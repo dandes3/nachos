@@ -15,9 +15,9 @@ Usage--
 
 		Run with %./nachos -P num <other options>
 			Where num can be-
-							2 : to call a demonstration of the producer consumer problem. 
-							3 : to call a demonstration of a controlled elevator emulator for THall
-							4 : to call a demonstration of a directionally controlled automobile bridge for VDOT.
+                            2 : to call a demonstration of the producer consumer problem. 
+                            3 : to call a demonstration of a controlled elevator emulator for THall
+                            4 : to call a demonstration of a directionally controlled automobile bridge for VDOT.
 
 
 
