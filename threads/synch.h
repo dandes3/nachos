@@ -79,8 +79,10 @@ class Lock {
 					// Condition variable ops below.
 
   private:
-    const char* name;				// for debugging
-    // plus some other stuff you'll need to define
+    const char* name;// for debugging
+    const bool status;
+    List* queue;
+    Thread* lockHolder;
 };
 
 // The following class defines a "condition variable".  A condition
@@ -132,6 +134,7 @@ class Condition {
 
   private:
     const char* name;
+    List* queue;
     // plus some other stuff you'll need to define
 };
 #endif // SYNCH_H
