@@ -125,6 +125,7 @@ void Lock::Acquire() {
 
 	(void)interrupt->SetLevel(oldLevel);
 }
+
 void Lock::Release() {
 	IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
@@ -165,11 +166,8 @@ void Condition::Wait(Lock* conditionLock) {
 	conditionLock->Acquire();
 
 	(void)interrupt->SetLevel(oldLevel);
-
-
-
-
 }
+
 void Condition::Signal(Lock* conditionLock) {
 	IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
