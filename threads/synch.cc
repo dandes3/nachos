@@ -193,7 +193,7 @@ void Condition::Broadcast(Lock* conditionLock) {
 
 		while (thread != NULL){
 			scheduler->ReadyToRun(thread);
-			thread = queue->Remove();
+			thread = (Thread*) queue->Remove();
 		}
 
 		(void)interrupt->SetLevel(oldLevel);
