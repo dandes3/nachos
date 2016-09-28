@@ -49,3 +49,7 @@ ThreadTest()
     SimpleThread(0);
 }
 
+void
+ElevatorTest()
+{
+}
