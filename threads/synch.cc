@@ -149,8 +149,8 @@ bool Lock::isHeldByCurrentThread() {
 Condition::Condition(const char* debugName) {
 	name = debugName;
 	queue = new(std::nothrow) List;
-
 }
+
 Condition::~Condition() {
 	delete queue;
 }
@@ -161,11 +161,28 @@ void Condition::Wait(Lock* conditionLock) {
 	ASSERT(conditionLock->isHeldByCurrentThread());
 
 	conditionLock->Release();
-	queue->Append((void*)currentThread);
+	queue->SortedInsert((void*)currentThread, std::numeric_limits<long long>::max());
+
 	currentThread->Sleep();
 	conditionLock->Acquire();
 
 	(void)interrupt->SetLevel(oldLevel);
+}
+
+void Condition::Wait(Lock* conditionLock, long long priority){
+
+        IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+        ASSERT(conditionLock->isHeldByCurrentThread());
+
+        conditionLock->Release();
+        queue->SortedInsert((void*)currentThread, priority);
+	
+        currentThread->Sleep();
+        conditionLock->Acquire();
+
+        (void)interrupt->SetLevel(oldLevel);
+
 }
 
 void Condition::Signal(Lock* conditionLock) {
@@ -175,7 +192,7 @@ void Condition::Signal(Lock* conditionLock) {
 
 	Thread *thread;
 
-	thread = (Thread *)queue->Remove();
+	thread = (Thread *)queue->SortedRemove(NULL);
 	if (thread != NULL)
 		scheduler->ReadyToRun(thread);
 
@@ -189,7 +206,7 @@ void Condition::Broadcast(Lock* conditionLock) {
 
 		Thread *thread;
 
-		thread = (Thread *)queue->Remove();
+		thread = (Thread *)queue->SortedRemove(NULL);
 
 		while (thread != NULL){
 			scheduler->ReadyToRun(thread);

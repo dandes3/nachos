@@ -21,6 +21,7 @@
 #include "thread.h"
 #include "list.h"
 #include <new>
+#include <limits>
 
 // The following class defines a "semaphore" whose value is a non-negative
 // integer.  The semaphore has only two operations P() and V():
@@ -126,7 +127,8 @@ class Condition {
     ~Condition();			// deallocate the condition
     const char* getName() { return (name); }
     
-    void Wait(Lock *conditionLock); 	// these are the 3 operations on 
+    void Wait(Lock *conditionLock); 	// these are the 3 operations on
+    void Wait(Lock *conditionLock, long long priority);		
 					// condition variables; releasing the 
 					// lock and going to sleep are 
 					// *atomic* in Wait()
