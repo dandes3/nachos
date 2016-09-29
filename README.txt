@@ -7,7 +7,7 @@ Compiled, edited, and modified as coursework for CSCI 444, The College of Willia
 This code is provided AS IS and had been created strictly for educational purposes. 
 
 
-Usage-
+Usage--
        This project includes a makefile. In parent directory, do a %make , this will compile and prepare
        the full NachOS OS and included programs for execution. 
        
@@ -19,10 +19,7 @@ Usage-
                             3 : to call a demonstration of a controlled elevator emulator for THall
                             4 : to call a demonstration of a directionally controlled automobile bridge for VDOT.
        
-       TODO: Enumerate on what <other options> are. 
+       TODO: Enumerate on what <other options> are.
 
 
-
-
-
-
+       
