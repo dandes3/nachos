@@ -168,7 +168,7 @@ main(int argc, char **argv)
         }
 
 #endif // NETWORK
-    }
+    }  //TODO: find where this ties to. 
 
     currentThread->Finish();	// NOTE: if the procedure "main" 
 				                // returns, then the program "nachos"
