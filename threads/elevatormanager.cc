@@ -33,43 +33,12 @@ void ElevatorManager::Request(bool dropOff, int pid, int floor){
 
    ASSERT(floor < 4 && floor >= 0); //Floor not out of bounds
    
-   current ++;
-
-   if (dropOff) //Dropoff val is true if the process wants to be dropped off, rather than picked up
-     printf("p%d is requesting to be dropped off at floor %d\n", pid, floor);
-   else
-     printf("p%d is requesting to be picked up at floor %d\n", pid, floor);
-
-   bool upWaiting, downWaiting, flag;
-   upSweep -> ThreadWaiting(&upWaiting);
-   downSweep -> ThreadWaiting(&downWaiting);
-
-   if (!busy and current > 1)
+   current ++;               //Safe guard for issues caused by Mesa Semantics. If a thread is waiting on the lock at the top of Request when another
+                             //thread has been signaled, and that thread aquires the lock, it will "skip the line" and ruin elevator order. Current tracks the
+  if (!busy and current > 1) //number of threads in Request, and directs the errant thread to a wait if other threads are in request, allowing the signalled thread to operate.
      busy = true;
-  /*    if (directionUp){
-      if (upWaiting)
-         upSweep -> Signal(lock); //Get processes waiting on the up sweep if we're already going that way
 
-      else{
-         directionUp = false; //Otherwise go down and get those waiting on the downsweep
-         downSweep -> Signal(lock);
-      }
-   }
-
-   else{ //Mirror of above
-      if (downWaiting)
-         downSweep -> Signal(lock);
-
-      else{
-         directionUp = true;
-         upSweep -> Signal(lock);
-      }
-   }
-
-
-  }
-*/
-   if (busy){ //Mesa semantics 
+  if (busy){
 
       if ((position < floor) || ((position == floor) && !directionUp)) //If process should be picke up on upsweep
         upSweep -> Wait(lock, floor); //Priority wait based on floor
@@ -80,20 +49,14 @@ void ElevatorManager::Request(bool dropOff, int pid, int floor){
 
    busy = true; //Elevator is "delivering or picking up"
 
-
-   if (dropOff)
-     printf("p%d delivered at floor %d\n", pid, floor);
-   else
-     printf("p%d picked up at floor %d\n", pid, floor);
-
    position = floor; //Elevator moved to destination
    
-   current --;
+   current --; //Thread has left request
 
    lock->Release();
 }
 
-void ElevatorManager::Arrived(){
+void ElevatorManager::Release(){
    lock -> Acquire();
 
    busy = false; //Elevator has "completed pick up/deliver"

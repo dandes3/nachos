@@ -9,7 +9,7 @@ class ElevatorManager{
       ~ElevatorManager();
 
       void Request(bool dropOff, int pid, int floor);
-      void Arrived();
+      void Release();
 
    private:
       int position, current;

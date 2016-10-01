@@ -74,24 +74,34 @@ void Elevator(int arg){
       }
       
      
-     manager -> Arrived(); //Signals a thread to wake from its wait in Release(). This will trigger the elevator to update
-                            // its position, essentially "moving" the elevator. Note 
+     manager -> Release(); //Signals a thread to wake from its wait in Request. Fix for mesa semantics can be found in elevatormanager.cc
+     elevatorTravel -> V();
     }
 }
 
 void ArrivingGoingFromTo(int atFloor, int toFloor, int num){
    
+   printf("p%d is requesting to be pickedup at floor %d\n", num, atFloor);
+  
    manager -> Request(false, num, atFloor); //Request pickup. False value to indicate pickup rather than dropoff
 
-   elevatorSem -> V(); //Signal elevator to execute Arrived on monitor 
+   printf("p%d picked up at floor %d------------------------------------%d\n", num, atFloor, atFloor);
+
+   elevatorSem -> V(); //Signal elevator to "move" and call Release
    
+   elevatorTravel -> P(); //Wait for elevator delay.
+
+   printf("p%d requesting to be dropped off at floor %d\n", num, toFloor);
+
    manager -> Request(true, num, toFloor); //Request floor for dropoff after elevator arrives. On return, thread has been delivered at desired floor
+   
+   printf("p%d dropped off at floor %d----------------------------------%d\n", num, toFloor, toFloor);
 
    countMutex -> P(); //Mutual exclusion for usersDelivered variable
    usersDelivered ++; //Increment number of threads delivered
    countMutex -> V();
    
-   elevatorSem -> V();
+   manager -> Release();
 }
 
 void ElevatorUser(int num){
