@@ -99,7 +99,10 @@ class Thread {
     void CheckOverflow();   			// Check if thread has 
 						// overflowed its stack
     void setStatus(ThreadStatus st) { status = st; }
-    const char* getName() { return (name); }
+    void setName(const char *s){ strcat(name,s); }
+    char* getName() { return (name); }
+    char* name; // Changed name to be nonconstant for debugging
+        // purposes. We can change it back
     void Print() { printf("%s, ", name); }
 
   private:
@@ -109,7 +112,7 @@ class Thread {
 					// NULL if this is the main thread
 					// (If NULL, don't deallocate stack)
     ThreadStatus status;		// ready, running or blocked
-    const char* name;
+    //const char* name; // Moved to Public:
 
     void StackAllocate(VoidFunctionPtr func, int arg);
     					// Allocate a stack for thread.
