@@ -62,7 +62,12 @@ extern void Consumer(int n);
 
 extern void Three(void);
 
-extern void Four(void);
+extern void Four(int numCars);
+extern void OneVehicle(int direction);
+extern void ArriveBridge(int direction);
+extern void CrossBridge(int direction);
+extern void ExitBridge(int direction);
+extern void Test(int n); //DELETE LATER *******
 
 extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 
@@ -114,6 +119,11 @@ main(int argc, char **argv)
                 int numberOfConsumers = atoi(*(argv+3));
                 int buffSize = atoi(*(argv+4));
                 Two( numberOfProducers, numberOfConsumers, buffSize );
+            }
+            if (!strcmp(*(argv+1), "4")){
+                int numCars = atoi(*(argv+2));
+                Test(numCars);
+                //Four(numCars);
             }
         }
 #endif

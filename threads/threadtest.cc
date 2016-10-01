@@ -24,9 +24,14 @@
 
 char *buffer; // The buffer where characters will be placed and removed from
 Lock *lock; // A lock for accessing the buffer
+Lock *bridgeLock; // A lock for accessing the bridge
 Lock *consumerLock; // A lock for consumers to access charsToBeConsumed
 Condition *notEmpty; // Checks if the buffer is not empty
 Condition *notFull; // Checks if the buffer is not full
+Condition *bridgeNotFull; // Checks if the bridge is full;
+Condition *bridgeNorth; // Checks if the bridge is going in one direction (0)
+Condition *bridgeSouth; // Checks if the bridge is going in one direction (1)
+
 int buffSize; // The input size for the buffer. Passed in through the command line
 int pos; // position in the buffer to either insert or remove a char from
 int charsToBeConsumed; // Number of characters that producers will put in.
@@ -35,22 +40,24 @@ int charsToBeConsumed; // Number of characters that producers will put in.
         // in case there is an unequal number of producers and consumers.
 int numCharsConsumed; // Number of characters already consumed. Goal is to get this
         // value to be charsToBeConsumed to indicate that consumers are done.
+int carsOnBridge; // Number of cars on the bridge
+int currentDirection; // Current direction of cars on bridge
 void Insert(char c); // Prototype for a producer function to insert c into the buffer
 void Remove(); // Prototype for a consumer function to remove the last character from the buffer
 void Producer(int n); // The function that gets forked per producer thread
 void Consumer(int n); // The function that gets forked per consumer thread
+void OneVehicle(int direction);
+void ArriveBridge(int direction);
+void CrossBridge(int direction);
+void ExitBridge(int direction);
 
-void
-SimpleThread(int which)
-{
+void SimpleThread(int which){
     int num;
     
     for (num = 0; num < 5; num++) {
 	printf("*** thread %d looped %d times\n", which, num);
         currentThread->Yield();
     }
-    
-
 }
 
 //----------------------------------------------------------------------
@@ -58,9 +65,7 @@ SimpleThread(int which)
 // 	Set up a ping-pong between two threads, by forking a thread 
 //	to call SimpleThread, and then calling SimpleThread ourselves.
 //----------------------------------------------------------------------
-void
-ThreadTest()
-{
+void ThreadTest(){
     DEBUG('t', "Entering SimpleTest");
 
     Thread *t = new(std::nothrow) Thread("forked thread");
@@ -233,6 +238,132 @@ void Three(){
     
 }
 
-void Four(){
-    printf("four\n");
+
+void OneVehicle(int direc){
+    printf("One Vehicle. Direc is: %d\n", direc);
+    int arrival_delay = 1+(int) (100000.0*rand()/(RAND_MAX+1.0));
+    int crossing_time = 1+(int) (100000.0*rand()/(RAND_MAX+1.0));
+    
+    printf("arrival_delay is %d\n", arrival_delay);
+    printf("crossing_time is %d\n", crossing_time);
+    
+    for (int i=0; i < arrival_delay; i++){
+        interrupt->SetLevel(IntOff);
+        interrupt->SetLevel(IntOn);
+    }
+    
+    ArriveBridge(direc);
+    CrossBridge(direc);
+    
+    for (int i=0; i < crossing_time; i++){
+        interrupt->SetLevel(IntOff);
+        interrupt->SetLevel(IntOn);
+    }
+    ExitBridge(direc);
+}
+
+void ArriveBridge(int direction){
+    printf("Arrive at the bridge\n");
+    
+    bridgeLock->Acquire();
+    
+    while (carsOnBridge >= 3){
+        bridgeNotFull->Wait(bridgeLock);
+    }
+    
+    if (carsOnBridge == 0){
+        currentDirection = direction;
+        if (direction == 0){
+            bridgeNorth->Signal(bridgeLock);
+        }
+        else{
+            bridgeSouth->Signal(bridgeLock);
+        }
+    }
+    
+    while (currentDirection != direction){
+        if (direction == 0){
+            bridgeNorth->Wait(bridgeLock);
+        }
+        else{
+            bridgeSouth->Wait(bridgeLock);
+        }
+    }
+    
+    carsOnBridge++;
+    
+    if (carsOnBridge != 3){
+        bridgeNotFull->Signal(bridgeLock);
+    }
+    
+    printf("curDir is %d\n", currentDirection);
+    printf("myDir is %d\n", direction);
+    
+    bridgeLock->Release();
+    
+    printf("arrive count is %d\n", carsOnBridge);
+    printf("Finished arriving on bridge\n");
+}
+
+void CrossBridge(int direction){
+    printf("Crossing the bridge\n");
+}
+
+void ExitBridge(int direction){
+    printf("Exiting the bridge\n\n");
+    
+    bridgeLock->Acquire();
+    
+    carsOnBridge--;
+    
+    bridgeLock->Release();
+    
+    printf("Finished exiting the bridge\n");
+}
+
+void Four(int numCars){
+    DEBUG('t', "four\n");
+    
+    bridgeLock = new Lock("bridgeLock");
+    bridgeNotFull = new Condition("bridgeFull");
+    bridgeNorth = new Condition("bridgeNorth");
+    bridgeSouth = new Condition("bridgeSouth");
+    
+    carsOnBridge = 0;
+    
+    for (int i = 0; i < numCars; i++){
+        int direction = rand() % 2;
+
+        Thread *vehicle = new Thread("vehicle");
+        vehicle->Fork(OneVehicle, direction);
+
+    }
+    
+    
+}
+
+void dummy1(){
+    printf("dummy1\n");
+}
+
+void dummy2(){
+    printf("dummy2\n");
+}
+
+void dummy3(){
+    printf("dummy3\n\n");
+}
+
+void dummy(int n){
+    dummy1();
+    dummy2();
+    dummy3();
+}
+
+void Test(int n){
+    printf("Test\n");
+    for (int i = 0; i < n; i++){
+        Thread *testThread = new Thread("test");
+        testThread->Fork(dummy, 0);
+    }
 }
