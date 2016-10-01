@@ -13,7 +13,7 @@
 #include "system.h"
 #include <vector>
 #include "synch.h"
-
+#define MAX_CARS 3
 //----------------------------------------------------------------------
 // SimpleThread
 // 	Loop 5 times, yielding the CPU to another ready thread 
@@ -24,13 +24,13 @@
 //----------------------------------------------------------------------
 
 char *buffer; // The buffer where characters will be placed and removed from
-Lock *lock; // A lock for accessing the buffer
+Lock *bufferLock; // A lock for accessing the buffer
 Lock *bridgeLock; // A lock for accessing the bridge
 Lock *consumerLock; // A lock for consumers to access charsToBeConsumed
 
-Condition *notEmpty; // Checks if the buffer is not empty
-Condition *notFull; // Checks if the buffer is not full
-Condition *bridgeNotFull; // Checks if the bridge is full;
+Condition *bufferNotEmpty; // Indicates that the buffer is not empty
+Condition *bufferNotFull; // Indicates that the buffer is not full
+Condition *bridgeNotFull; // Indicates that the bridge is not full;
 Condition *bridgeDirection; // Changes the direction of traffic when bridge is empty
 
 int buffSize; // The input size for the buffer. Passed in through the command line
@@ -42,23 +42,19 @@ int charsToBeConsumed; // Number of characters that producers will put in.
 int numCharsConsumed; // Number of characters already consumed. Goal is to get this
         // value to be charsToBeConsumed to indicate that consumers are done.
 int carsOnBridge; // Number of cars on the bridge
-int currentDirection; // Current direction of cars on bridge
-int nameCount = 0;
+int trafficDirection; // Current direction of cars on bridge
+
+int nameCount = 1; // a vehicle id for ensuring the code is correct
 
 void Insert(char c); // Prototype for a producer function to insert c into the buffer
 void Remove(); // Prototype for a consumer function to remove the last character from the buffer
 void Producer(int n); // The function that gets forked per producer thread
 void Consumer(int n); // The function that gets forked per consumer thread
-void OneVehicle(int direction);
-void ArriveBridge(int direction, int id);
-void CrossBridge(int direction, int id);
-void ExitBridge(int direction, int id);
-
-void Test(struct fourStruct *fs);
-struct fourStruct{
-    int myDir;
-    int myNum;
-};
+void OneVehicle(int myDirection); // Controls when a vehicle arrives,
+    // crosses, or exits the bridge
+int ArriveBridge(int myDirection); // Determines whether the car can cross
+void CrossBridge(int myDirection, int id); // Crosses the bridge
+void ExitBridge(int myDirection, int id); // Exits the bridge and lets others know
 
 void SimpleThread(int which){
     int num;
@@ -95,7 +91,6 @@ void Producer(int n){
         Insert(string[i]);
     }
     
-    
 }
 
 //----------------------------------------------------------------------
@@ -114,11 +109,17 @@ void Consumer(int n){
     
     consumerLock->Acquire();
     numConsumed = numCharsConsumed; // the Remove function modifies the global
-            // numCharsConsumed. So to read it, we lock it
+            // numCharsConsumed. So to initalize it, we have get the global copy.
+            // This accounts for the case where there are many consumers
+            // and few producers. 
     consumerLock->Release();
     
-    while(numConsumed < charsToBeConsumed){
+    while(numConsumed < charsToBeConsumed){ // We have to make sure
+            // that we don't consume more characters than producers
+            // will input into the buffer. That is, one consumer can still
+            // clear the buffer regardless of the number of producers
         Remove();
+        
         consumerLock->Acquire();
         numConsumed = numCharsConsumed;
         consumerLock->Release();
@@ -134,10 +135,10 @@ void Consumer(int n){
 void Insert(char c){
     DEBUG('t', "insert\n");
     
-    lock->Acquire();
+    bufferLock->Acquire();
 
     while (strlen(buffer) >= buffSize) { // wait if the buffer is full
-        notFull->Wait(lock);
+        bufferNotFull->Wait(bufferLock);
     }
     buffer[pos++] = c;
     //DEBUG('t', "insert entered %c\n", c);
@@ -146,9 +147,9 @@ void Insert(char c){
     printf("%s\n", buffer);
     //printf("%s\t%d\n", buffer, strlen(buffer));
     
-    notEmpty->Signal(lock);
+    bufferNotEmpty->Signal(bufferLock); // Signal that the buffer is not empty
     
-    lock->Release();
+    bufferLock->Release();
 }
 
 //----------------------------------------------------------------------
@@ -161,10 +162,10 @@ void Insert(char c){
 void Remove(){
     DEBUG('t', "remove\n");
     
-    lock->Acquire();
+    bufferLock->Acquire();
     
     while (strlen(buffer) <= 0){ // wait if the buffer is empty
-        notEmpty->Wait(lock);
+        bufferNotEmpty->Wait(bufferLock);
     }
     
     DEBUG('t', "remove's buffer is %s\n", buffer);
@@ -175,10 +176,9 @@ void Remove(){
     //DEBUG('t', "remove got %c\n", c);
     
     printf("%s\n", buffer);
-    //printf("%s\t%d\n", buffer, strlen(buffer));
     
-    notFull->Signal(lock);
-    lock->Release();
+    bufferNotFull->Signal(bufferLock); // Signal that the buffer is not full
+    bufferLock->Release();
     
     consumerLock->Acquire();
     numCharsConsumed++;
@@ -202,44 +202,31 @@ void Two(int numPros, int numCons, int sizeOfBuffer){
     //DEBUG('t', "buffSize is %d\n", buffSize);
     //DEBUG('t', "charsToBeConsumed is %d\n", charsToBeConsumed);
     
-    buffer = new char[buffSize];
-    lock = new(std::nothrow) Lock("Lock");
+    buffer = new char[buffSize]; // initalize buffer to input buffSize
+    
+    // instantiate locks
+    bufferLock = new(std::nothrow) Lock("bufferLock");
     consumerLock = new(std::nothrow) Lock("consumerLock");
-    pos = 0;
     
-    bzero(buffer, buffSize);
+    pos = 0; //First producer will input into the 0th element of the buffer
     
-    notEmpty = new(std::nothrow) Condition("notEmpty");
-    notFull = new(std::nothrow) Condition("notFull");
+    bzero(buffer, buffSize); //clear the buffer
+    
+    //instantiate conditions
+    bufferNotEmpty = new(std::nothrow) Condition("bufferNotEmpty");
+    bufferNotFull = new(std::nothrow) Condition("bufferNotFull");
     
     // fork off numPros number of producers
     for (int i = 0; i < numPros; i++){
-        char temp[10];
-        sprintf(temp, "%d", i);
-        char name[100];
-
-        strcpy(name,"producer");
-        strcat(name, temp); // name should be producer0, producer1, etc...
-        
-        Thread *proThread = new Thread(name);
-        //DEBUG('t', "name is %s\n", name);
-        //DEBUG('t', "producer name is %s\n", proThread->getName());
+        Thread *proThread = new Thread("Producer");
         proThread->Fork(Producer, 1); // arg 1 is a dummy argument
     }
+    
     // fork off numCons number of consumers
     for (int i = 0; i < numPros; i++){
-        char temp[10];
-        sprintf(temp, "%d", i);
-        char name[100];
-
-        strcpy(name,"consumer");
-        strcat(name, temp); // name should be producer0, producer1, etc...
-        
-        Thread *conThread = new Thread(name);
-        //DEBUG('t', "name is %s\n", name);
+        Thread *conThread = new Thread("Consumer");
         conThread->Fork(Consumer, 1);
     }
-        
 }
 
 
@@ -248,132 +235,178 @@ void Three(){
     
 }
 
-
-void OneVehicle(int direction){
+//----------------------------------------------------------------------
+//  OneVehicle
+// 	Controls how much time passes before the vehicle arrives to the bridge.
+//  Controls how much time it takes for a vehicle to cross the bridge.
+//  Calls the ArriveBride, CrossBridge, and ExitBridge functions at the appropriate
+//  times.
+//----------------------------------------------------------------------
+void OneVehicle(int myDirection){
 
     int arrival_delay = 1+(int) (100000.0*rand()/(RAND_MAX+1.0));
     int crossing_time = 1+(int) (100000.0*rand()/(RAND_MAX+1.0));
     
-    int id;
-    //nameLock->Acquire();
-    //id = nameCount;
-    //nameLock->Release();
+    int id; // A local copy of the id for the vehicle. 
+        // This helps a reader verify the correctness of the code by
+        // allowing them to see which vehicle is performing a specific action
     
-    
+    // Delay before arriving
     for (int i=0; i < arrival_delay; i++){
         interrupt->SetLevel(IntOff);
         interrupt->SetLevel(IntOn);
     }
-    ArriveBridge(direction, id);
     
-    CrossBridge(direction, id);
+    id = ArriveBridge(myDirection); // ArriveBridge modifies the global variant
+        // of id, nameCount, and returns it as to keep it local to the thread.
+    
+    CrossBridge(myDirection, id);
+    
+    // Simulate travel time for crossing a bridge
     for (int i=0; i < crossing_time; i++){
         interrupt->SetLevel(IntOff);
         interrupt->SetLevel(IntOn);
     }
     
-    ExitBridge(direction, id);
+    ExitBridge(myDirection, id);
 }
 
-void ArriveBridge(int direction, int id){
-
-    char *dirName = new char[6];
-    char *curName = new char[6];
-    bzero(dirName, 6);
-    bzero(dirName, 6);
+//----------------------------------------------------------------------
+//  ArriveBridge
+// 	Determine if the bridge is full or if there is oncoming traffic. If so, wait.
+//  If not (or if condition is signaled), then increase the number of cars on the
+//  bridge. Return the id of this car.
+//----------------------------------------------------------------------
+int ArriveBridge(int myDirection){
     
+    // instantiate two empty strings to represent myDirection and trafficDirection.
+    // For reading convenience, a direction of 0 corresponds to "NORTH" and 1 to 
+    // "SOUTH"
+    char *myDirectionName = new char[6]; // strlen("NORTH") = strlen("SOUTH") = 6
+    char *trafficDirectionName = new char[6];
+    
+    // Clear the strings
+    bzero(myDirectionName, 6);
+    bzero(myDirectionName, 6);
+    
+    // Acquire the lock
     bridgeLock->Acquire();
     
-    if (direction == 0){
-        strcpy(dirName, "NORTH");
+    int id = nameCount++; // this is the only place that modifies or 
+    // reads nameCount
+    
+    // set myDirectionName to "NORTH" if myDirection is 0
+    // set myDirectionName to "SOUTH" if myDirection is 1
+    if (myDirection == 0){
+        strcpy(myDirectionName, "NORTH");
     }
     else{
-        strcpy(dirName, "SOUTH");
+        strcpy(myDirectionName, "SOUTH");
     }
-    if (currentDirection == 0){
-        strcpy(curName, "NORTH");
+    
+    // set trafficDirectionName to "NORTH" if trafficDirection is 0
+    // set trafficDirectionName to "SOUTH" if trafficDirection is 1
+    if (trafficDirection == 0){
+        strcpy(trafficDirectionName, "NORTH");
     }
     else{
-        strcpy(curName, "SOUTH");
+        strcpy(trafficDirectionName, "SOUTH");
     }
         
-    printf("Car going %s and traffic is going %s tried to ARRIVE. There were %d cars on the bridge.\n", dirName, curName, carsOnBridge);
+    printf("Car %d going %s and traffic is going %s tried to ARRIVE. There were %d cars on the bridge.\n", id, myDirectionName, trafficDirectionName, carsOnBridge);
     
-    while (carsOnBridge == 3 || currentDirection != direction){
-        if (carsOnBridge == 3){
-            printf("Car going %s and traffic is going %s has to WAIT because the bridge is FULL.\n", dirName, curName);
-            bridgeNotFull->Wait(bridgeLock);
-            printf("The bridge is NO LONGER full.\n", dirName, curName);
+    while (carsOnBridge == MAX_CARS || trafficDirection != myDirection){ // wait if
+            // bridge is full or if there is oncoming traffic
+        if (carsOnBridge == MAX_CARS){
+            printf("Car %d going %s and traffic is going %s has to WAIT because the bridge is FULL.\n", id, myDirectionName, trafficDirectionName);
+            bridgeNotFull->Wait(bridgeLock); //Wait until the bridge is not full
+            printf("The bridge is NO LONGER full.\n", myDirectionName, trafficDirectionName);
         }
         
-        if (currentDirection != direction){
-            printf("Car going %s and traffic is going %s has to WAIT because of ONCOMING traffic.\n", dirName, curName);
-            bridgeDirection->Wait(bridgeLock);
-            currentDirection = direction;
-            printf("Since there no cars on the bridge. Switching traffic flow to %s\n", dirName);
-            strcpy(curName, dirName);
+        if (trafficDirection != myDirection){
+            printf("Car %d going %s and traffic is going %s has to WAIT because of ONCOMING traffic.\n", id, myDirectionName, trafficDirectionName);
+            bridgeDirection->Wait(bridgeLock); // wait until there 
+                // is no oncoming traffic.
+                // This only happens when there are no cars on the bridge
+            trafficDirection = myDirection; // since the bridge is now empty
+                // then the direction of traffic is the direction that
+                // this vehicle moves in.
+            printf("Since there no cars on the bridge. Switching traffic flow to %s\n", myDirectionName);
+            strcpy(trafficDirectionName, myDirectionName);
         }
     }
     
-    carsOnBridge++;
+    carsOnBridge++; // increment the number of cars on the bridge
     
-    if (carsOnBridge != 3){
-        bridgeNotFull->Signal(bridgeLock);
+    if (carsOnBridge != MAX_CARS){
+        bridgeNotFull->Signal(bridgeLock); // Signal that the bridge is not full
     }
-    printf("Car going %s and traffic is going %s successfully ARRIVED. There are now  %d cars on the bridge.\n", dirName, curName, carsOnBridge);
-    bridgeLock->Release();
     
+    printf("Car %d going %s and traffic is going %s successfully ARRIVED. There are now  %d cars on the bridge.\n", id, myDirectionName, trafficDirectionName, carsOnBridge);
+    
+    bridgeLock->Release(); // release the lock
+    return id;
     
 }
 
-void CrossBridge(int direction, int id){
+//----------------------------------------------------------------------
+//  CrossBridge
+// 	Merely states that a certain car is now crossing the bridge
+//----------------------------------------------------------------------
+void CrossBridge(int myDirection, int id){
     
-    char *dirName = new char[6];
-    char *curName = new char[6];
-    bzero(dirName, 6);
-    bzero(dirName, 6);
+    char *myDirectionName = new char[6];
+    char *trafficDirectionName = new char[6];
+    bzero(myDirectionName, 6);
+    bzero(myDirectionName, 6);
     
-    if (direction == 0){
-        strcpy(dirName, "NORTH");
+    if (myDirection == 0){
+        strcpy(myDirectionName, "NORTH");
     }
     else{
-        strcpy(dirName, "SOUTH");
+        strcpy(myDirectionName, "SOUTH");
     }
 
-    printf("Car going %s is now CROSSING the bridge\n", dirName);
+    printf("Car %d going %s is now CROSSING the bridge\n", id, myDirectionName);
 }
 
-void ExitBridge(int direction, int id){
+//----------------------------------------------------------------------
+//  ExitBridge
+// 	Decrement the number of cars on the bridge. If there are no cars, 
+//  the direction of traffic is subject to change, so signal those waiting for 
+//  oncoming traffic to clear.
+//----------------------------------------------------------------------
+void ExitBridge(int myDirection, int id){
     
+    char *myDirectionName = new char[6];
+    char *trafficDirectionName = new char[6];
+    bzero(myDirectionName, 6);
+    bzero(myDirectionName, 6);
     
-    char *dirName = new char[6];
-    char *curName = new char[6];
-    bzero(dirName, 6);
-    bzero(dirName, 6);
+    bridgeLock->Acquire(); // Acquire the lock
     
-    bridgeLock->Acquire();
-    
-    if (direction == 0){
-        strcpy(dirName, "NORTH");
+    if (myDirection == 0){
+        strcpy(myDirectionName, "NORTH");
     }
     else{
-        strcpy(dirName, "SOUTH");
+        strcpy(myDirectionName, "SOUTH");
     }
-    if (currentDirection == 0){
-        strcpy(curName, "NORTH");
+    if (trafficDirection == 0){
+        strcpy(trafficDirectionName, "NORTH");
     }
     else{
-        strcpy(curName, "SOUTH");
+        strcpy(trafficDirectionName, "SOUTH");
     }
-    printf("Car going %s and traffic is going %s began to EXIT. There were %d cars on the bridge.\n", dirName, curName, carsOnBridge);
+    printf("Car %d going %s and traffic is going %s began to EXIT. There were %d cars on the bridge.\n", id, myDirectionName, trafficDirectionName, carsOnBridge);
     
-    carsOnBridge--;
+    carsOnBridge--; // decrement the number of cars on the bridge
+    
     bridgeNotFull->Signal(bridgeLock);
     if (carsOnBridge == 0){
         bridgeDirection->Signal(bridgeLock);
     }
     
-    printf("Car going %s and traffic is going %s successfully EXITED. There are now %d cars on the bridge.\n", dirName, curName, carsOnBridge);
+    printf("Car %d going %s and traffic is going %s successfully EXITED. There are now %d cars on the bridge.\n", id, myDirectionName, trafficDirectionName, carsOnBridge);
     
     
     bridgeLock->Release();
@@ -392,10 +425,10 @@ void Four(int numCars){
     carsOnBridge = 0;
     
     for (int i = 0; i < numCars; i++){
-        int direction = rand() % 2;
+        int myDirection = rand() % 2;
         if (i == 0){
-            currentDirection = direction;
-            if (currentDirection == 0){
+            trafficDirection = myDirection;
+            if (trafficDirection == 0){
                 printf("FIRST car to arrive will be going NORTH, so setting up traffic to go NORTH\n");
             }
             else{
@@ -404,6 +437,6 @@ void Four(int numCars){
         }
  
         Thread *vehicle = new Thread("Vehicle");
-        vehicle->Fork(OneVehicle, direction);
+        vehicle->Fork(OneVehicle, myDirection);
     }
 }
