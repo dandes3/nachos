@@ -15,11 +15,18 @@ Usage--
        
        Run with %./nachos -P num <other options>
             Where num can be-
-                            2 : to call a demonstration of the producer consumer problem. 
+                            2 : to call a demonstration of the producer consumer problem.
+                            	If this option is called, the <other options> should be of the form,
+                            	<x y z> where x is the number of producers desired, y is the number of consumers, and z is 
+                            	the desired buffer size. (i.e: ./nachos -P 2 4 5 6 would call producer/consumer with 4 producers, 
+                            	5 consumers, and a buffer size of 6.)
+
                             3 : to call a demonstration of a controlled elevator emulator for THall
                             4 : to call a demonstration of a directionally controlled automobile bridge for VDOT.
        
-       TODO: Enumerate on what <other options> are.
-
+       TODO: Enumerate on what <other options> are depending on requirements of threadtest methods. 
 
        
+
+
+
