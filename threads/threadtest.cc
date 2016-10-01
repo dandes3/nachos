@@ -27,13 +27,10 @@ char *buffer; // The buffer where characters will be placed and removed from
 Lock *lock; // A lock for accessing the buffer
 Lock *bridgeLock; // A lock for accessing the bridge
 Lock *consumerLock; // A lock for consumers to access charsToBeConsumed
-Lock *nameLock; // A lock so that I can increment and read a variable called 
-    // nameCount to identify the threads.
+
 Condition *notEmpty; // Checks if the buffer is not empty
 Condition *notFull; // Checks if the buffer is not full
 Condition *bridgeNotFull; // Checks if the bridge is full;
-Condition *bridgeNorth; // Checks if the bridge is going in one direction (0)
-Condition *bridgeSouth; // Checks if the bridge is going in one direction (1)
 Condition *bridgeDirection; // Changes the direction of traffic when bridge is empty
 
 int buffSize; // The input size for the buffer. Passed in through the command line
@@ -253,19 +250,15 @@ void Three(){
 
 
 void OneVehicle(int direction){
-    //printf("name is %d\n", currentThread->getName());
-    //printf("One Vehicle. Direc is: %d\n", direction);
-    //printf("curDir in OneVehicle is %d\n", currentDirection);
+
     int arrival_delay = 1+(int) (100000.0*rand()/(RAND_MAX+1.0));
     int crossing_time = 1+(int) (100000.0*rand()/(RAND_MAX+1.0));
     
     int id;
-    nameLock->Acquire();
-    id = nameCount;
-    nameLock->Release();
+    //nameLock->Acquire();
+    //id = nameCount;
+    //nameLock->Release();
     
-    //printf("arrival_delay is %d\n", arrival_delay);
-    //printf("crossing_time is %d\n", crossing_time);
     
     for (int i=0; i < arrival_delay; i++){
         interrupt->SetLevel(IntOff);
@@ -310,6 +303,7 @@ void ArriveBridge(int direction, int id){
         if (carsOnBridge == 3){
             printf("Car going %s and traffic is going %s has to WAIT because the bridge is FULL.\n", dirName, curName);
             bridgeNotFull->Wait(bridgeLock);
+            printf("The bridge is NO LONGER full.\n", dirName, curName);
         }
         
         if (currentDirection != direction){
@@ -374,6 +368,7 @@ void ExitBridge(int direction, int id){
     printf("Car going %s and traffic is going %s began to EXIT. There were %d cars on the bridge.\n", dirName, curName, carsOnBridge);
     
     carsOnBridge--;
+    bridgeNotFull->Signal(bridgeLock);
     if (carsOnBridge == 0){
         bridgeDirection->Signal(bridgeLock);
     }
@@ -390,14 +385,11 @@ void Four(int numCars){
     DEBUG('t', "four\n");
     
     bridgeLock = new Lock("bridgeLock");
-    nameLock = new Lock("nameLock");
     
     bridgeNotFull = new Condition("bridgeFull");
-
     bridgeDirection = new Condition("bridgeDirection");
     
     carsOnBridge = 0;
-    nameCount = 0;
     
     for (int i = 0; i < numCars; i++){
         int direction = rand() % 2;
@@ -410,28 +402,8 @@ void Four(int numCars){
                 printf("FIRST car to arrive will be going SOUTH, so setting up traffic to go SOUTH\n");
             }
         }
-        char name[10];
-        (void) sprintf(name, "%d", i);
+ 
         Thread *vehicle = new Thread("Vehicle");
-        //strcpy(vehicle->name, name);
-        
-        struct fourStruct fs;
-        fs.myDir = direction;
-        fs.myNum = i;
-        
-        nameLock->Acquire();
-        nameCount++;
-        nameLock->Release();
-        
-        //vehicle->Fork(Test, &fs);
         vehicle->Fork(OneVehicle, direction);
-
     }
-    
-    
-}
-
-void Test(struct fourStruct *fs){
-    printf("Test\n");
-    
 }
