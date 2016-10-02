@@ -3,7 +3,8 @@
 | Nachos Project 1
 -------------------------------------------
 
---Compiled, edited, and modified as coursework for CSCI 444, The College of William & Mary, Fall 2016
+  Compiled, edited, and modified as coursework for CSCI 444, at The College of William & Mary, Fall 2016.
+
   The formatting of this document depends on spaces that may be interpreted differently on different systems. 
   Please view in a basic text editor for best document interpretation.
 
@@ -28,7 +29,7 @@
 
 
 Usage--
-      This project includes a makefile. In parent directory, do a %make , this will compile and prepare
+      This project includes a makefile. In the parent directory, do a %make, this will compile and prepare
       the full Nachos OS and included programs for execution. 
        
       In the >threads directory, there will now be a nachos executable. 
@@ -56,17 +57,18 @@ Usage--
 
 Commentary--
       On locks and condition variables:
-          We made the design choice to implement locks in the essential sense of a binary semaphore, while still careful to avoid the literal t
+          We made the design choice to implement locks in the essential sense of a binary semaphore, while still careful to avoid the literal
           translation of a semaphore. The locks are derived from the supplied Semaphore::V and Semaphore::P models, while implementing the required 
           methods Acquire, Release, and a method to check if the lockholder is the current thread. Condition variables are constructed utilizing the 
           previously defined locks and interrupt disabling as a method to increment machine time. In addition to the required methods, we added a 
-          priority wait function, as well as queue-is-empty function. 
+          priority wait function, as well as queue-is-empty function.
 
       On producer/consumer:
           The created buffer that is printed to the output is incremented by one letter from the phrase "HELLO WORLD" each print. This comes from the
           chosen producer function executing itself once per thread, which yields a total number of characters printed as the function <<strlen("HELLO 
           WORLD") * numberOfProducers == 11 * numberOfProducers>>. The output printed is relatively convincing for the correctness of our solution, 
-          unless multiple producers and consumers are initialized, which will of course yield gibberish. 
+          clearly printing and visualizing the way the methods are utilizing the producer/consumer model. This is unless multiple producers and 
+          consumers are initialized, which will of course yield gibberish. 
 
       On the elevator emulator:
           The output to the terminal uses text phrases to demonstrate requesting and picking up, with long dashed lines surrounded by the appropriate 
