@@ -4,7 +4,10 @@
 -------------------------------------------
 
 Compiled, edited, and modified as coursework for CSCI 444, The College of William & Mary, Fall 2016.
-This code is provided AS IS and had been created strictly for educational purposes. 
+This code is provided AS IS and had been created strictly for educational purposes.
+
+The formatting of this document depends on spaces that may be interpreted differently on different systems. 
+Please view in a basic text editor for best document interpretation.
 
 
 Usage--
@@ -18,7 +21,8 @@ Usage--
         Where num can be:
 
             2 : to call a demonstration of the producer consumer problem.
-                If this option is called, the <other options> should be of the form, <x y z> where x is the number of producers desired, y is the number of consumers, and z is the desired buffer size. 
+                If this option is called, the <other options> should be of the form, <x y z> where x is the number of producers desired, y is the n
+                number of consumers, and z is the desired buffer size. 
                 (i.e: ./nachos -P 2 4 5 6 would call producer/consumer with 4 producers, 5 consumers, and a buffer size of 6.) 
                 --ASSUMPTIONS-- x y z are all assumed to be greater than 0, and valid integer whole numbers.   
 
@@ -28,20 +32,30 @@ Usage--
                 --ASSUMPTIONS-- the correct amount of additional arguments are passed (none).
 
             4 : to call a demonstration of a directionally controlled automobile bridge for VDOT.
-                If this option is called, the <other options> should be of the form, <x> where x is the number of cars desired to negotiate the bridge. (i.e: ./nachos -P 4 8 would call the automobile bridge with 8 cars attempting to negotiate.)
+                If this option is called, the <other options> should be of the form, <x> where x is the number of cars desired to negotiate the bridge
+                (i.e: ./nachos -P 4 8 would call the automobile bridge with 8 cars attempting to negotiate.)
                 --ASSUMPTIONS-- x is assumed to be greater than 0, and a valid integer whole number.
 
 
 Commentary--
 
       On locks and condition variables:
-          We made the design choice to implement locks in the essential sense of a binary semaphore, while still careful to avoid the literal translation of a semaphore. The locks are derived from the supplied Semaphore::V and Semaphore::P models, while implementing the required methods Acquire, Release, and a method to check if the lockholder is the current thread. Condition variables are constructed utilizing the previously defined locks and interrupt disabling as a method to increment machine time. In addition to the required methods, we added a priority wait function, as well as queue-is-empty function. 
+          We made the design choice to implement locks in the essential sense of a binary semaphore, while still careful to avoid the literal t
+          translation of a semaphore. The locks are derived from the supplied Semaphore::V and Semaphore::P models, while implementing the required 
+          methods Acquire, Release, and a method to check if the lockholder is the current thread. Condition variables are constructed utilizing the 
+          previously defined locks and interrupt disabling as a method to increment machine time. In addition to the required methods, we added a 
+          priority wait function, as well as queue-is-empty function. 
 
       On producer/consumer:
-          The created buffer that is printed to the output is incremented by one letter from the phrase "HELLO WORLD" each print. This comes from the chosen producer function executing itself once per thread, which yields a total number of characters printed as the function <<strlen("HELLO WORLD") * numberOfProducers == 11 * numberOfProducers>>. The output printed is relatively convincing for the correctness of our solution, unless multiple producers and consumers are initialized, which will of course yield gibberish. 
+          The created buffer that is printed to the output is incremented by one letter from the phrase "HELLO WORLD" each print. This comes from the
+          chosen producer function executing itself once per thread, which yields a total number of characters printed as the function <<strlen("HELLO 
+          WORLD") * numberOfProducers == 11 * numberOfProducers>>. The output printed is relatively convincing for the correctness of our solution, 
+          unless multiple producers and consumers are initialized, which will of course yield gibberish. 
 
       On the elevator emulator:
-          The output to the terminal uses text phrases to demonstrate requesting and picking up, with long dashed lines surrounded by the appropriate number for pick up and drop offs to clearly visualize the movement of the elevator. The function is capped at a preset 10 users to simplify the demonstration process. The correctness for this solution, we believe, is demonstrated by three key points:        
+          The output to the terminal uses text phrases to demonstrate requesting and picking up, with long dashed lines surrounded by the appropriate 
+          number for pick up and drop offs to clearly visualize the movement of the elevator. The function is capped at a preset 10 users to simplify 
+          the demonstration process. The correctness for this solution, we believe, is demonstrated by three key points:        
             1) The elevator does not change direction unless there are no more users in the same direction that the
                elevator is currently moving. 
             2) All 10 users request to be picked up, request to be dropped off, and are, in fact, dropped off.
@@ -57,12 +71,10 @@ Commentary--
              4) Beginning to exit (car is still on bridge in the process of exiting)
              5) Sucessfully exiting (car has exited and the bridge/traffic light know the bridge is empty)
            These allow the visualization of the bridge to be represented fairly well with plain text. 
-           On itialization, the bridge originally sets traffic flow to the direction the first car is traveling (to remain fair). To improve readability and user interaction, the value 0 for travel is mapped to NORTH, and 1 for SOUTH respectively. 
-           Since the specifications to not restrict us to fairness, we made the design choice to prioritize NOT running straight into incoming traffic. This is accomplished by keeping track of the current flow of traffic, and directly comparing to a car attempting to arrive. 
-
-
-
-
+           On itialization, the bridge originally sets traffic flow to the direction the first car is traveling (to remain fair). To improve 
+           readability and user interaction, the value 0 for travel is mapped to NORTH, and 1 for SOUTH respectively. 
+           Since the specifications to not restrict us to fairness, we made the design choice to prioritize NOT running straight into incoming traffic.
+           This is accomplished by keeping track of the current flow of traffic, and directly comparing to any car attempting to arrive. 
 
 
 
