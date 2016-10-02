@@ -3,8 +3,11 @@
 | Nachos Project 1
 -------------------------------------------
 
-Compiled, edited, and modified as coursework for CSCI 444, The College of William & Mary, Fall 2016.
-This code is provided AS IS and had been created strictly for educational purposes.
+__Compiled, edited, and modified as coursework for CSCI 444, The College of William & Mary, Fall 2016__
+
+--------------------------------------------------------------------------------------------------------
+-----------This code is provided as is and has been created strictly for educational purposes-----------
+--------------------------------------------------------------------------------------------------------
 
 The formatting of this document depends on spaces that may be interpreted differently on different systems. 
 Please view in a basic text editor for best document interpretation.
@@ -12,7 +15,7 @@ Please view in a basic text editor for best document interpretation.
 
 Usage--
       This project includes a makefile. In parent directory, do a %make , this will compile and prepare
-      the full NachOS OS and included programs for execution. 
+      the full Nachos OS and included programs for execution. 
        
       In the >threads directory, there will now be a nachos executable. 
        
@@ -38,7 +41,6 @@ Usage--
 
 
 Commentary--
-
       On locks and condition variables:
           We made the design choice to implement locks in the essential sense of a binary semaphore, while still careful to avoid the literal t
           translation of a semaphore. The locks are derived from the supplied Semaphore::V and Semaphore::P models, while implementing the required 
