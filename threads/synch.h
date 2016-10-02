@@ -132,9 +132,9 @@ class Condition {
 					// condition variables; releasing the 
 					// lock and going to sleep are 
 					// *atomic* in Wait()
-    void Signal(Lock *conditionLock);   // conditionLock must be held by
-    void Broadcast(Lock *conditionLock);// the currentThread for all of 
-					// these operations
+    void Signal(Lock *conditionLock);    // conditionLock must be held by
+    void Broadcast(Lock *conditionLock); // the currentThread for all of 
+	void ThreadWaiting(bool* ret);	     // these operations
 
   private:
     const char* name;
