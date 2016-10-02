@@ -1,0 +1,96 @@
+Overall - Every couple of lines, a hex value is printed. I grepped the source code for "%x", I cannot find where
+this is coming from. I believe this is printed upon condition signals, but if these lines are ignored, the output
+is correct. The rest of the comments are based on output that are not these weird hex numbers.
+
+#2 Output:
+Call the function as ./nachos -rs [seed] -P 2 [numberOfProducers] [numberOfConsumers] [sizeOfBuffer]
+     all parameters are assumed to be  > 0 and ints, though I do not check this b/c error messaging is annoying.
+Every line printed is the buffer, either printed by a producer or consumer.
+Tested cases where:
+       1) numberOfProducers = numberOfConsumers
+       2) numberOfProducers << numberOfConsumers
+       3) numberOfProducers >> numberOfConsumers
+       4) sizeOfBuffer << strlen("HELLO WORLD")
+       5) sizeOfBuffer >> strlen("HELLO WORLD")
+In all cases the buffer grows or shrinks by one character at a time per line.
+Running with large amounts of producers and consumers gives better data because it makes it more likely that all 
+outcomes occur. 
+An example, below is part of the output for "threads/nachos -rs 793 -P 2 15 15 20":
+   HELL
+   HELLH
+   HELLHE
+   HELLHEL
+   HELLHE
+   HELLH
+   HELL
+   HEL
+   HE
+   HEE
+   HE
+   H
+
+   O
+Things to note:
+   It's often gibberish
+   How many characters are inserted by a producer or removed by a consumer before the other thread does the
+   opposite is random.
+
+#2 Code:
+   My Producer function is executed once per thread and prints one character from "HELLO WORLD".
+   Therefore, the total number of characters produced is strlen("HELLO WORLD") * numberOfProducers =
+   = 11 * numberOfProducers.
+   I assumed that the total number of characters consumed should be the same as the total number of characters
+   produced
+   The reading or adding content from the buffer always requires bufferLock to be acquired. Same with pos, which 
+   is the index of where the next insert or remove should be within the buffer.
+
+#4 Output:
+Call the function as ./nachos -rs [seed] -P 4 [numberOfCars]
+     all paramaters are assumed to be >0 and ints, though I do not check b/c error messaging is annoying.
+I chose to allow the user to control how many cars should be generated and simulated through numberOfCars.
+For readability, I index my cars starting at 1 and ending at numberOfCars. For readability, I also map directions 
+0 and 1 to NORTH and SOUTH respectively.
+Since we don't have to be fair, I prioritize not running into oncoming traffic. Therefore, I track the direction
+of traffic and compare it to the direction of a car trying to arrive. Thus, an example line of my output reads:
+   Car 2 going NORTH and traffic is going NORTH tried to ARRIVE. There were 1 cars on the bridge.
+indicates that a car is trying to go NORTH and traffic is also flowing NORTH because Car 1 was going NORTH and as
+the first car, he set the flow of traffic. Because the directions correspond, then Car 2 will have no trouble
+getting onto the bridge.
+Thus, for part b of #4, let's consider this scenario.
+      Car 1, 2, 3 are on bridge going NORTH
+      Car 4 is moving SOUTH and tries to arrive
+      Bridge is full so Car 4 waits on condition notFull
+      Car 5 is moving NORTH and tries to arrive
+      Bridge is full so Car 5 waits on condition notFull
+      Car 1 exits the bridge
+      Bridge is not full, so condition notFull signals
+      Now, we have two cases:
+      	1. Car 4 wakes up first.
+	   Car 4 is moving SOUTH and traffic NORTH, so Car 4 cannot move against traffic so waits on
+	       condition direction
+	   Car 5 wakes up second.
+	   Car 5 is moving NORTH and traffic NORTH, so Car 5 crosses the bridge.
+	2. Car 5 wakes up first.
+	   Car 5 is moving NORTH and traffic NORTH, so Car 5 crosses the bridge.
+      So, in both cases to the scenario where the bridge is full, the new car travels before
+      the car waiting on the other side.
+However, the case where there is only one car on the bridge goes as such:
+	 Car 1 is on the bridge going NORTH
+	 Car 2 is moving SOUTH and tries to arrive
+	 Car 2 is moving SOUTH and traffic NORTH, so Car 2 cannot move aginst traffic so waits on
+	     condition direction
+	 Car 3 is moving NORTH and tries to arrive
+	 Car 3 crosses the bridge because the bridge is not full and he is going in the right direction 
+	 So, in the scenario where the bridge is not full, the new car travels before teh car waiting on the other
+	 side
+Thus, in all scenarios, the new car travels before the car waiting on the other side. 
+
+Each car produces 5 lines of output (though not always right after the other). trying to arrive, successfully arriving, crossing the bridge, begining to exit, and successfully exiting.
+     Trying to arrive is when you pull up to the light, where the code determines if the light should be green or
+     	    red
+     Successfully arriving is when the car gets the green light to start crossing the bridge
+     Crossing the bridge just means the car is on the bridge
+     Beginning to exit is when the car is getting off the bridge but still on it
+     Successfully exiting is when the car is off the bridge and the traffic light knows the bridge is not full
+Again, running this with high number of cars to simulate gives the best results in terms of encountering all
+outcomes. When you do this, you encounter all the scenarios, I'll leave it to you to write about that.

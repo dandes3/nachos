@@ -54,8 +54,11 @@
 #include "system.h"
 
 // External functions used by this file
+extern void Two(int numP, int numC, int buffSize);
+extern void Four(int numCars);
 
 extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
+
 extern void Print(char *file), PerformanceTest(void);
 extern void StartProcess(char *file), ConsoleTest(char *in, char *out);
 extern void MailTest(int networkID);
@@ -85,12 +88,31 @@ main(int argc, char **argv)
     
 #ifdef THREADS
     ThreadTest();
+    DEBUG('t', "ThreadTest ended\n");
 #endif
 
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
 	argCount = 1;
         if (!strcmp(*argv, "-z"))               // print copyright
             printf (copyright);
+#ifdef THREADS
+        if (!strcmp(*argv, "-p") || !strcmp(*argv, "-P")){
+            if (!strcmp(*(argv+1), "2")){
+                //DEBUG('t', "argv[2] is: %s\n", *(argv+2));
+                //DEBUG('t', "argv[3] is: %s\n", *(argv+3));
+                //DEBUG('t', "argv[4] is: %s\n", *(argv+4));
+                int numberOfProducers = atoi(*(argv+2));
+                int numberOfConsumers = atoi(*(argv+3));
+                int buffSize = atoi(*(argv+4));
+                Two( numberOfProducers, numberOfConsumers, buffSize );
+            }
+            if (!strcmp(*(argv+1), "4")){
+                int numCars = atoi(*(argv+2));
+                Four(numCars);
+            }
+        }
+#endif
+
 #ifdef USER_PROGRAM
         if (!strcmp(*argv, "-x")) {        	// run a user program
 	    ASSERT(argc > 1);
