@@ -251,6 +251,18 @@ void OneVehicle(int myDirection){
         // This helps a reader verify the correctness of the code by
         // allowing them to see which vehicle is performing a specific action
     
+    char *myDirectionName = new char[6]; //strlen("NORTH") = strlen("SOUTH") = 6
+    bzero(myDirectionName, 6);
+    
+    // set myDirectionName to "NORTH" if myDirection is 0
+    // set myDirectionName to "SOUTH" if myDirection is 1
+    if (myDirection == 0){
+        strcpy(myDirectionName, "NORTH");
+    }
+    else{
+        strcpy(myDirectionName, "SOUTH");
+    }
+    
     // Delay before arriving
     for (int i=0; i < arrival_delay; i++){
         interrupt->SetLevel(IntOff);
@@ -282,7 +294,7 @@ int ArriveBridge(int myDirection){
     // instantiate two empty strings to represent myDirection and trafficDirection.
     // For reading convenience, a direction of 0 corresponds to "NORTH" and 1 to 
     // "SOUTH"
-    char *myDirectionName = new char[6]; // strlen("NORTH") = strlen("SOUTH") = 6
+    char *myDirectionName = new char[6]; 
     char *trafficDirectionName = new char[6];
     
     // Clear the strings
