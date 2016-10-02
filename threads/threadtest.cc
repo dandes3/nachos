@@ -41,7 +41,7 @@ int charsToBeConsumed; // Number of characters that producers will put in.
         // in case there is an unequal number of producers and consumers.
 int numCharsConsumed; // Number of characters already consumed. Goal is to get this
         // value to be charsToBeConsumed to indicate that consumers are done.
-int carsOnBridge; // Number of cars on the bridge
+int carsOnBridge = 0; // Number of cars on the bridge
 int trafficDirection; // Current direction of cars on bridge
 
 int nameCount = 1; // a vehicle id for ensuring the code is correct
@@ -55,6 +55,8 @@ void OneVehicle(int myDirection); // Controls when a vehicle arrives,
 int ArriveBridge(int myDirection); // Determines whether the car can cross
 void CrossBridge(int myDirection, int id); // Crosses the bridge
 void ExitBridge(int myDirection, int id); // Exits the bridge and lets others know
+char *DirectionToString(int direction); // Converts a direction (0 or 1) to a string
+    // ("NORTH" or "SOUTH" respectively)
 
 void SimpleThread(int which){
     int num;
@@ -102,8 +104,6 @@ void Producer(int n){
 //----------------------------------------------------------------------
 void Consumer(int n){
     //DEBUG('t', "consumer\n");
-    
-    char *string = "HELLO WORLD";
     
     int numConsumed; // local data
     
@@ -170,7 +170,7 @@ void Remove(){
     
     DEBUG('t', "remove's buffer is %s\n", buffer);
     char c = buffer[pos - 1];
-    buffer[pos-1] = '\0';
+    buffer[pos - 1] = '\0';
     pos--;
     //DEBUG('t', "remove's count is %d\n", pos);
     //DEBUG('t', "remove got %c\n", c);
@@ -229,11 +229,17 @@ void Two(int numPros, int numCons, int sizeOfBuffer){
     }
 }
 
-
-
-void Three(){
-    
+// Converts a direction to a string. Having direction in string form makes
+// it easier to read and verify the correctness of the code.
+char *DirectionToString(int direction){
+    char *string = new char[6]; // strlen("NORTH") = strlen("SOUTH") = 6
+    if (direction == 0)
+        strcpy(string, "NORTH");
+    else
+        strcpy(string, "SOUTH");
+    return string;
 }
+
 
 //----------------------------------------------------------------------
 //  OneVehicle
@@ -251,18 +257,6 @@ void OneVehicle(int myDirection){
         // This helps a reader verify the correctness of the code by
         // allowing them to see which vehicle is performing a specific action
     
-    char *myDirectionName = new char[6]; //strlen("NORTH") = strlen("SOUTH") = 6
-    bzero(myDirectionName, 6);
-    
-    // set myDirectionName to "NORTH" if myDirection is 0
-    // set myDirectionName to "SOUTH" if myDirection is 1
-    if (myDirection == 0){
-        strcpy(myDirectionName, "NORTH");
-    }
-    else{
-        strcpy(myDirectionName, "SOUTH");
-    }
-    
     // Delay before arriving
     for (int i=0; i < arrival_delay; i++){
         interrupt->SetLevel(IntOff);
@@ -272,7 +266,7 @@ void OneVehicle(int myDirection){
     id = ArriveBridge(myDirection); // ArriveBridge modifies the global variant
         // of id, nameCount, and returns it as to keep it local to the thread.
     
-    CrossBridge(myDirection, id);
+    CrossBridge(myDirection, id); // Print that we are crossing the bridge
     
     // Simulate travel time for crossing a bridge
     for (int i=0; i < crossing_time; i++){
@@ -280,7 +274,7 @@ void OneVehicle(int myDirection){
         interrupt->SetLevel(IntOn);
     }
     
-    ExitBridge(myDirection, id);
+    ExitBridge(myDirection, id); // decrement the number of cars on the bridge
 }
 
 //----------------------------------------------------------------------
@@ -291,60 +285,44 @@ void OneVehicle(int myDirection){
 //----------------------------------------------------------------------
 int ArriveBridge(int myDirection){
     
-    // instantiate two empty strings to represent myDirection and trafficDirection.
-    // For reading convenience, a direction of 0 corresponds to "NORTH" and 1 to 
-    // "SOUTH"
-    char *myDirectionName = new char[6]; 
-    char *trafficDirectionName = new char[6];
-    
-    // Clear the strings
-    bzero(myDirectionName, 6);
-    bzero(myDirectionName, 6);
+    // Convert the directions to strings. Makes it easier to follow output
+    char *myDirectionName = DirectionToString(myDirection);
+    char *trafficDirectionName = DirectionToString(trafficDirection);
     
     // Acquire the lock
     bridgeLock->Acquire();
     
     int id = nameCount++; // this is the only place that modifies or 
-    // reads nameCount
-    
-    // set myDirectionName to "NORTH" if myDirection is 0
-    // set myDirectionName to "SOUTH" if myDirection is 1
-    if (myDirection == 0){
-        strcpy(myDirectionName, "NORTH");
-    }
-    else{
-        strcpy(myDirectionName, "SOUTH");
-    }
-    
-    // set trafficDirectionName to "NORTH" if trafficDirection is 0
-    // set trafficDirectionName to "SOUTH" if trafficDirection is 1
-    if (trafficDirection == 0){
-        strcpy(trafficDirectionName, "NORTH");
-    }
-    else{
-        strcpy(trafficDirectionName, "SOUTH");
-    }
+        // reads nameCount
         
     printf("Car %d going %s and traffic is going %s tried to ARRIVE. There were %d cars on the bridge.\n", id, myDirectionName, trafficDirectionName, carsOnBridge);
     
     while (carsOnBridge == MAX_CARS || trafficDirection != myDirection){ // wait if
             // bridge is full or if there is oncoming traffic
         if (carsOnBridge == MAX_CARS){
+            
             printf("Car %d going %s and traffic is going %s has to WAIT because the bridge is FULL.\n", id, myDirectionName, trafficDirectionName);
+            
             bridgeNotFull->Wait(bridgeLock); //Wait until the bridge is not full
+            
             printf("The bridge is NO LONGER full.\n", myDirectionName, trafficDirectionName);
         }
         
         if (trafficDirection != myDirection){
             printf("Car %d going %s and traffic is going %s has to WAIT because of ONCOMING traffic.\n", id, myDirectionName, trafficDirectionName);
+            
             bridgeDirection->Wait(bridgeLock); // wait until there 
                 // is no oncoming traffic.
                 // This only happens when there are no cars on the bridge
+            
             trafficDirection = myDirection; // since the bridge is now empty
                 // then the direction of traffic is the direction that
                 // this vehicle moves in.
+                
             printf("Since there no cars on the bridge. Switching traffic flow to %s\n", myDirectionName);
-            strcpy(trafficDirectionName, myDirectionName);
+            
+            strcpy(trafficDirectionName, myDirectionName); //rename 
+                // trafficDirectionName
         }
     }
     
@@ -357,6 +335,7 @@ int ArriveBridge(int myDirection){
     printf("Car %d going %s and traffic is going %s successfully ARRIVED. There are now  %d cars on the bridge.\n", id, myDirectionName, trafficDirectionName, carsOnBridge);
     
     bridgeLock->Release(); // release the lock
+    
     return id;
     
 }
@@ -366,18 +345,8 @@ int ArriveBridge(int myDirection){
 // 	Merely states that a certain car is now crossing the bridge
 //----------------------------------------------------------------------
 void CrossBridge(int myDirection, int id){
-    
-    char *myDirectionName = new char[6];
-    char *trafficDirectionName = new char[6];
-    bzero(myDirectionName, 6);
-    bzero(myDirectionName, 6);
-    
-    if (myDirection == 0){
-        strcpy(myDirectionName, "NORTH");
-    }
-    else{
-        strcpy(myDirectionName, "SOUTH");
-    }
+    // Covert the direction to a string. Makes it easier to follow the output
+    char *myDirectionName = DirectionToString(myDirection);
 
     printf("Car %d going %s is now CROSSING the bridge\n", id, myDirectionName);
 }
@@ -390,54 +359,50 @@ void CrossBridge(int myDirection, int id){
 //----------------------------------------------------------------------
 void ExitBridge(int myDirection, int id){
     
-    char *myDirectionName = new char[6];
-    char *trafficDirectionName = new char[6];
-    bzero(myDirectionName, 6);
-    bzero(myDirectionName, 6);
+    // Convert the directions to strings. Makes it easier to follow output
+    char *myDirectionName = DirectionToString(myDirection);
+    char *trafficDirectionName = DirectionToString(trafficDirection);
     
     bridgeLock->Acquire(); // Acquire the lock
     
-    if (myDirection == 0){
-        strcpy(myDirectionName, "NORTH");
-    }
-    else{
-        strcpy(myDirectionName, "SOUTH");
-    }
-    if (trafficDirection == 0){
-        strcpy(trafficDirectionName, "NORTH");
-    }
-    else{
-        strcpy(trafficDirectionName, "SOUTH");
-    }
     printf("Car %d going %s and traffic is going %s began to EXIT. There were %d cars on the bridge.\n", id, myDirectionName, trafficDirectionName, carsOnBridge);
     
     carsOnBridge--; // decrement the number of cars on the bridge
     
-    bridgeNotFull->Signal(bridgeLock);
+    bridgeNotFull->Signal(bridgeLock); // signal that the bridge is not full
+    
     if (carsOnBridge == 0){
-        bridgeDirection->Signal(bridgeLock);
+        bridgeDirection->Signal(bridgeLock); // allow the direction of the flow
+            // of traffic to change
     }
     
     printf("Car %d going %s and traffic is going %s successfully EXITED. There are now %d cars on the bridge.\n", id, myDirectionName, trafficDirectionName, carsOnBridge);
     
-    
-    bridgeLock->Release();
-    
-    
+    bridgeLock->Release(); // release the lock
 }
 
+//----------------------------------------------------------------------
+//  Four
+//  The traffic on a bridge problem. For a given input of the number of cars to 
+//  simulate, we fork off a new OneVehicle function. Here, we instantiate our locks
+//  and conditions for this problem are instantiated. We also assign the initial
+//  direction that traffic will flow in based on the direction we assign
+//  to the first Vehicle thread.
+//----------------------------------------------------------------------
 void Four(int numCars){
     DEBUG('t', "four\n");
     
+    // Instantiate lock
     bridgeLock = new Lock("bridgeLock");
     
+    // Instantiate conditions
     bridgeNotFull = new Condition("bridgeFull");
     bridgeDirection = new Condition("bridgeDirection");
     
-    carsOnBridge = 0;
-    
     for (int i = 0; i < numCars; i++){
-        int myDirection = rand() % 2;
+        int myDirection = rand() % 2; // "randomly" choose 0 or 1
+        
+        // The first car sets the initial direction of the flow of traffic
         if (i == 0){
             trafficDirection = myDirection;
             if (trafficDirection == 0){
