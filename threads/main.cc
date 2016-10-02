@@ -80,7 +80,7 @@ int
 main(int argc, char **argv)
 {
     int argCount;			// the number of arguments 
-					// for a particular command
+					        // for a particular command
 
     DEBUG('t', "Entering main");
     (void) Initialize(argc, argv);
@@ -90,31 +90,37 @@ main(int argc, char **argv)
     DEBUG('t', "ThreadTest ended\n");
 #endif
 
-    for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
+    for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) 
+    {
 	argCount = 1;
         if (!strcmp(*argv, "-z"))               // print copyright
             printf (copyright);
+
+
+// Begin code section from main.cc modifed for argument checking purposes --
 #ifdef THREADS
-        if (!strcmp(*argv, "-p") || !strcmp(*argv, "-P")){
-            if (!strcmp(*(argv+1), "2")){
-                //DEBUG('t', "argv[2] is: %s\n", *(argv+2));
-                //DEBUG('t', "argv[3] is: %s\n", *(argv+3));
-                //DEBUG('t', "argv[4] is: %s\n", *(argv+4));
+        if (!strcmp(*argv, "-p") || !strcmp(*argv, "-P"))
+        {
+            if (!strcmp(*(argv+1), "2"))                      // Run producer/consumer
+            {
                 int numberOfProducers = atoi(*(argv+2));
                 int numberOfConsumers = atoi(*(argv+3));
                 int buffSize = atoi(*(argv+4));
                 Two( numberOfProducers, numberOfConsumers, buffSize );
             }
-            if (!strcmp(*(argv+1), "3"))
+            if (!strcmp(*(argv+1), "3"))                      // Run THall elevator
             {
             	ElevatorTest();
             }
-            if (!strcmp(*(argv+1), "4")){
+            if (!strcmp(*(argv+1), "4"))                      // Run bridge simulator
+            {
                 int numCars = atoi(*(argv+2));
                 Four(numCars);
             }
         }
 #endif
+// End above code block -----------------------------------------------------
+
 
 #ifdef USER_PROGRAM
         if (!strcmp(*argv, "-x")) {        	// run a user program
@@ -159,8 +165,8 @@ main(int argc, char **argv)
         if (!strcmp(*argv, "-o")) {
 	    ASSERT(argc > 1);
             Delay(2); 				// delay for 2 seconds
-						// to give the user time to 
-						// start up another nachos
+						            // to give the user time to 
+						            // start up another nachos
             MailTest(atoi(*(argv + 1)));
             argCount = 2;
         }
