@@ -433,6 +433,12 @@ void Four(int numCars){
     }
 }
 
+//----------------------------------------------------------------------
+//  Elevator
+//  Function controlling the elvator thread. Signaled into action when a thread
+//  has been "picked up" and is looking to request a floor for dropoff. Executes
+//  the elevator delay and calls Release() on the elevator manager.
+//----------------------------------------------------------------------
 void Elevator(int arg){
 
    while (usersDelivered < 20){ //While a thread is still outstanding to be delivered
@@ -449,6 +455,11 @@ void Elevator(int arg){
     }
 }
 
+//----------------------------------------------------------------------
+//  ArrivingGoingFromTo
+//  Allows passenger threads to request to be pickedup at their current floor
+//  and dropped off at their destination. This function controls all print statements.
+//----------------------------------------------------------------------
 void ArrivingGoingFromTo(int atFloor, int toFloor, int num){
    
    printf("p%d is requesting to be pickedup at floor %d\n", num, atFloor);
@@ -474,6 +485,12 @@ void ArrivingGoingFromTo(int atFloor, int toFloor, int num){
    manager -> Release();
 }
 
+//----------------------------------------------------------------------
+//  ElevatorUser
+//  Initializes a passenger thread to determine and execute their random delay,
+//  randmoly determine a starting and ending floor, and call ArrivingGoingFromTo
+//  to actually request their ride.
+//----------------------------------------------------------------------
 void ElevatorUser(int num){
 
    int delay = 1+(int) (600.0*rand()/(RAND_MAX+1.0)); //Random delay, set within 600 to better insure overlap of requests
@@ -491,6 +508,13 @@ void ElevatorUser(int num){
 
 }
 
+//----------------------------------------------------------------------
+//  ElevatorTest
+//  Starts the multithreaded elevator simulator. Spawns one elevator thread and
+//  10 passenger threads. The elevator should function such that the elevator
+//  only changes directions to pickup or drop off a thread if there are no
+//  more waiting threads in the current direction it is moving.
+//----------------------------------------------------------------------
 void ElevatorTest(){
 
    int i;
