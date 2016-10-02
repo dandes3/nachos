@@ -11,11 +11,9 @@
 
 #include "copyright.h"
 #include "system.h"
-<<<<<<< HEAD
 #include <vector>
 #include "synch.h"
 #define MAX_CARS 3
-=======
 #include "elevatormanager.h"
 
 int elevatorPos = 0;
@@ -31,7 +29,6 @@ Thread *elevatorThread;
 Semaphore *elevatorSem;
 
 ElevatorManager *manager;
->>>>>>> elevator
 //----------------------------------------------------------------------
 // SimpleThread
 // 	Loop 5 times, yielding the CPU to another ready thread 
