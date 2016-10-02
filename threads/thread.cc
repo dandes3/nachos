@@ -19,6 +19,7 @@
 #include "switch.h"
 #include "synch.h"
 #include "system.h"
+#include <iostream>
 
 #define STACK_FENCEPOST 0xdeadbeef	// this is put at the top of the
 					// execution stack, for detecting 
@@ -34,7 +35,7 @@
 
 Thread::Thread(const char* threadName)
 {
-    name = threadName;
+    name = (char *) threadName; 
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
@@ -58,7 +59,7 @@ Thread::Thread(const char* threadName)
 Thread::~Thread()
 {
     DEBUG('t', "Deleting thread \"%s\"\n", name);
-
+    std::cout << currentThread << std::endl;
     ASSERT(this != currentThread);
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
@@ -96,7 +97,7 @@ Thread::Fork(VoidFunctionPtr func, int arg)
     scheduler->ReadyToRun(this);	// ReadyToRun assumes that interrupts 
 					// are disabled!
     (void) interrupt->SetLevel(oldLevel);
-}    
+}  
 
 //----------------------------------------------------------------------
 // Thread::CheckOverflow
