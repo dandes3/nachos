@@ -56,9 +56,8 @@
 // External functions used by this file
 extern void Two(int numP, int numC, int buffSize);
 extern void Four(int numCars);
-
 extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
-
+extern void ElevatorTest(void);
 extern void Print(char *file), PerformanceTest(void);
 extern void StartProcess(char *file), ConsoleTest(char *in, char *out);
 extern void MailTest(int networkID);
@@ -105,6 +104,10 @@ main(int argc, char **argv)
                 int numberOfConsumers = atoi(*(argv+3));
                 int buffSize = atoi(*(argv+4));
                 Two( numberOfProducers, numberOfConsumers, buffSize );
+            }
+            if (!strcmp(*(argv+1), "3"))
+            {
+            	ElevatorTest();
             }
             if (!strcmp(*(argv+1), "4")){
                 int numCars = atoi(*(argv+2));

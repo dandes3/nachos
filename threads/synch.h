@@ -122,19 +122,19 @@ class Lock {
 
 class Condition {
   public:
-    Condition(const char* debugName);		// initialize condition to 
-					// "no one waiting"
-    ~Condition();			// deallocate the condition
+    Condition(const char* debugName);			// initialize condition to 
+							// "no one waiting"
+    ~Condition();					// deallocate the condition
     const char* getName() { return (name); }
     
-    void Wait(Lock *conditionLock); 	// these are the 3 operations on
+    void Wait(Lock *conditionLock); 				     // these are the 3 operations on
     void Wait(Lock *conditionLock, long long priority);		
-					// condition variables; releasing the 
-					// lock and going to sleep are 
-					// *atomic* in Wait()
-    void Signal(Lock *conditionLock);    // conditionLock must be held by
-    void Broadcast(Lock *conditionLock); // the currentThread for all of 
-	void ThreadWaiting(bool* ret);	     // these operations
+								                        // condition variables; releasing the 
+								                        // lock and going to sleep are 
+								                        // *atomic* in Wait()
+    void Signal(Lock *conditionLock);			        // conditionLock must be held by
+    void Broadcast(Lock *conditionLock);			    // the currentThread for all of 
+    void ThreadWaiting(bool* ret);		                // these operations
 
   private:
     const char* name;
