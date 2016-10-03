@@ -48,7 +48,7 @@ Condition *bufferNotFull; // Indicates that the buffer is not full
 Condition *bridgeNotFull; // Indicates that the bridge is not full;
 Condition *bridgeDirection; // Changes the direction of traffic when bridge is empty
 
-int buffSize; // The input size for the buffer. Passed in through the command line
+unsigned int buffSize; // The input size for the buffer. Passed in through the command line
 int pos; // position in the buffer to either insert or remove a char from
 int charsToBeConsumed; // Number of characters that producers will put in.
         // Equal to strlen("HELLO WORLD") * number of producers.
@@ -104,7 +104,7 @@ void Producer(int n){
     //DEBUG('t', "producer\n");
     
     char *string = const_cast<char*>("HELLO WORLD");
-    for (int i = 0; i < strlen(string); i++){
+    for (unsigned int i = 0; i < strlen(string); i++){
         Insert(string[i]);
     }
     
@@ -210,7 +210,7 @@ void Remove(){
 void Two(int numPros, int numCons, int sizeOfBuffer){
     buffSize = sizeOfBuffer;
     charsToBeConsumed = numPros * 11; // 11 characters in "HELLO WORLD"
-    printf("Two\n");
+    //printf("Two\n");
     //DEBUG('t', "Entering Two\n");
     //DEBUG('t', "numPro is %d\n", numPros);
     //DEBUG('t', "numCon is %d\n", numCons);
