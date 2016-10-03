@@ -79,12 +79,18 @@ Commentary--
           The output to the terminal uses text phrases to demonstrate requesting and picking up, with long dashed lines 
           surrounded by the appropriate number for pick up and drop offs to clearly visualize the movement of the 
           elevator. The function is capped at a preset 10 users to simplify the demonstration process. The correctness 
-          for this solution, we believe, is demonstrated by three key points:        
+          for this solution, we believe, is demonstrated by three key points:  
+
             1) The elevator does not change direction unless there are no more users in the same direction that the
-               elevator is currently moving. 
-            2) All 10 users request to be picked up, request to be dropped off, and are, in fact, dropped off.
-            3) The elevator doesn't excessively skip users. This only occasionally happens due to the actual built
-               in unpredictability of thread timing compared with the timing of the terminal output.
+               elevator is currently moving. This is done in an attempt to mimic the real world behavior of elevators
+               as closely as possible, keeping the movement in the direction that the individuals in the elevator have 
+               requested floors from. 
+            2) All 10 users request to be picked up, request to be dropped off, and are, in fact, dropped off. We are
+               building a death trap elevator that does not allow users to exit once they are on it, and we want to 
+               honor every request to use the elevator. 
+            3) The elevator doesn't excessively skip users. We demonstrate this, but this is implemented in another
+               attempt keep the elevator as realistic as possible. The skipping only occasionally happens due to 
+               the actual built in unpredictability of thread timing compared with the timing of the terminal output.
 
       (4) On the automobile traffic sync:
            The output to the terminal is generated as each car makes one of its 5 available checkpoints. They are:
