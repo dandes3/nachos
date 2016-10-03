@@ -25,7 +25,10 @@
 # All rights reserved.  See copyright.h for copyright notice and limitation 
 # of liability and disclaimer of warranty provisions.
 
-CFLAGS = -g -Wall -m32 -Wshadow $(INCPATH) $(DEFINES) $(HOST) -DCHANGED
+# We changed this to inhibit warnings
+#-----------------------------------------------------------------------
+CFLAGS = -g -w -m32 -Wshadow $(INCPATH) $(DEFINES) $(HOST) -DCHANGED
+#-----------------------------------------------------------------------
 LDFLAGS =  -m32
 
 # These definitions may change as the software is updated.
