@@ -103,7 +103,7 @@ void ThreadTest(){
 void Producer(int n){
     //DEBUG('t', "producer\n");
     
-    char *string = "HELLO WORLD";
+    char *string = const_cast<char*>("HELLO WORLD");
     for (int i = 0; i < strlen(string); i++){
         Insert(string[i]);
     }
@@ -320,7 +320,7 @@ int ArriveBridge(int myDirection){
             
             bridgeNotFull->Wait(bridgeLock); //Wait until the bridge is not full
             
-            printf("The bridge is NO LONGER full.\n", myDirectionName, trafficDirectionName);
+            printf("The bridge is NO LONGER full.\n");
         }
         
         if (trafficDirection != myDirection){
