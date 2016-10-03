@@ -73,7 +73,9 @@ Commentary--
           total number of characters printed as the function <<strlen("HELLO WORLD") * numberOfProducers == 11 * 
           numberOfProducers>>. The output printed is relatively convincing for the correctness of our solution, 
           clearly printing and visualizing the way the methods are utilizing the producer/consumer model. This is 
-          unless multiple producers and consumers are initialized, which will of course yield gibberish. 
+          unless multiple producers and consumers are initialized, which will of course yield gibberish. Most
+          demonstrative results are yielded with large amounts of producers and consumers, as most possible outcomes
+          will then occur. 
 
       (3) On the elevator emulator:
           The output to the terminal uses text phrases to demonstrate requesting and picking up, with long dashed lines 
