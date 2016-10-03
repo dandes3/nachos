@@ -103,7 +103,7 @@ void ThreadTest(){
 void Producer(int n){
     //DEBUG('t', "producer\n");
     
-    char *string = "HELLO WORLD";
+    char const * = "HELLO WORLD";
     for (int i = 0; i < strlen(string); i++){
         Insert(string[i]);
     }
@@ -184,7 +184,7 @@ void Remove(){
     }
     
     DEBUG('t', "remove's buffer is %s\n", buffer);
-    char c = buffer[pos - 1];
+    //char c = buffer[pos - 1];
     buffer[pos - 1] = '\0';
     pos--;
     //DEBUG('t', "remove's count is %d\n", pos);
