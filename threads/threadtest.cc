@@ -103,7 +103,7 @@ void ThreadTest(){
 void Producer(int n){
     //DEBUG('t', "producer\n");
     
-    char const * = "HELLO WORLD";
+    char *string = "HELLO WORLD";
     for (int i = 0; i < strlen(string); i++){
         Insert(string[i]);
     }
