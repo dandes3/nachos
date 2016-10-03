@@ -27,7 +27,7 @@
 
 # We changed this to inhibit warnings
 #-----------------------------------------------------------------------
-CFLAGS = -g -w -m32 -Wshadow $(INCPATH) $(DEFINES) $(HOST) -DCHANGED
+CFLAGS = -g -Wall -m32 -Wshadow $(INCPATH) $(DEFINES) $(HOST) -DCHANGED
 #-----------------------------------------------------------------------
 LDFLAGS =  -m32
 
