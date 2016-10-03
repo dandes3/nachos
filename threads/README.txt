@@ -3,10 +3,11 @@
 | Nachos Project 1
 -------------------------------------------
 
-  Compiled, edited, and modified as coursework for CSCI 444, at The College of William & Mary, Fall 2016.
+Compiled, edited, and modified as coursework for CSCI 444, at The College of William & Mary, Fall 2016.
 
-  The formatting of this document depends on spaces that may be interpreted differently on different systems. 
-  Please view in a basic text editor for best document interpretation.
+The formatting of this document depends on spaces that may be interpreted differently on different systems. 
+Please view in a rich text editor with wide window dimensions for best document interpretation. 
+(The ascii art was a lot of work.)
 
 --------------------------------------------------------------------------------------------------------
   --------This code is provided as is and has been created strictly for educational purposes--------
@@ -23,7 +24,7 @@
       |  +o  -dy+  ::  d` oh  ://+. -h +-N. om`  --.   do .m//h:  m- /y  d.  m`  `N`   .sy-:ys`  |                                
       |  +y  :y ss     d  d+  s/`yh  +y -sy` +ysyo/ohy`mo  m  s+  h- .m- -s++:   /h- ss-.sd  ho  |                                
       |  +d  +o  ys   `y: m` -d` `d+  ys `oo. ```  -dy do `N  os  s-  /d.  `    :ys d--/++-  hs  |                                
-      |  +m..o+   so/:o:y +--ho   -d:.:m+  :oo/:/ohd+` os/od` /y++y-   -s+:..:+s+`` oh/`   .ss`  |                                
+      |  +m..o+   so/:o;y +--ho   -d:.:m+  :oo/:/ohd+` os/od` /y++y-   -s+:..:+s+`` oh/`   .ss`  |                                
       |  -+++/:    ---- : ::::.    /o++ss   `./++/-`   `````   ````      .-:/:-`     `:///+:.    |           
        ------------------------------------------------------------------------------------------
 
@@ -40,7 +41,7 @@ Usage--
 
             2 : to call a demonstration of the producer consumer problem.
                 If this option is called, the <other options> should be of the form, <x y z> where x is the 
-                number of producers desired, y is the nnumber of consumers, and z is the desired buffer size. 
+                number of producers desired, y is the number of consumers, and z is the desired buffer size. 
                 (i.e: ./nachos -P 2 4 5 6 would call producer/consumer with 4 producers, 5 consumers, and a 
                 buffer size of 6.) 
                 --ASSUMPTIONS-- x y z are all assumed to be greater than 0, and valid integer whole numbers.   
@@ -96,9 +97,54 @@ Commentary--
            These allow the visualization of the bridge to be represented fairly well with plain text. 
            On initialization, the bridge originally sets traffic flow to the direction the first car is traveling 
            (to remain fair). To improve readability and user interaction, the value 0 for travel is mapped to 
-           NORTH, and 1 for SOUTH respectively. Since the specifications to not restrict us to fairness, we made the 
+           NORTH, and 1 for SOUTH respectively. Since the specifications do not restrict us in fairness, we made the 
            design choice to prioritize NOT running straight into incoming traffic. This is accomplished by keeping 
-           track of the current flow of traffic, and directly comparing to any car attempting to arrive. 
+           track of the current flow of traffic, and directly comparing to any car attempting to arrive.
+           
+           Our approach for correctness can be best demonstrated with two examples--
+
+              1) Three cars are already present on the bridge:
+                  ~ Car 1, 2, 3 are on bridge going NORTH
+                  ~ Car 4 is moving SOUTH and tries to arrive
+                  ~ Bridge is full so Car 4 waits on condition notFull
+                  ~ Car 5 is moving NORTH and tries to arrive
+                  ~ Bridge is full so Car 5 waits on condition notFull
+                  ~ Car 1 exits the bridge
+                  ~ Bridge is not full, so condition notFull signals
+                  ~ Now, we have two cases:
+                    i) ~ Car 4 wakes up first.
+                       ~ Car 4 is moving SOUTH and traffic NORTH, so Car 4 cannot move against traffic so waits on
+                          condition direction
+                       ~ Car 5 wakes up second.
+                       ~ Car 5 is moving NORTH and traffic NORTH, so Car 5 crosses the bridge.
+                   ii) ~ Car 5 wakes up first.
+                       ~ Car 5 is moving NORTH and traffic NORTH, so Car 5 crosses the bridge.
+                  So in both cases where the bridge is already full of vehicles, the new arrival car travels before
+                  the secondary arrival car waiting on the other side. This ensures a sort of balanced approach to 
+                  traffic waiting on both sides of the bridge, and avoids strict starvation on such a tiny crossway.
+
+              2) Only a single car is present on the bridge:
+                  ~ Car 1 is on the bridge going NORTH
+                  ~ Car 2 is moving SOUTH and tries to arrive
+                  ~ Car 2 is moving SOUTH and traffic NORTH, so Car 2 cannot move aginst traffic, so waits on
+                     condition direction
+                  ~ Car 3 is moving NORTH and tries to arrive
+                  ~ Car 3 crosses the bridge because the bridge is not full and he is going in the right direction 
+                  So, in the scenario where the bridge is not already full, the new car travels before the car 
+                  waiting on the other side
+             Thus, in all important imagined scenarios, the new car arriving travels before the car waiting on the other side. 
+             
+             We drew our interpretation of correctness from the real world scenario of a program controlled bridge. If a bridge 
+             in indeed one way, and we are creating a program equivalent of a flag man, we prioritize traffic already traveling
+             in the direction of moving traffic. This mimics the real world behavior of a flag team where priority is given to 
+             traffic traveling in the direction of already moving traffic, based on the idea that reversing the flow of 
+             traffic is a costly (in terms of performance) action in the real world. 
+
+
+
+
+
+
 
 
 
