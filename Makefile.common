@@ -48,7 +48,7 @@ THREAD_H =../threads/copyright.h\
 	../machine/interrupt.h\
 	../machine/sysdep.h\
 	../machine/stats.h\
-	../threads/elevatormanager.h
+	../threads/elevatormanager.h\
 	../machine/timer.h
 
 
@@ -64,7 +64,7 @@ THREAD_C =../threads/main.cc\
 	../machine/interrupt.cc\
 	../machine/sysdep.cc\
 	../machine/stats.cc\
-	../threads/elevatormanager.cc
+	../threads/elevatormanager.cc\
 	../machine/timer.cc
 
 THREAD_S = ../threads/switch.s
