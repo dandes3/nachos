@@ -48,6 +48,7 @@ THREAD_H =../threads/copyright.h\
 	../machine/interrupt.h\
 	../machine/sysdep.h\
 	../machine/stats.h\
+        ../threads/elevatormanager.h\
 	../machine/timer.h
 
 THREAD_C =../threads/main.cc\
@@ -62,12 +63,13 @@ THREAD_C =../threads/main.cc\
 	../machine/interrupt.cc\
 	../machine/sysdep.cc\
 	../machine/stats.cc\
+        ../threads/elevatormanager.cc\
 	../machine/timer.cc
 
 THREAD_S = ../threads/switch.s
 
 THREAD_O =main.o list.o scheduler.o synch.o synchlist.o system.o thread.o \
-	utility.o threadtest.o interrupt.o stats.o sysdep.o timer.o
+	utility.o threadtest.o interrupt.o stats.o sysdep.o timer.o elevatormanager.o
 
 USERPROG_H = ../userprog/addrspace.h\
 	../userprog/bitmap.h\
