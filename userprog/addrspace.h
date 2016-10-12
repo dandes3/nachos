@@ -30,6 +30,11 @@ class AddrSpace {
 
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch 
+    OpenFileId fileOpen(char* fileName)();
+    OpenFile* readWrite(OpenFileId fileId);
+    void fileClose(OpenFileId fileId);
+    
+    
 
   private:
 #ifndef USE_TLB
@@ -37,6 +42,9 @@ class AddrSpace {
 #endif					// for now!
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
+   
+    OpenFile* fileVector [20] = {nullptr}; 		// Array mapping file ids to OpenFile objects
+    
 };
 
 #endif // ADDRSPACE_H

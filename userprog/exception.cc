@@ -24,6 +24,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
+#include "filesys.h"
 
 #ifdef USE_TLB
 
@@ -94,16 +95,46 @@ void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
-
+    char* arg;
+    
     switch (which) {
       case SyscallException:
-	switch (type) {
-	  case SC_Halt:
-            DEBUG('a', "Shutdown, initiated by user program.\n");
-            interrupt->Halt();
+	    switch (type) {
+          case SC_Halt:
+             DEBUG('a', "Shutdown, initiated by user program.\n");
+             interrupt->Halt();
+             
+          case SC_Create:
+             ReadArg(arg, 128);
+             Create(arg);
+             
+          case SC_Open:
+             ReadArg(arg, 128);
+             OpenFileId fileId = currentThread -> space -> fileOpen(arg);
+             machine -> WriteRegister(2, fileId);
+             
+          case SC_Close:
+              currentThread -> space -> fileClose(machine->ReadRegister(4));
+              
+          case SC_Read:
+              int intoBuf = machine -> ReadRegister(4);
+              int size = machine -> ReadRegister(5);
+              int fileId = machine->ReadRegister(6);
+              
+              OpenFile* readFile = currentThread -> space -> readWrite(fileId);
+              
+              if (readFile == nullptr)
+                  machine -> WriteRegister(2, -1);
+              
+              else
+                  machine -> WriteRegister(2, readFile -> Read(intoBuf, size));
+              
+          case 
+              
+              
           default:
-	    printf("Undefined SYSCALL %d\n", type);
-	    ASSERT(false);
+	         printf("Undefined SYSCALL %d\n", type);
+	         ASSERT(false);
 	}
 #ifdef USE_TLB
       case PageFaultException:
@@ -113,4 +144,21 @@ ExceptionHandler(ExceptionType which)
       default: ;
     }
 }
+
+void ReadArg(char* result, int size){
+    
+    int location;
+    
+    location = machine->ReadRegister(4);
+    result = new(std::nothrow) char[size];
+    
+    for (int i = 0; i < size; i++){
+        if ((result[i] = machine->mainMemory[location++]) == '\0')
+            break;
+    }
+    
+    result[size] = '\0';
+    
+}
+
 
