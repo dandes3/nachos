@@ -193,3 +193,31 @@ void AddrSpace::RestoreState()
     machine->pageTableSize = numPages;
 #endif
 }
+
+void AddrSpace::fileOpen(char* fileName){
+    OpenFile* newFile = Open(fileName);
+    
+    for (int i = 0; i < 20; i++){
+        if (fileVector[i] == nullptr){
+            fileVector[currentId] = newFile;
+            return i;
+        }
+        
+    return -1;
+}
+
+void AddrSpace::fileClose(OpenFileId fileId){
+    
+    if (fileId > 19 || fileId < 0 || fileVector[fileId] == nullptr)
+        return;
+    
+    delete fileVector[fileId];
+    fileVector[fileId] = nullptr;
+}
+
+OpenFile* AddrSpace::readWrite(OpenFileId fileId){
+    if  (fileId > 19 || fileId < 0)
+        return nullptr;
+    
+    return fileVector[fileId];
+}
