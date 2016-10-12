@@ -91,10 +91,17 @@ HandleTLBFault(int vaddr)
 //	are in machine.h.
 //----------------------------------------------------------------------
 
+void ReadArg(char* result, int size);
+
 void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
+    int size;
+    char* intoBuf, *fromBuf;
+    OpenFileId fileId;
+    OpenFile* readFile, *writeFile;
+    
     char* arg;
     
     switch (which) {
@@ -103,34 +110,53 @@ ExceptionHandler(ExceptionType which)
           case SC_Halt:
              DEBUG('a', "Shutdown, initiated by user program.\n");
              interrupt->Halt();
+             break;
              
           case SC_Create:
+             DEBUG('a', "Create entered\n");
              ReadArg(arg, 128);
-             Create(arg);
+             DEBUG('a', "Create entered\n");
+             fileSystem -> Create(arg, -1);
+             break;
              
           case SC_Open:
+             DEBUG('a', "Open entered\n");
              ReadArg(arg, 128);
-             OpenFileId fileId = currentThread -> space -> fileOpen(arg);
+             fileId = currentThread -> space -> fileOpen(arg);
              machine -> WriteRegister(2, fileId);
+             break;
              
           case SC_Close:
+              DEBUG('a', "Close entered\n");
               currentThread -> space -> fileClose(machine->ReadRegister(4));
+              break;
               
           case SC_Read:
-              int intoBuf = machine -> ReadRegister(4);
-              int size = machine -> ReadRegister(5);
-              int fileId = machine->ReadRegister(6);
+              DEBUG('a', "Read entered\n");
+              intoBuf = (char*) machine -> ReadRegister(4);
+              size = machine -> ReadRegister(5);
+              fileId = machine->ReadRegister(6);
               
-              OpenFile* readFile = currentThread -> space -> readWrite(fileId);
+              readFile = currentThread -> space -> readWrite(fileId);
               
-              if (readFile == nullptr)
+              if (readFile == NULL)
                   machine -> WriteRegister(2, -1);
               
               else
                   machine -> WriteRegister(2, readFile -> Read(intoBuf, size));
+              break;
               
-          case 
+          case SC_Write:
+              DEBUG('a', "Write entered\n");
+              fromBuf = (char*) machine -> ReadRegister(4);
+              size = machine -> ReadRegister(5);
+              fileId = machine->ReadRegister(6);
               
+              writeFile = currentThread -> space -> readWrite(fileId);
+              
+              if (readFile != NULL)
+                  writeFile -> Write(fromBuf, size);
+              break;
               
           default:
 	         printf("Undefined SYSCALL %d\n", type);

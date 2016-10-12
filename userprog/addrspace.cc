@@ -118,7 +118,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
         executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
-
+    
+    for (int j = 0; j < 20; j++)
+        fileVector[j] = NULL;    
+    
 }
 
 //----------------------------------------------------------------------
@@ -194,30 +197,32 @@ void AddrSpace::RestoreState()
 #endif
 }
 
-void AddrSpace::fileOpen(char* fileName){
-    OpenFile* newFile = Open(fileName);
+OpenFileId AddrSpace::fileOpen(char* fileName){
+    
+    OpenFile* newFile = fileSystem -> Open(fileName);
     
     for (int i = 0; i < 20; i++){
-        if (fileVector[i] == nullptr){
-            fileVector[currentId] = newFile;
+        if (fileVector[i] == NULL){
+            fileVector[i] = newFile;
             return i;
         }
+    }
         
     return -1;
 }
 
 void AddrSpace::fileClose(OpenFileId fileId){
     
-    if (fileId > 19 || fileId < 0 || fileVector[fileId] == nullptr)
+    if (fileId > 19 || fileId < 0 || fileVector[fileId] == NULL)
         return;
     
     delete fileVector[fileId];
-    fileVector[fileId] = nullptr;
+    fileVector[fileId] = NULL;
 }
 
 OpenFile* AddrSpace::readWrite(OpenFileId fileId){
     if  (fileId > 19 || fileId < 0)
-        return nullptr;
+        return NULL;
     
     return fileVector[fileId];
 }
