@@ -1,7 +1,5 @@
-
 #include "console.h"
 #include "synch.h"
-
 
 
 class SynchConsole
