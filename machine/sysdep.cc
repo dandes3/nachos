@@ -129,9 +129,12 @@ PollFile(int fd)
 
 int
 OpenForWrite(char *name)
-{
+{   
+   // fprintf(stderr, "%s\n", name);
+    
     int fd = open(name, O_RDWR|O_CREAT|O_TRUNC, 0666);
-
+    
+   // fprintf(stderr, "error is: %s\n", strerror(errno));
     ASSERT(fd >= 0); 
     return fd;
 }

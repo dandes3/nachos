@@ -96,6 +96,8 @@ void ReadArg(char* result, int size);
 void
 ExceptionHandler(ExceptionType which)
 {
+    fprintf(stderr, "Fuck you\n");
+    
     int type = machine->ReadRegister(2);
     int size;
     char* intoBuf, *fromBuf;
@@ -114,7 +116,9 @@ ExceptionHandler(ExceptionType which)
              
           case SC_Create:
              DEBUG('a', "Create entered\n");
+             arg = new(std::nothrow) char[128];
              ReadArg(arg, 128);
+             //fprintf(stderr, "%s\n", arg);
              DEBUG('a', "Create entered\n");
              fileSystem -> Create(arg, -1);
              break;
@@ -169,6 +173,8 @@ ExceptionHandler(ExceptionType which)
 #endif
       default: ;
     }
+    
+    
 }
 
 void ReadArg(char* result, int size){
@@ -176,14 +182,14 @@ void ReadArg(char* result, int size){
     int location;
     
     location = machine->ReadRegister(4);
-    result = new(std::nothrow) char[size];
-    
-    for (int i = 0; i < size; i++){
+    //result = new(std::nothrow) char[size];
+    for (int i = 0; i < size - 1; i++){
+        //fprintf(stderr, "%c", machine->mainMemory[location]);
         if ((result[i] = machine->mainMemory[location++]) == '\0')
             break;
     }
     
-    result[size] = '\0';
+    result[size - 1] = '\0';
     
 }
 
