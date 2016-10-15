@@ -32,10 +32,13 @@ class AddrSpace {
 
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch 
+   
+#ifdef CHANGED
     OpenFileId fileOpen(char* fileName);
     OpenFile* readWrite(OpenFileId fileId);
     void fileClose(OpenFileId fileId);
-    
+    int isConsoleFile(OpenFile* file);
+#endif
     
 
   private:
@@ -44,9 +47,12 @@ class AddrSpace {
 #endif					// for now!
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
-   
-    OpenFile* fileVector [20];
 
+#ifdef CHANGED
+    OpenFile* fileVector [20];
+    OpenFile* stdIn;
+    OpenFile* stdOut;
+#endif
     
 };
 

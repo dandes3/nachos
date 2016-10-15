@@ -189,6 +189,8 @@ ReadPartial(int fd, char *buffer, int nBytes)
 void
 WriteFile(int fd, char *buffer, int nBytes)
 {
+    DEBUG('p', "buffer: %s\n", buffer);
+
     int retVal = write(fd, buffer, nBytes);
     ASSERT(retVal == nBytes);
 }
