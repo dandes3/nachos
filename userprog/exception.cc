@@ -25,6 +25,7 @@
 #include "system.h"
 #include "syscall.h"
 #include "filesys.h"
+#include "synchconsole.h"
 
 #ifdef USE_TLB
 
@@ -43,27 +44,27 @@
 void
 HandleTLBFault(int vaddr)
 {
-  int vpn = vaddr / PageSize;
-  int victim = Random() % TLBSize;
-  int i;
+int vpn = vaddr / PageSize;
+int victim = Random() % TLBSize;
+int i;
 
-  stats->numTLBFaults++;
+stats->numTLBFaults++;
 
-  // First, see if free TLB slot
-  for (i=0; i<TLBSize; i++)
+// First, see if free TLB slot
+for (i=0; i<TLBSize; i++)
     if (machine->tlb[i].valid == false) {
-      victim = i;
-      break;
+    victim = i;
+    break;
     }
 
-  // Otherwise clobber random slot in TLB
+// Otherwise clobber random slot in TLB
 
-  machine->tlb[victim].virtualPage = vpn;
-  machine->tlb[victim].physicalPage = vpn; // Explicitly assumes 1-1 mapping
-  machine->tlb[victim].valid = true;
-  machine->tlb[victim].dirty = false;
-  machine->tlb[victim].use = false;
-  machine->tlb[victim].readOnly = false;
+machine->tlb[victim].virtualPage = vpn;
+machine->tlb[victim].physicalPage = vpn; // Explicitly assumes 1-1 mapping
+machine->tlb[victim].valid = true;
+machine->tlb[victim].dirty = false;
+machine->tlb[victim].use = false;
+machine->tlb[victim].readOnly = false;
 }
 
 #endif
@@ -102,110 +103,133 @@ ExceptionHandler(ExceptionType which)
     int size, intoBuf, readBytes, fileType;
     OpenFileId fileId;
     OpenFile* readFile, *writeFile;
+    SynchConsole* sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
     
-    char* arg, *readContent;
+    char* arg, *readContent, stdinChar;
     
     switch (which) {
-      case SyscallException:
-	    switch (type) {
-          case SC_Halt:
-             DEBUG('a', "Shutdown, initiated by user program.\n");
-             interrupt->Halt();
-             break;
+    case SyscallException:
+        switch (type) {
+        case SC_Halt:
+            DEBUG('a', "Shutdown, initiated by user program.\n");
+            interrupt->Halt();
+            break;
 
 #ifdef CHANGED       
-          case SC_Create:
-             DEBUG('a', "Create entered\n");
+        case SC_Create:
+            DEBUG('a', "Create entered\n");
 
-             arg = new(std::nothrow) char[128];
-             ReadArg(arg, 127);
-       
-             fileSystem -> Create(arg, -1);
-             
-             IncrementPc();  
-             break;
-             
-          case SC_Open:
-             DEBUG('a', "Open entered\n");
-
-             arg = new(std::nothrow) char[128];
-             ReadArg(arg, 127);
-
-             fileId = currentThread -> space -> fileOpen(arg);
-             machine -> WriteRegister(2, fileId);
-
-             IncrementPc();
-             break;
-             
-          case SC_Close:
-              DEBUG('a', "Close entered\n");
-
-              currentThread -> space -> fileClose(machine->ReadRegister(4));
-             
-              IncrementPc();
-              break;
-              
-          case SC_Read:
-              DEBUG('a', "Read entered\n");
-
-              intoBuf =  machine -> ReadRegister(4);
-              size = machine -> ReadRegister(5);
-              fileId = machine->ReadRegister(6);
-              readContent = new(std::nothrow) char[size];
- 
-              readFile = currentThread -> space -> readWrite(fileId);
-              fileType = currentThread -> space -> isConsoleFile(readFile);
-
-              if (fileType  == 1); //Needs to be implemented, stdOut
-              else if (readFile == 0); //Needs to be implemented, stdIn
- 
-              else if (readFile == NULL)
-                  machine -> WriteRegister(2, -1);
-              
-              else{
-                  readBytes  =  readFile -> Read(readContent, size); 
-                  machine -> WriteRegister(2, readBytes);
-      
-                  for (int i = 0; i < size; i++){
-                     machine -> mainMemory[intoBuf] = readContent[i];
-                     intoBuf++;
-                  }
-              }
-
-              IncrementPc();
-              break;
-              
-          case SC_Write:
-              DEBUG('a', "Write entered\n");
-
-              size = machine -> ReadRegister(5);
-              fileId = machine->ReadRegister(6);
+            arg = new(std::nothrow) char[128];
+            ReadArg(arg, 127);
     
-              arg = new(std::nothrow) char[size];
-              ReadArg(arg, size);
-              
-              writeFile = currentThread -> space -> readWrite(fileId);
-              fileType = currentThread -> space -> isConsoleFile(writeFile);
+            fileSystem -> Create(arg, -1);
+            
+            IncrementPc();  
+            break;
+            
+        case SC_Open:
+            DEBUG('a', "Open entered\n");
 
-              if (fileType  == 1); //Needs to be implementd, stdOut 
-              else if (fileType == 0); //Needs to be implemented, stdIn
+            arg = new(std::nothrow) char[128];
+            ReadArg(arg, 127);
 
-              else if (writeFile != NULL)
-                  writeFile -> Write(arg, size);
-              
-              IncrementPc();
-              break;
+            fileId = currentThread -> space -> fileOpen(arg);
+            machine -> WriteRegister(2, fileId);
+
+            IncrementPc();
+            break;
+            
+        case SC_Close:
+            DEBUG('a', "Close entered\n");
+
+            currentThread -> space -> fileClose(machine->ReadRegister(4));
+            
+            IncrementPc();
+            break;
+            
+        case SC_Read:
+            DEBUG('a', "Read entered\n");
+
+            intoBuf =  machine -> ReadRegister(4);
+            size = machine -> ReadRegister(5);
+            fileId = machine -> ReadRegister(6);
+            readContent = new(std::nothrow) char[size + 1];
+            bzero(readContent, size + 1);
+
+            readFile = currentThread -> space -> readWrite(fileId);
+            fileType = currentThread -> space -> isConsoleFile(readFile);
+            //fprintf(stderr, "filetype: %d\n", fileType);
+
+            if (fileType  == 1) 
+                machine -> WriteRegister(2, -1);
+            
+            else if (fileType  == 0){
+                //fprintf(stderr, "stdin\n");
+                for (int i = 0; i < size; i++){
+                    sConsole -> GetChar(&stdinChar);
+                    fprintf(stderr, "stdinchar: %d\n", stdinChar);
+                    if (stdinChar == EOF){
+                        break;
+                    }
+                    else
+                        readContent[i] = stdinChar;
+                }
+                
+            }
+            
+            else if (readFile == NULL)
+                machine -> WriteRegister(2, -1);
+            
+            else{
+                readBytes  =  readFile -> Read(readContent, size); 
+                machine -> WriteRegister(2, readBytes);
+    
+                for (int i = 0; i < size; i++){
+                    machine -> mainMemory[intoBuf] = readContent[i];
+                    intoBuf++;
+                }
+            }
+
+            IncrementPc();
+            fprintf(stderr, "Moved out Read\n");
+            break;
+            
+        case SC_Write:
+            DEBUG('a', "Write entered\n");
+
+            size = machine -> ReadRegister(5);
+            fileId = machine->ReadRegister(6);
+    
+            arg = new(std::nothrow) char[size];
+            ReadArg(arg, size);
+            
+            writeFile = currentThread -> space -> readWrite(fileId);
+            fileType = currentThread -> space -> isConsoleFile(writeFile);
+
+            if (fileType  == 1){
+                for (int i = 0; i < size; i++)
+                    sConsole -> PutChar(arg[i]);
+                    
+            }
+            else if (fileType == 0)
+                machine -> WriteRegister(2, -1);
+
+            else if (writeFile != NULL)
+                writeFile -> Write(arg, size);
+            
+            IncrementPc();
+            break;
 #endif              
-          default:
-	         printf("Undefined SYSCALL %d\n", type);
-	         ASSERT(false);
-	}
+        default:
+            printf("Undefined SYSCALL %d\n", type);
+            ASSERT(false);
+    }
 #ifdef USE_TLB
-      case PageFaultException:
-	HandleTLBFault(machine->ReadRegister(BadVAddrReg));
-	break;
+    case PageFaultException:
+    HandleTLBFault(machine->ReadRegister(BadVAddrReg));
+    break;
 #endif
-      default: ;
+    default: ;
     }
     
     

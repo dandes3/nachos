@@ -7,17 +7,19 @@
 
 class SynchConsole
 {
-    SynchConsole(char* fileReader, char* fileWriter);
-    ~SynchConsole();
-    
-    char GetChar();
-    void PutChar(char c);
-    void ReadAvail();
-    void WriteDone();
-    
-    Console* console;
-    Semaphore *readSem, *writeSem;
-    Lock *readLock, *writeLock;
+    public:
+        SynchConsole(char* fileReader, char* fileWriter);
+        ~SynchConsole();
+        
+        void GetChar(char* cp);
+        void PutChar(char c);
+        void ReadAvail();
+        void WriteDone();
+        
+    private:
+        Console* console;
+        Semaphore *readSem, *writeSem;
+        Lock *readLock, *writeLock;
 
 };
 
