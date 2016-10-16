@@ -32,6 +32,7 @@ OpenFile::OpenFile(int sector)
     seekPosition = 0;
 }
 
+
 //----------------------------------------------------------------------
 // OpenFile::~OpenFile
 // 	Close a Nachos file, de-allocating any in-memory data structures.
