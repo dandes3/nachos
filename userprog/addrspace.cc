@@ -60,6 +60,9 @@ SwapHeader (NoffHeader *noffH)
 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
+    stdOut = new(std::nothrow) OpenFile(1);
+    stdIn = new(std::nothrow) OpenFile(0);
+
     NoffHeader noffH;
     unsigned int size;
 #ifndef USE_TLB
@@ -118,7 +121,13 @@ AddrSpace::AddrSpace(OpenFile *executable)
         executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
+    
+    for (int j = 0; j < 20; j++)
+        fileVector[j] = NULL;
 
+    fileVector[0] = stdIn;
+    fileVector[1] = stdOut;
+    
 }
 
 //----------------------------------------------------------------------
@@ -131,6 +140,8 @@ AddrSpace::~AddrSpace()
 #ifndef USE_TLB
    delete pageTable;
 #endif
+   for (int i = 0; i < 20; i++)
+      delete fileVector[i];
 }
 
 //----------------------------------------------------------------------
@@ -194,30 +205,63 @@ void AddrSpace::RestoreState()
 #endif
 }
 
-void AddrSpace::fileOpen(char* fileName){
-    OpenFile* newFile = Open(fileName);
+#ifdef CHANGED
+OpenFileId AddrSpace::fileOpen(char* fileName){
     
+    OpenFile* newFile;
+    
+    //Opening connection to console, not actual files
+    if (strcmp(fileName, "/dev/ttyin") == 0)
+       newFile = stdIn;
+    else if (strcmp(fileName, "/dev/ttyout") == 0)
+       newFile = stdOut;
+    else
+        newFile = fileSystem -> Open(fileName);
+    
+    if (newFile == NULL){
+      if (not fileSystem -> Create(fileName, -1))
+        return -1;
+
+      newFile = fileSystem -> Open(fileName);
+    }
+
     for (int i = 0; i < 20; i++){
-        if (fileVector[i] == nullptr){
-            fileVector[currentId] = newFile;
+        if (fileVector[i] == NULL){
+            fileVector[i] = newFile;
             return i;
         }
+    }
         
     return -1;
 }
 
 void AddrSpace::fileClose(OpenFileId fileId){
     
-    if (fileId > 19 || fileId < 0 || fileVector[fileId] == nullptr)
+    if (fileId > 19 || fileId < 0 || fileVector[fileId] == NULL)
         return;
     
-    delete fileVector[fileId];
-    fileVector[fileId] = nullptr;
+    if (fileVector[fileId] != stdIn && fileVector[fileId] != stdOut) //Deleting OpenFile object closes file in linux file system.
+        delete fileVector[fileId];                                   //Since the console doesn't correspond to actaul files, this would cause errors. 
+
+    fileVector[fileId] = NULL;
 }
 
 OpenFile* AddrSpace::readWrite(OpenFileId fileId){
     if  (fileId > 19 || fileId < 0)
-        return nullptr;
-    
+        return NULL;
+       
     return fileVector[fileId];
 }
+
+int AddrSpace::isConsoleFile(OpenFile* file){
+    
+    if (file == stdIn)
+       return 0;
+
+    if (file == stdOut)
+       return 1;
+  
+    return -1;
+}
+
+#endif

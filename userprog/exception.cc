@@ -91,11 +91,19 @@ HandleTLBFault(int vaddr)
 //	are in machine.h.
 //----------------------------------------------------------------------
 
+void ReadArg(char* result, int size);
+void IncrementPc();
+
 void
 ExceptionHandler(ExceptionType which)
 {
+    
     int type = machine->ReadRegister(2);
-    char* arg;
+    int size, intoBuf, readBytes, fileType;
+    OpenFileId fileId;
+    OpenFile* readFile, *writeFile;
+    
+    char* arg, *readContent;
     
     switch (which) {
       case SyscallException:
@@ -103,35 +111,91 @@ ExceptionHandler(ExceptionType which)
           case SC_Halt:
              DEBUG('a', "Shutdown, initiated by user program.\n");
              interrupt->Halt();
-             
+             break;
+
+#ifdef CHANGED       
           case SC_Create:
-             ReadArg(arg, 128);
-             Create(arg);
+             DEBUG('a', "Create entered\n");
+
+             arg = new(std::nothrow) char[128];
+             ReadArg(arg, 127);
+       
+             fileSystem -> Create(arg, -1);
+             
+             IncrementPc();  
+             break;
              
           case SC_Open:
-             ReadArg(arg, 128);
-             OpenFileId fileId = currentThread -> space -> fileOpen(arg);
+             DEBUG('a', "Open entered\n");
+
+             arg = new(std::nothrow) char[128];
+             ReadArg(arg, 127);
+
+             fileId = currentThread -> space -> fileOpen(arg);
              machine -> WriteRegister(2, fileId);
+
+             IncrementPc();
+             break;
              
           case SC_Close:
+              DEBUG('a', "Close entered\n");
+
               currentThread -> space -> fileClose(machine->ReadRegister(4));
+             
+              IncrementPc();
+              break;
               
           case SC_Read:
-              int intoBuf = machine -> ReadRegister(4);
-              int size = machine -> ReadRegister(5);
-              int fileId = machine->ReadRegister(6);
-              
-              OpenFile* readFile = currentThread -> space -> readWrite(fileId);
-              
-              if (readFile == nullptr)
+              DEBUG('a', "Read entered\n");
+
+              intoBuf =  machine -> ReadRegister(4);
+              size = machine -> ReadRegister(5);
+              fileId = machine->ReadRegister(6);
+              readContent = new(std::nothrow) char[size];
+ 
+              readFile = currentThread -> space -> readWrite(fileId);
+              fileType = currentThread -> space -> isConsoleFile(readFile);
+
+              if (fileType  == 1); //Needs to be implemented, stdOut
+              else if (readFile == 0); //Needs to be implemented, stdIn
+ 
+              else if (readFile == NULL)
                   machine -> WriteRegister(2, -1);
               
-              else
-                  machine -> WriteRegister(2, readFile -> Read(intoBuf, size));
+              else{
+                  readBytes  =  readFile -> Read(readContent, size); 
+                  machine -> WriteRegister(2, readBytes);
+      
+                  for (int i = 0; i < size; i++){
+                     machine -> mainMemory[intoBuf] = readContent[i];
+                     intoBuf++;
+                  }
+              }
+
+              IncrementPc();
+              break;
               
-          case 
+          case SC_Write:
+              DEBUG('a', "Write entered\n");
+
+              size = machine -> ReadRegister(5);
+              fileId = machine->ReadRegister(6);
+    
+              arg = new(std::nothrow) char[size];
+              ReadArg(arg, size);
               
+              writeFile = currentThread -> space -> readWrite(fileId);
+              fileType = currentThread -> space -> isConsoleFile(writeFile);
+
+              if (fileType  == 1); //Needs to be implementd, stdOut 
+              else if (fileType == 0); //Needs to be implemented, stdIn
+
+              else if (writeFile != NULL)
+                  writeFile -> Write(arg, size);
               
+              IncrementPc();
+              break;
+#endif              
           default:
 	         printf("Undefined SYSCALL %d\n", type);
 	         ASSERT(false);
@@ -143,15 +207,16 @@ ExceptionHandler(ExceptionType which)
 #endif
       default: ;
     }
+    
+    
 }
 
-void ReadArg(char* result, int size){
+#ifdef CHANGED
+void ReadArg(char* result, int size){ //Size refers to last index of array
     
     int location;
-    
     location = machine->ReadRegister(4);
-    result = new(std::nothrow) char[size];
-    
+
     for (int i = 0; i < size; i++){
         if ((result[i] = machine->mainMemory[location++]) == '\0')
             break;
@@ -161,4 +226,16 @@ void ReadArg(char* result, int size){
     
 }
 
+void IncrementPc(){
 
+    int tmp;
+
+    tmp = machine -> ReadRegister(PCReg);
+    machine -> WriteRegister(PrevPCReg, tmp);
+    tmp = machine -> ReadRegister(NextPCReg);
+    machine -> WriteRegister(PCReg, tmp);
+    tmp += 4;
+    machine -> WriteRegister(NextPCReg, tmp);
+}
+
+#endif

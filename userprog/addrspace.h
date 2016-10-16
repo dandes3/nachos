@@ -16,6 +16,8 @@
 #include "copyright.h"
 #include "filesys.h"
 
+typedef int OpenFileId;	
+
 #define UserStackSize		1024 	// increase this as necessary!
 
 class AddrSpace {
@@ -30,10 +32,13 @@ class AddrSpace {
 
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch 
-    OpenFileId fileOpen(char* fileName)();
+   
+#ifdef CHANGED
+    OpenFileId fileOpen(char* fileName);
     OpenFile* readWrite(OpenFileId fileId);
     void fileClose(OpenFileId fileId);
-    
+    int isConsoleFile(OpenFile* file);
+#endif
     
 
   private:
@@ -42,8 +47,12 @@ class AddrSpace {
 #endif					// for now!
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
-   
-    OpenFile* fileVector [20] = {nullptr}; 		// Array mapping file ids to OpenFile objects
+
+#ifdef CHANGED
+    OpenFile* fileVector [20];
+    OpenFile* stdIn;
+    OpenFile* stdOut;
+#endif
     
 };
 
