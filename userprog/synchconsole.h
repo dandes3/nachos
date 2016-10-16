@@ -1,7 +1,8 @@
+#ifndef SYNCHCONSOLE_H
+#define SYNCHCONSOLE_H
 
 #include "console.h"
 #include "synch.h"
-
 
 
 class SynchConsole
@@ -17,5 +18,7 @@ class SynchConsole
     Console* console;
     Semaphore *readSem, *writeSem;
     Lock *readLock, *writeLock;
-    
-}
+
+};
+
+#endif
