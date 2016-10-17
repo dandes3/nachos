@@ -207,46 +207,66 @@ void AddrSpace::RestoreState()
 }
 
 #ifdef CHANGED
+
+//----------------------------------------------------------------------
+// AddrSpace::fileOpen
+//      Opens a file by name given in parameter fileName. Puts resulting
+//	OpenFile object in the fileVector at the first open file descriptor.
+//
+//	Uses the convention that opening the file "/dev/ttyin" opens stdin
+//	and opening "/dev/ttyout" opens stdout.
+//----------------------------------------------------------------------
 OpenFileId AddrSpace::fileOpen(char* fileName){
     
     OpenFile* newFile;
     
     //Opening connection to console, not actual files
-    if (strcmp(fileName, "/dev/ttyin") == 0)
-       newFile = stdIn;
-    else if (strcmp(fileName, "/dev/ttyout") == 0)
+    if (strcmp(fileName, "/dev/ttyin") == 0) //stdin
+       newFile = stdIn; 
+    else if (strcmp(fileName, "/dev/ttyout") == 0) //stdin
        newFile = stdOut;
-    else
-        newFile = fileSystem -> Open(fileName);
+    else //some other file
+        newFile = fileSystem -> Open(fileName); 
     
-    if (newFile == NULL){
+    if (newFile == NULL){ // If newFile is null, fileName does not exist. Try to create it and open again.
       if (not fileSystem -> Create(fileName, -1))
-        return -1;
+        return -1; //Can't create or open file
 
       newFile = fileSystem -> Open(fileName);
     }
 
+    //Put newFile in fileVector at first open spot
     for (int i = 0; i < 20; i++){
         if (fileVector[i] == NULL){
             fileVector[i] = newFile;
-            return i;
+            return i; //Index corresponds to file descriptor
         }
     }
-        
+       
     return -1;
 }
 
+//----------------------------------------------------------------------
+// AddrSpace::fileClose
+//	Frees OpenFile object corresponding to the given fileId. Also
+//	frees slot in file vector for other files.
+//----------------------------------------------------------------------
 void AddrSpace::fileClose(OpenFileId fileId){
     
-    if (fileId > 19 || fileId < 0 || fileVector[fileId] == NULL)
+    if (fileId > 19 || fileId < 0 || fileVector[fileId] == NULL) //No file to close
         return;
     
     if (fileVector[fileId] != stdIn && fileVector[fileId] != stdOut) //Deleting OpenFile object closes file in linux file system.
-        delete fileVector[fileId];                                   //Since the console doesn't correspond to actaul files, this would cause errors. 
+        delete fileVector[fileId];                                   //Since the stdIn and stdOut doesn't correspond to actaul files, this would cause errors. 
 
-    fileVector[fileId] = NULL;
+    fileVector[fileId] = NULL; //Free up space in file vector
 }
 
+//----------------------------------------------------------------------
+// AddrSpace::readWrite
+//      Returns the OpenFile object corresponding to the given fileId. Used
+//	by the exception handler to read and write from/to files.
+//----------------------------------------------------------------------
 OpenFile* AddrSpace::readWrite(OpenFileId fileId){
     if  (fileId > 19 || fileId < 0)
         return NULL;
@@ -254,6 +274,12 @@ OpenFile* AddrSpace::readWrite(OpenFileId fileId){
     return fileVector[fileId];
 }
 
+//----------------------------------------------------------------------
+// AddrSpace::isConsoleFile
+//      Unelegant solution for allowing the exception handler to recognize
+//	if an OpenFile object returned from readWrite is stdIn, stdOut,
+//	or some other file.
+//----------------------------------------------------------------------
 int AddrSpace::isConsoleFile(OpenFile* file){
     
     if (file == stdIn)

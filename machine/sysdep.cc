@@ -130,11 +130,8 @@ PollFile(int fd)
 int
 OpenForWrite(char *name)
 {   
-   // fprintf(stderr, "%s\n", name);
-    
     int fd = open(name, O_RDWR|O_CREAT|O_TRUNC, 0666);
     
-   // fprintf(stderr, "error is: %s\n", strerror(errno));
     ASSERT(fd >= 0); 
     return fd;
 }
@@ -189,7 +186,6 @@ ReadPartial(int fd, char *buffer, int nBytes)
 void
 WriteFile(int fd, char *buffer, int nBytes)
 {
-    DEBUG('p', "buffer: %s\n", buffer);
 
     int retVal = write(fd, buffer, nBytes);
     ASSERT(retVal == nBytes);

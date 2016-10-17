@@ -29,6 +29,8 @@
 
 #ifdef USE_TLB
 
+//static SynchConsole* sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
+
 //----------------------------------------------------------------------
 // HandleTLBFault
 //      Called on TLB fault. Note that this is not necessarily a page
@@ -98,15 +100,18 @@ void IncrementPc();
 void
 ExceptionHandler(ExceptionType which)
 {
-    
+//IMPORTANT: All code written assumes that ExceptionHandler cannot be executed by two threads concurrently 
+
+#ifdef CHANGED
     int type = machine->ReadRegister(2);
     int size, intoBuf, readBytes, fileType;
     OpenFileId fileId;
     OpenFile* readFile, *writeFile;
-    SynchConsole* sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
-    
+    static SynchConsole* sConsole = new(std::nothrow) SynchConsole(NULL, NULL);// SynchConsole for writing to stdout and stding. Static, indicating the same
+                                                                               // instance will be used everytime this function is called.
     char* arg, *readContent, stdinChar;
-    
+#endif CHANGED
+
     switch (which) {
     case SyscallException:
         switch (type) {
@@ -115,16 +120,16 @@ ExceptionHandler(ExceptionType which)
             interrupt->Halt();
             break;
 
-#ifdef CHANGED       
+#ifdef CHANGED
         case SC_Create:
             DEBUG('a', "Create entered\n");
 
             arg = new(std::nothrow) char[128];
-            ReadArg(arg, 127);
+            ReadArg(arg, 127); //put name of file in arg, max 127 chars, truncated if over 
     
-            fileSystem -> Create(arg, -1);
+            fileSystem -> Create(arg, -1); 
             
-            IncrementPc();  
+            IncrementPc(); //Increment program counter to next instruction
             break;
             
         case SC_Open:
@@ -133,8 +138,8 @@ ExceptionHandler(ExceptionType which)
             arg = new(std::nothrow) char[128];
             ReadArg(arg, 127);
 
-            fileId = currentThread -> space -> fileOpen(arg);
-            machine -> WriteRegister(2, fileId);
+            fileId = currentThread -> space -> fileOpen(arg); //Put OpenFile object in thread file vector, get file descriptor
+            machine -> WriteRegister(2, fileId); //Return file descriptor
 
             IncrementPc();
             break;
@@ -142,7 +147,7 @@ ExceptionHandler(ExceptionType which)
         case SC_Close:
             DEBUG('a', "Close entered\n");
 
-            currentThread -> space -> fileClose(machine->ReadRegister(4));
+            currentThread -> space -> fileClose(machine->ReadRegister(4)); //Remove file from file vector, delete OpenFile object
             
             IncrementPc();
             break;
@@ -150,71 +155,68 @@ ExceptionHandler(ExceptionType which)
         case SC_Read:
             DEBUG('a', "Read entered\n");
 
-            intoBuf =  machine -> ReadRegister(4);
-            size = machine -> ReadRegister(5);
-            fileId = machine -> ReadRegister(6);
-            readContent = new(std::nothrow) char[size + 1];
-            bzero(readContent, size + 1);
+            intoBuf =  machine -> ReadRegister(4); //Return buffer
+            size = machine -> ReadRegister(5); //Number of bytes requested
+            fileId = machine -> ReadRegister(6); //File descriptor from which to read
 
-            readFile = currentThread -> space -> readWrite(fileId);
-            fileType = currentThread -> space -> isConsoleFile(readFile);
-            //fprintf(stderr, "filetype: %d\n", fileType);
+            readContent = new(std::nothrow) char[size + 1]; //Local buffer to pull data from file
+            bzero(readContent, size + 1); //If fewer than size bytes are read, intoBuf will be filled with null bytes
 
-            if (fileType  == 1) 
-                machine -> WriteRegister(2, -1);
-            
-            else if (fileType  == 0){
-                //fprintf(stderr, "stdin\n");
-                for (int i = 0; i < size; i++){
-                    sConsole -> GetChar(&stdinChar);
-                    fprintf(stderr, "stdinchar: %d\n", stdinChar);
-                    if (stdinChar == EOF){
-                        break;
-                    }
-                    else
-                        readContent[i] = stdinChar;
-                }
-                
+            readFile = currentThread -> space -> readWrite(fileId); //OpenFile object associated with file descriptor
+            fileType = currentThread -> space -> isConsoleFile(readFile); //Returns an int which tells if the OpenFile object is stdin or stdout or neither
+ 
+            if (fileType  == 1 || readFile == NULL){  //Requested read on stdin, or a file descriptor that doesn't correspond to a file
+                DEBUG('p', "Error in Read\n");
+                machine -> WriteRegister(2, -1); //Return -1
+                IncrementPc();
+                break;
             }
-            
-            else if (readFile == NULL)
-                machine -> WriteRegister(2, -1);
-            
-            else{
-                readBytes  =  readFile -> Read(readContent, size); 
-                machine -> WriteRegister(2, readBytes);
-    
-                for (int i = 0; i < size; i++){
+
+            else if (fileType  == 0){ //Read from stdin
+                readBytes = 0;
+                for (int i = 0; i < size; i++){ //Read size chars, or until EOF is reached
+                    sConsole -> GetChar(&stdinChar); 
+                    if (stdinChar == EOF)
+                        break;
+                    else{
+                        readContent[i] = stdinChar;
+                        readBytes ++;
+                   }
+                }
+            }
+                        
+            else //Read from a file
+                readBytes  =  readFile -> Read(readContent, size); //Read into local buffer, returns number of bytes read
+
+            //Only reached if a read is actually attempted
+            machine -> WriteRegister(2, readBytes); //Write number of bytes read into return register
+            for (int i = 0; i < size; i++){ //Copy local buffer into main memory at intoBuf address
                     machine -> mainMemory[intoBuf] = readContent[i];
                     intoBuf++;
-                }
             }
 
             IncrementPc();
-            fprintf(stderr, "Moved out Read\n");
             break;
             
         case SC_Write:
             DEBUG('a', "Write entered\n");
 
-            size = machine -> ReadRegister(5);
-            fileId = machine->ReadRegister(6);
-    
+            size = machine -> ReadRegister(5); //Number of bytes to be written
+            fileId = machine->ReadRegister(6); //File descriptor of file to be written
+      
+            //Pull content to be written into local memory
             arg = new(std::nothrow) char[size];
             ReadArg(arg, size);
             
-            writeFile = currentThread -> space -> readWrite(fileId);
-            fileType = currentThread -> space -> isConsoleFile(writeFile);
+            writeFile = currentThread -> space -> readWrite(fileId); //OpenFile object corresponding to file descriptor
+            fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
 
-            if (fileType  == 1){
+            if (fileType  == 1){ //stdout
                 for (int i = 0; i < size; i++)
-                    sConsole -> PutChar(arg[i]);
-                    
-            }
-            else if (fileType == 0)
-                machine -> WriteRegister(2, -1);
+                    sConsole -> PutChar(arg[i]); //Put each char using SynchConsole
+            } 
 
-            else if (writeFile != NULL)
+            else if (writeFile != NULL && fileType != 0) //File descriptor was valid and not stdin
                 writeFile -> Write(arg, size);
             
             IncrementPc();
@@ -236,6 +238,10 @@ ExceptionHandler(ExceptionType which)
 }
 
 #ifdef CHANGED
+/*
+* Pulls "size" number of characters from register 4, and puts them into
+* the local buffer "result".
+*/
 void ReadArg(char* result, int size){ //Size refers to last index of array
     
     int location;
@@ -247,9 +253,11 @@ void ReadArg(char* result, int size){ //Size refers to last index of array
     }
     
     result[size] = '\0';
-    
 }
 
+/*
+* Increments the program counter to the next instruction after the syscall.
+*/
 void IncrementPc(){
 
     int tmp;

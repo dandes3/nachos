@@ -40,12 +40,10 @@ SynchConsole::~SynchConsole() //Purge SynchConsole
 void SynchConsole::GetChar(char* cp) //Lock the readlock and hang Read Semaphore, pull from console, return character
 {
     readLock->Acquire();
-    /*console -> CheckCharAvail();
-    readSem -> P();*/
+    readSem -> P();
     
-    char c;
-    while((c = console->GetChar()) == EOF)
-        console -> CheckCharAvail();
+    char c = console->GetChar();
+    console -> CheckCharAvail();
     
     *cp = c;
     readLock->Release();

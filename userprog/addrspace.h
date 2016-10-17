@@ -18,6 +18,8 @@
 
 typedef int OpenFileId;	
 
+//SynchConsole* sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
+
 #define UserStackSize		1024 	// increase this as necessary!
 
 class AddrSpace {
@@ -34,7 +36,7 @@ class AddrSpace {
     void RestoreState();		// info on a context switch 
    
 #ifdef CHANGED
-    OpenFileId fileOpen(char* fileName);
+    OpenFileId fileOpen(char* fileName); 
     OpenFile* readWrite(OpenFileId fileId);
     void fileClose(OpenFileId fileId);
     int isConsoleFile(OpenFile* file);
@@ -49,9 +51,9 @@ class AddrSpace {
 					// address space
 
 #ifdef CHANGED
-    OpenFile* fileVector [20];
-    OpenFile* stdIn;
-    OpenFile* stdOut;
+    OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
+    OpenFile* stdIn;   //Cookie corresponding to stdIn, not a "real" OpenFile object
+    OpenFile* stdOut;  //Cookie corresponding to stdOut, not a "real" OpenFile object
 #endif
     
 };

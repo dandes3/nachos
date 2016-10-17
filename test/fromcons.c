@@ -1,6 +1,4 @@
-/* fromcons.c
- *
- * Simple program to read characters from the
+/*imple program to read characters from the
  *      console and echo them. Stop when a Q is read.
  *      Assumes uniprogrammed system.
  *	
@@ -89,5 +87,4 @@ OpenFileId file;
   }
   Write(buffer,pos,file);
 }
-
 
