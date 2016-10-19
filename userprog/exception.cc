@@ -25,7 +25,7 @@
 #include "system.h"
 #include "syscall.h"
 #include "filesys.h"
-#include "synchconsole.h"
+//#include "synchconsole.h"
 
 #ifdef USE_TLB
 
@@ -107,7 +107,7 @@ ExceptionHandler(ExceptionType which)
     int size, intoBuf, readBytes, fileType;
     OpenFileId fileId;
     OpenFile* readFile, *writeFile;
-    static SynchConsole* sConsole = new(std::nothrow) SynchConsole(NULL, NULL);// SynchConsole for writing to stdout and stding. Static, indicating the same
+   // static SynchConsole* sConsole = new(std::nothrow) SynchConsole(NULL, NULL);// SynchConsole for writing to stdout and stding. Static, indicating the same
                                                                                // instance will be used everytime this function is called.
     char* arg, *readContent, stdinChar;
 #endif CHANGED

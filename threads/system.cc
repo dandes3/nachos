@@ -29,6 +29,7 @@ SynchDisk   *synchDisk;
 
 #ifdef USER_PROGRAM	// requires either FILESYS or FILESYS_STUB
 Machine *machine;	// user program memory and registers
+SynchConsole *sConsole;
 #endif
 
 #ifdef NETWORK
@@ -151,6 +152,7 @@ Initialize(int argc, char **argv)
     
 #ifdef USER_PROGRAM
     machine = new(std::nothrow) Machine(debugUserProg);	// this must come first
+    sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
 #endif
 
 #ifdef FILESYS
