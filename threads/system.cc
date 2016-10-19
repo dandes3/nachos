@@ -29,7 +29,7 @@ SynchDisk   *synchDisk;
 
 #ifdef USER_PROGRAM	// requires either FILESYS or FILESYS_STUB
 Machine *machine;	// user program memory and registers
-SynchConsole *sConsole;
+//SynchConsole *sConsole;
 #endif
 
 #ifdef NETWORK
@@ -166,6 +166,8 @@ Initialize(int argc, char **argv)
 #ifdef NETWORK
     postOffice = new(std::nothrow) PostOffice(netname, rely, 10);
 #endif
+
+
 }
 
 //----------------------------------------------------------------------

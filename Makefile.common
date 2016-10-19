@@ -1,4 +1,4 @@
-# This is part of a GNU Makefile, included by the Makefiles in
+#This is part of a GNU Makefile, included by the Makefiles in
 # each of the subdirectories.  
 #
 # This file includes all of the baseline code provided by Nachos.

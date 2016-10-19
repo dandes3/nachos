@@ -175,7 +175,7 @@ void Condition::Wait(Lock* conditionLock) {
 
     //Release lock and get put on sleepers list
     conditionLock->Release(); 
-    queue->SortedInsert((void*)currentThread, std::numeric_limits<long long>::max()); // Uses max long long as priority to ensure all
+    queue->SortedInsert((void*)currentThread, 90000000000000000); // Uses max long long as priority to ensure all
                                                                                       // threads waiting without a priority are woken after 
     currentThread->Sleep(); // Relinquish cpu                                         // threads with a priority
     conditionLock->Acquire(); //Will acquire the lock when awoken by signal
