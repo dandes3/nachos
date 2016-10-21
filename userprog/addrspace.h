@@ -24,6 +24,7 @@ typedef int OpenFileId;
 
 class AddrSpace {
   public:
+    AddrSpace(AddrSpace *copySpace);
     AddrSpace(OpenFile *executable);	// Create an address space,
 					// initializing it with the program
 					// stored in the file "executable"
@@ -40,6 +41,9 @@ class AddrSpace {
     OpenFile* readWrite(OpenFileId fileId);
     void fileClose(OpenFileId fileId);
     int isConsoleFile(OpenFile* file);
+    OpenFile* stdIn;   //Cookie corresponding to stdIn, not a "real" OpenFile object
+    OpenFile* stdOut;  //Cookie corresponding to stdOut, not a "real" OpenFile object
+    OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
 #endif
     
 
@@ -50,11 +54,7 @@ class AddrSpace {
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
 
-#ifdef CHANGED
-    OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
-    OpenFile* stdIn;   //Cookie corresponding to stdIn, not a "real" OpenFile object
-    OpenFile* stdOut;  //Cookie corresponding to stdOut, not a "real" OpenFile object
-#endif
+
     
 };
 

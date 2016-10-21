@@ -104,6 +104,7 @@ ExceptionHandler(ExceptionType which)
     int size, intoBuf, readBytes, fileType;
     OpenFileId fileId;
     OpenFile* readFile, *writeFile;
+    Thread* newThread, *prevThread;
  
     char* arg, *readContent, stdinChar;
 #endif
@@ -181,9 +182,11 @@ ExceptionHandler(ExceptionType which)
                 }
             }
                         
-            else //Read from a file
+            else{ //Read from a file
+                readFile -> offsetLock -> Acquire();
                 readBytes  =  readFile -> Read(readContent, size); //Read into local buffer, returns number of bytes read
-
+                readFile -> offsetLock -> Release();
+            }
             //Only reached if a read is actually attempted
             machine -> WriteRegister(2, readBytes); //Write number of bytes read into return register
             for (int i = 0; i < size; i++){ //Copy local buffer into main memory at intoBuf address
@@ -212,11 +215,19 @@ ExceptionHandler(ExceptionType which)
                     sConsole -> PutChar(arg[i]); //Put each char using SynchConsole
             } 
 
-            else if (writeFile != NULL && fileType != 0) //File descriptor was valid and not stdin
+            else if (writeFile != NULL && fileType != 0) {//File descriptor was valid and not stdin
+                writeFile -> offsetLock -> Acquire();
                 writeFile -> Write(arg, size);
+                writeFile -> offsetLock -> Release();
+            }
             
             IncrementPc();
             break;
+            
+        case SC_FORK:
+            prevThread = currentThread;  
+            newThread = new(std:nothrow) Thread("forked");
+            newThread -> Fork(CopyThread, (int)prevThread); //Assuming fork makes this thread currentThread
 #endif              
         default:
             printf("Undefined SYSCALL %d\n", type);
@@ -264,6 +275,12 @@ void IncrementPc(){
     machine -> WriteRegister(PCReg, tmp);
     tmp += 4;
     machine -> WriteRegister(NextPCReg, tmp);
+}
+
+void CopyThread(int prevThreadPtr){
+    Thread* prevThread = (Thread*) prevThreadPtr;
+    
+    currentThread -> space = new (std::nothrow) AddrSpace(prevThread -> space);
 }
 
 #endif

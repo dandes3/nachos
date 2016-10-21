@@ -94,12 +94,12 @@ AddrSpace::AddrSpace(OpenFile *executable)
 // first, set up the translation 
     pageTable = new(std::nothrow) TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
-	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	pageTable[i].physicalPage = i;
-	pageTable[i].valid = true;
-	pageTable[i].use = false;
-	pageTable[i].dirty = false;
-	pageTable[i].readOnly = false;  // if the code segment was entirely on 
+	   pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
+	   pageTable[i].physicalPage = i;
+	   pageTable[i].valid = true;
+	   pageTable[i].use = false;
+	   pageTable[i].dirty = false;
+	   pageTable[i].readOnly = false;  // if the code segment was entirely on 
 					// a separate page, we could set its 
 					// pages to be read-only
     }
@@ -128,6 +128,18 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
     fileVector[0] = stdIn;
     fileVector[1] = stdOut;
+    
+}
+
+AddrSpace::AddrSpace (AddrSpace* copySpace){
+    stdOut = copySpace -> stdOut;
+    stdIn = copySpace -> stdIn;
+    
+    for (int i = 0; i < 20; i++)
+        fileVector[i] = copySpace -> fileVector[i];
+  
+    
+    
     
 }
 
@@ -223,7 +235,7 @@ OpenFileId AddrSpace::fileOpen(char* fileName){
     //Opening connection to console, not actual files
     if (strcmp(fileName, "/dev/ttyin") == 0) //stdin
        newFile = stdIn; 
-    else if (strcmp(fileName, "/dev/ttyout") == 0) //stdin
+    else if (strcmp(fileName, "/dev/ttyout") == 0) //stdout
        newFile = stdOut;
     else //some other file
         newFile = fileSystem -> Open(fileName); 
@@ -256,9 +268,15 @@ void AddrSpace::fileClose(OpenFileId fileId){
     if (fileId > 19 || fileId < 0 || fileVector[fileId] == NULL) //No file to close
         return;
     
-    if (fileVector[fileId] != stdIn && fileVector[fileId] != stdOut) //Deleting OpenFile object closes file in linux file system.
+    fileVector[fileId] -> linkLock -> Acquire();
+    
+    fileVector[fileId] -> links --;
+    
+    if (fileVector[fileId] != stdIn && fileVector[fileId] != stdOut && fileVector[fileId] -> links == 0) //Deleting OpenFile object closes file in linux file system.
         delete fileVector[fileId];                                   //Since the stdIn and stdOut doesn't correspond to actaul files, this would cause errors. 
-
+    
+    fileVector[fileId] -> linkLock -> Release();
+    
     fileVector[fileId] = NULL; //Free up space in file vector
 }
 

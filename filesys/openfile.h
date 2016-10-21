@@ -22,13 +22,16 @@
 
 #include "copyright.h"
 #include "utility.h"
+#include "synch.h"
+
+//class Lock;
 
 #ifdef FILESYS_STUB			// Temporarily implement calls to 
 					// Nachos file system as calls to UNIX!
 					// See definitions listed under #else
 class OpenFile {
   public:
-    OpenFile(int f) { file = f; currentOffset = 0; }	// open the file
+    OpenFile(int f) { file = f; currentOffset = 0; links = 1; linkLock = new (std::nothrow) Lock("linkLock"); offsetLock = new (std::nothrow) Lock("offsetLock"); }	// open the file
     ~OpenFile() { Close(file); }			// close the file
 
     int ReadAt(char *into, int numBytes, int position) { 
@@ -52,6 +55,10 @@ class OpenFile {
 		}
 
     int Length() { Lseek(file, 0, 2); return Tell(file); }
+    
+    int links;
+    Lock* linkLock;
+    Lock* offsetLock;
     
   private:
     int file;
