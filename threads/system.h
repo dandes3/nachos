@@ -11,11 +11,12 @@
 #include "copyright.h"
 #include "utility.h"
 #include "thread.h"
-//#include "synch.h"
+#include "synch.h"
 #include "scheduler.h"
 #include "interrupt.h"
 #include "stats.h"
 #include "timer.h"
+#include "bitmap.h"
 #include <new>
 
 // Initialization and cleanup routines
@@ -37,6 +38,9 @@ extern Timer *timer;				// the hardware alarm clock
 
 extern Machine* machine;	// user program memory and registers
 extern SynchConsole* sConsole;  // Console class to unify I/O operations
+extern BitMap *memMap;              // global memory map
+extern Lock *bitLock;
+
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 

@@ -93,6 +93,7 @@ machine->tlb[victim].readOnly = false;
 
 void ReadArg(char* result, int size);
 void IncrementPc();
+void CopyThread(int prevThreadPtr);
 
 void
 ExceptionHandler(ExceptionType which)
@@ -152,7 +153,7 @@ ExceptionHandler(ExceptionType which)
         case SC_Read:
             DEBUG('a', "Read entered\n");
 
-            intoBuf =  machine -> ReadRegister(4); //Return buffer
+            intoBuf =  ConvertAddr(machine -> ReadRegister(4)); //Return buffer
             size = machine -> ReadRegister(5); //Number of bytes requested
             fileId = machine -> ReadRegister(6); //File descriptor from which to read
 
@@ -224,9 +225,9 @@ ExceptionHandler(ExceptionType which)
             IncrementPc();
             break;
             
-        case SC_FORK:
+        case SC_Fork:
             prevThread = currentThread;  
-            newThread = new(std:nothrow) Thread("forked");
+            newThread = new(std::nothrow) Thread("forked");
             newThread -> Fork(CopyThread, (int)prevThread); //Assuming fork makes this thread currentThread
 #endif              
         default:
@@ -275,6 +276,10 @@ void IncrementPc(){
     machine -> WriteRegister(PCReg, tmp);
     tmp += 4;
     machine -> WriteRegister(NextPCReg, tmp);
+}
+
+int ConvertAddr (int virtualAddress){
+    return currentThread -> space -> pageTable[virtualAddr].physicalPage;
 }
 
 void CopyThread(int prevThreadPtr){
