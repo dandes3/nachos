@@ -15,10 +15,14 @@
 
 #include "copyright.h"
 #include "filesys.h"
+#include <map>
 
 typedef int OpenFileId;	
 
-//SynchConsole* sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
+typedef struct ChildInfo{
+    int exitVal;
+    Semaphore* joinSemaphore;
+} ChildInfo;
 
 #define UserStackSize		1024 	// increase this as necessary!
 
@@ -44,13 +48,18 @@ class AddrSpace {
     OpenFile* stdIn;   //Cookie corresponding to stdIn, not a "real" OpenFile object
     OpenFile* stdOut;  //Cookie corresponding to stdOut, not a "real" OpenFile object
     OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
-#endif
+    int registerVector[40];
+    map<SpaceId, ChildInfo*> childMap;
+    AddrSpace* parentSpace = NULL;
+    int mySpaceId;
     
-
-  private:
+#endif
 #ifndef USE_TLB
     TranslationEntry *pageTable;	// Assume linear page table translation
 #endif					// for now!
+
+  private:
+    
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
 

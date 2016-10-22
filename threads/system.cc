@@ -32,6 +32,7 @@ Machine *machine;	// user program memory and registers
 SynchConsole *sConsole;
 BitMap *memMap;
 Lock *bitLock;
+SpaceId spaceId;
 #endif
 
 #ifdef NETWORK
@@ -157,6 +158,7 @@ Initialize(int argc, char **argv)
     sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
     memMap = new(std::nothrow) BitMap(NumPhysPages);
     bitLock = new(std::nothrow) Lock("bitLock");
+    spaceId = 1;
 #endif
 
 #ifdef FILESYS

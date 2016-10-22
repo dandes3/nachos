@@ -130,6 +130,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
     fileVector[0] = stdIn;
     fileVector[1] = stdOut;
+
     
 }
 
@@ -166,6 +167,8 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
         for (int j = 0; j < PageSize; j ++)
             machine -> mainMemory[curPhysMemAddr] = machine -> mainMemory[copyPhysMemAddr];
     }
+    
+    parentSpace = copySpace;
     
 }
 

@@ -94,6 +94,7 @@ machine->tlb[victim].readOnly = false;
 void ReadArg(char* result, int size);
 void IncrementPc();
 void CopyThread(int prevThreadPtr);
+int ConvertAddr (int virtualAddress);
 
 void
 ExceptionHandler(ExceptionType which)
@@ -102,7 +103,7 @@ ExceptionHandler(ExceptionType which)
 
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
-    int size, intoBuf, readBytes, fileType;
+    int size, intoBuf, readBytes, fileType, physIntoBuf, cid;
     OpenFileId fileId;
     OpenFile* readFile, *writeFile;
     Thread* newThread, *prevThread;
@@ -153,7 +154,7 @@ ExceptionHandler(ExceptionType which)
         case SC_Read:
             DEBUG('a', "Read entered\n");
 
-            intoBuf =  ConvertAddr(machine -> ReadRegister(4)); //Return buffer
+            intoBuf = machine -> ReadRegister(4); //Return buffer
             size = machine -> ReadRegister(5); //Number of bytes requested
             fileId = machine -> ReadRegister(6); //File descriptor from which to read
 
@@ -191,7 +192,8 @@ ExceptionHandler(ExceptionType which)
             //Only reached if a read is actually attempted
             machine -> WriteRegister(2, readBytes); //Write number of bytes read into return register
             for (int i = 0; i < size; i++){ //Copy local buffer into main memory at intoBuf address
-                    machine -> mainMemory[intoBuf] = readContent[i];
+                    physIntoBuf = ConvertAddr(intoBuf);
+                    machine -> mainMemory[physIntoBuf] = readContent[i];
                     intoBuf++;
             }
 
@@ -226,9 +228,33 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Fork:
-            prevThread = currentThread;  
-            newThread = new(std::nothrow) Thread("forked");
-            newThread -> Fork(CopyThread, (int)prevThread); //Assuming fork makes this thread currentThread
+            prevThread = currentThread;
+            newThread = new(std::nothrow) Thread("forked"); //Find a way to get childId into child thread addrSpace
+            machine -> WriteRegister(2, spaceId++); //Put semaphores around spaceID
+            currentThread -> childMap[spaceId] = new ChildInfo; //Potential error; pointer may point out of scope
+            currentThread -> childMap[spaceId] -> joinSemaphore = new Semaphore("name"); 
+            IncrementPc();
+            newThread -> Fork(CopyThread, (int)prevThread); //Probably won't work, where does newThread go after finishing CopyThread
+            currentThread -> Yield();
+            
+        case SC_Join:
+            cid = machine -> ReadRegister(2);
+            if (currentThread -> childMap.find(cid) != currentThread -> childMap.end()){
+                currentThread -> childMap[cid] -> joinSemaphore -> P();
+                machine -> WriteRegister(2, currentThread -> childMap[cid] -> exitVal);
+                delete currentThread -> childMap[cid];
+                currentThread -> childMap.erase(cid);
+            }
+            
+            else
+                machine -> WriteRegister(2, -1); 
+            
+            IncrementPc();
+            
+        case SC_Exit:
+            
+            
+            
 #endif              
         default:
             printf("Undefined SYSCALL %d\n", type);
@@ -252,12 +278,14 @@ ExceptionHandler(ExceptionType which)
 */
 void ReadArg(char* result, int size){ //Size refers to last index of array
     
-    int location;
+    int location, physAddr;
     location = machine->ReadRegister(4);
 
     for (int i = 0; i < size; i++){
-        if ((result[i] = machine->mainMemory[location++]) == '\0')
+        physAddr = ConvertAddr(location);
+        if ((result[i] = machine->mainMemory[physAddr]) == '\0')
             break;
+        location++;
     }
     
     result[size] = '\0';
@@ -279,13 +307,16 @@ void IncrementPc(){
 }
 
 int ConvertAddr (int virtualAddress){
-    return currentThread -> space -> pageTable[virtualAddr].physicalPage;
+    int virtPage = virtualAddress / PageSize;
+    int offset = virtualAddress % PageSize;
+    
+    return currentThread -> space -> pageTable[virtPage].physicalPage * PageSize + offset;
 }
 
 void CopyThread(int prevThreadPtr){
     Thread* prevThread = (Thread*) prevThreadPtr;
-    
     currentThread -> space = new (std::nothrow) AddrSpace(prevThread -> space);
+    machine -> WriteRegister(2, 0);
 }
 
 #endif

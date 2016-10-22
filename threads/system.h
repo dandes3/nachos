@@ -17,6 +17,7 @@
 #include "stats.h"
 #include "timer.h"
 #include "bitmap.h"
+#include "syscall.h"
 #include <new>
 
 // Initialization and cleanup routines
@@ -31,6 +32,7 @@ extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
+extern SpaceId spaceId;
 
 #ifdef USER_PROGRAM
 #include "machine.h"
