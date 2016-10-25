@@ -111,7 +111,8 @@ ExceptionHandler(ExceptionType which)
  
     char* arg, *readContent, stdinChar;
 #endif
-
+    
+     fprintf(stderr, "Size: %d\n", machine -> ReadRegister(5));
     switch (which) {
     case SyscallException:
         fprintf(stderr, "in syscall\n");
@@ -203,12 +204,13 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Write:
-            fprintf(stderr, "write to console\n");
             DEBUG('p', "Write entered\n");
 
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
       
+            fprintf(stderr, "Size: %d\n", size);
+            
             //Pull content to be written into local memory
             arg = new(std::nothrow) char[size];
             ReadArg(arg, size);
@@ -232,6 +234,7 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Fork:
+            fprintf(stderr, "In fork\n");
             prevThread = currentThread;
             newThread = new(std::nothrow) Thread("forked"); //Find a way to get childId into child thread addrSpace
             machine -> WriteRegister(2, spaceId++); //Put semaphores around spaceID
@@ -310,6 +313,7 @@ void ReadArg(char* result, int size){ //Size refers to last index of array
 
     for (int i = 0; i < size; i++){
         physAddr = ConvertAddr(location);
+        fprintf(stderr, "PhysAddr: %d, char from mem: %c\n", physAddr, machine -> mainMemory[physAddr]);
         if ((result[i] = machine->mainMemory[physAddr]) == '\0')
             break;
         location++;
@@ -337,7 +341,7 @@ int ConvertAddr (int virtualAddress){
     int virtPage = virtualAddress / PageSize;
     int offset = virtualAddress % PageSize;
     
-    return currentThread -> space -> pageTable[virtPage].physicalPage * PageSize + offset;
+    return ((currentThread -> space -> pageTable[virtPage].physicalPage) * PageSize) + offset;
 }
 
 void CopyThread(int prevThreadPtr){

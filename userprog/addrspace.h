@@ -56,7 +56,7 @@ class AddrSpace {
 #endif					// for now!
 
   private:
-    
+    int convertVirtualtoPhysical(int virtualAddr); 
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
 

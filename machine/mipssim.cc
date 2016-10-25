@@ -93,6 +93,9 @@ TypeToReg(RegType reg, Instruction *instr)
 void
 Machine::OneInstruction(Instruction *instr)
 {
+    
+    fprintf(stderr, "r5 in one instruction: %d\n", machine -> ReadRegister(5));
+    
     int raw;
     int nextLoadReg = 0; 	
     int nextLoadValue = 0; 	// record delayed load operation, to apply
