@@ -61,8 +61,7 @@ SwapHeader (NoffHeader *noffH)
 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
-    fprintf(stderr, "addrspace created\n");
-    
+     
     stdOut = new(std::nothrow) OpenFile(1);
     stdIn = new(std::nothrow) OpenFile(0);
 
@@ -99,7 +98,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	   pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
 	   bitLock -> Acquire();
 	   pageTable[i].physicalPage = memMap -> Find();
-       bitLock -> Release();
+           bitLock -> Release();
       //pageTable[i].physicalPage = i;
 	   pageTable[i].valid = true;
 	   pageTable[i].use = false;
@@ -140,8 +139,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
     fileVector[0] = stdIn;
     fileVector[1] = stdOut;
 
-    fprintf(stderr, "addrspace exited\n");
-    
 }
 
 AddrSpace::AddrSpace (AddrSpace* copySpace){
@@ -350,7 +347,7 @@ int AddrSpace::convertVirtualtoPhysical(int virtualAddr){
     int virtualPage = virtualAddr / PageSize;
     int offset = virtualAddr % PageSize;
 
-    return pageTable[virtualPage].physicalPage + offset;    
+    return pageTable[virtualPage].physicalPage * PageSize + offset;    
 }
 
 

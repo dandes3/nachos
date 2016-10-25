@@ -101,7 +101,6 @@ ExceptionHandler(ExceptionType which)
 {
 //IMPORTANT: All code written assumes that ExceptionHandler cannot be executed by two threads concurrently 
 
-   //fprintf(stderr, "write to console\n");
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
     int size, intoBuf, readBytes, fileType, physIntoBuf, cid;
@@ -112,10 +111,9 @@ ExceptionHandler(ExceptionType which)
     char* arg, *readContent, stdinChar;
 #endif
     
-     fprintf(stderr, "Size: %d\n", machine -> ReadRegister(5));
     switch (which) {
     case SyscallException:
-        fprintf(stderr, "in syscall\n");
+        //fprintf(stderr, "in syscall\n");
         switch (type) {
         case SC_Halt:
             DEBUG('a', "Shutdown, initiated by user program.\n");
@@ -208,8 +206,6 @@ ExceptionHandler(ExceptionType which)
 
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
-      
-            fprintf(stderr, "Size: %d\n", size);
             
             //Pull content to be written into local memory
             arg = new(std::nothrow) char[size];
@@ -219,7 +215,6 @@ ExceptionHandler(ExceptionType which)
             fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
 
             if (fileType  == 1){ //stdout
-                fprintf(stderr, "write to console\n");
                 for (int i = 0; i < size; i++)
                     sConsole -> PutChar(arg[i]); //Put each char using SynchConsole
             } 
@@ -269,7 +264,7 @@ ExceptionHandler(ExceptionType which)
 #endif
     
     case NoException:
-        fprintf(stderr, "NoException\n");
+       // fprintf(stderr, "NoException\n");
           break;
         
     case ReadOnlyException:
@@ -313,7 +308,7 @@ void ReadArg(char* result, int size){ //Size refers to last index of array
 
     for (int i = 0; i < size; i++){
         physAddr = ConvertAddr(location);
-        fprintf(stderr, "PhysAddr: %d, char from mem: %c\n", physAddr, machine -> mainMemory[physAddr]);
+        //fprintf(stderr, "PhysAddr: %d, char from mem: %c\n", physAddr, machine -> mainMemory[physAddr]);
         if ((result[i] = machine->mainMemory[physAddr]) == '\0')
             break;
         location++;

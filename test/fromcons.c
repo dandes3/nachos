@@ -19,8 +19,6 @@ main()
   int count=0;
   char c;
  
-  int test = 10/ 0;
-
   while (1) {
     Read(&c, 1, ConsoleInput);
     if ( c == 'Q' ) {

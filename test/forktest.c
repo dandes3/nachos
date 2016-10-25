@@ -5,7 +5,7 @@ main()
 {
     int i;
 
-    if ( 1){
+    if ( Fork() == 0){
 	for (i = 0; i < 5; i ++)
           prints("Child", ConsoleOutput);
         prints("\n", ConsoleOutput);
