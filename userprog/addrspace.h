@@ -15,7 +15,6 @@
 
 #include "copyright.h"
 #include "filesys.h"
-#include <map>
 
 typedef int OpenFileId;	
 
@@ -49,8 +48,6 @@ class AddrSpace {
     OpenFile* stdOut;  //Cookie corresponding to stdOut, not a "real" OpenFile object
     OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
     int registerVector[40];
-    map<SpaceId, ChildInfo*> childMap;
-    AddrSpace* parentSpace = NULL;
     int mySpaceId;
     
 #endif

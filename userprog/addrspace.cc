@@ -61,6 +61,8 @@ SwapHeader (NoffHeader *noffH)
 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
+    fprintf(stderr, "addrspace created\n");
+    
     stdOut = new(std::nothrow) OpenFile(1);
     stdIn = new(std::nothrow) OpenFile(0);
 
@@ -95,9 +97,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
     pageTable = new(std::nothrow) TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
 	   pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	   bitLock -> Acquire();
-	   pageTable[i].physicalPage = memMap -> Find();
-       bitLock -> Release();
+	  // bitLock -> Acquire();
+	   //pageTable[i].physicalPage = memMap -> Find();
+      // bitLock -> Release();
+      pageTable[i].physicalPage = i;
 	   pageTable[i].valid = true;
 	   pageTable[i].use = false;
 	   pageTable[i].dirty = false;
@@ -115,13 +118,15 @@ AddrSpace::AddrSpace(OpenFile *executable)
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
 			noffH.code.virtualAddr, noffH.code.size);
-        executable->ReadAt(&(machine->mainMemory[pageTable[noffH.code.virtualAddr].physicalPage]),
+        //executable->ReadAt(&(machine->mainMemory[pageTable[noffH.code.virtualAddr].physicalPage]),
+         executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
 			noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
 			noffH.initData.virtualAddr, noffH.initData.size);
-        executable->ReadAt(&(machine->mainMemory[pageTable[noffH.initData.virtualAddr].physicalPage]),
+        //executable->ReadAt(&(machine->mainMemory[pageTable[noffH.initData.virtualAddr].physicalPage]),
+        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
     
@@ -131,6 +136,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     fileVector[0] = stdIn;
     fileVector[1] = stdOut;
 
+    fprintf(stderr, "addrspace exited\n");
     
 }
 
@@ -167,8 +173,6 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
         for (int j = 0; j < PageSize; j ++)
             machine -> mainMemory[curPhysMemAddr] = machine -> mainMemory[copyPhysMemAddr];
     }
-    
-    parentSpace = copySpace;
     
 }
 

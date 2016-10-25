@@ -18,6 +18,7 @@
 #include "timer.h"
 #include "bitmap.h"
 #include "syscall.h"
+#include "joinlist.h"
 #include <new>
 
 // Initialization and cleanup routines
@@ -33,6 +34,8 @@ extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
 extern SpaceId spaceId;
+extern JoinList *joinList;
+extern Semaphore *joinSemaphore;
 
 #ifdef USER_PROGRAM
 #include "machine.h"

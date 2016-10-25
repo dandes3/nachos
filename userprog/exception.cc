@@ -101,6 +101,7 @@ ExceptionHandler(ExceptionType which)
 {
 //IMPORTANT: All code written assumes that ExceptionHandler cannot be executed by two threads concurrently 
 
+   //fprintf(stderr, "write to console\n");
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
     int size, intoBuf, readBytes, fileType, physIntoBuf, cid;
@@ -113,6 +114,7 @@ ExceptionHandler(ExceptionType which)
 
     switch (which) {
     case SyscallException:
+        fprintf(stderr, "in syscall\n");
         switch (type) {
         case SC_Halt:
             DEBUG('a', "Shutdown, initiated by user program.\n");
@@ -201,7 +203,8 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Write:
-            DEBUG('a', "Write entered\n");
+            fprintf(stderr, "write to console\n");
+            DEBUG('p', "Write entered\n");
 
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
@@ -214,6 +217,7 @@ ExceptionHandler(ExceptionType which)
             fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
 
             if (fileType  == 1){ //stdout
+                fprintf(stderr, "write to console\n");
                 for (int i = 0; i < size; i++)
                     sConsole -> PutChar(arg[i]); //Put each char using SynchConsole
             } 
@@ -231,28 +235,23 @@ ExceptionHandler(ExceptionType which)
             prevThread = currentThread;
             newThread = new(std::nothrow) Thread("forked"); //Find a way to get childId into child thread addrSpace
             machine -> WriteRegister(2, spaceId++); //Put semaphores around spaceID
-            currentThread -> childMap[spaceId] = new ChildInfo; //Potential error; pointer may point out of scope
-            currentThread -> childMap[spaceId] -> joinSemaphore = new Semaphore("name"); 
             IncrementPc();
             newThread -> Fork(CopyThread, (int)prevThread); //Probably won't work, where does newThread go after finishing CopyThread
             currentThread -> Yield();
+            break;
             
         case SC_Join:
             cid = machine -> ReadRegister(2);
-            if (currentThread -> childMap.find(cid) != currentThread -> childMap.end()){
-                currentThread -> childMap[cid] -> joinSemaphore -> P();
-                machine -> WriteRegister(2, currentThread -> childMap[cid] -> exitVal);
-                delete currentThread -> childMap[cid];
-                currentThread -> childMap.erase(cid);
-            }
+    
             
-            else
-                machine -> WriteRegister(2, -1); 
+            
+            machine -> WriteRegister(2, -1); 
             
             IncrementPc();
+            break;
             
         case SC_Exit:
-            
+            break;
             
             
 #endif              
@@ -265,7 +264,35 @@ ExceptionHandler(ExceptionType which)
     HandleTLBFault(machine->ReadRegister(BadVAddrReg));
     break;
 #endif
-    default: ;
+    
+    case NoException:
+        fprintf(stderr, "NoException\n");
+          break;
+        
+    case ReadOnlyException:
+        fprintf(stderr, "ReadOnly\n");
+          break;
+        
+    case BusErrorException:
+        fprintf(stderr, "BusError\n");// Translation resulted in an 
+          break;
+					    // invalid physical address
+    case AddressErrorException: // Unaligned reference or one that
+        fprintf(stderr, "AddressError\n");
+          break;
+					    // was beyond the end of the
+					    // address space
+    case OverflowException:
+        fprintf(stderr, "overflow\n");// Integer overflow in add or sub.
+          break;
+    case IllegalInstrException:
+        //fprintf(stderr, "IllegalInstr\n");// Unimplemented or reserved instr.
+		break;
+    case NumExceptionTypes:
+        fprintf(stderr, "NumExceptionTypes\n");
+        break;
+    default: 
+        fprintf(stderr, "defaulting\n");
     }
     
     
@@ -316,6 +343,7 @@ int ConvertAddr (int virtualAddress){
 void CopyThread(int prevThreadPtr){
     Thread* prevThread = (Thread*) prevThreadPtr;
     currentThread -> space = new (std::nothrow) AddrSpace(prevThread -> space);
+    prevThread -> RestoreUserState();
     machine -> WriteRegister(2, 0);
 }
 
