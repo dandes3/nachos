@@ -54,6 +54,7 @@ void SynchConsole::PutChar(char c) //Lock the writelock and push character, hang
     writeLock->Acquire();
     console->PutChar(c);
     writeSem -> P();
+    printf("Exiting putchar\n");
     writeLock->Release();
 }
 

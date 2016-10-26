@@ -34,7 +34,7 @@ CPP = /usr/bin/cpp -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR) -DCHANGED -nostartfiles
 
-all: halt shell matmult sort hellocons fromcons hellofile fileio forktest
+all: halt shell matmult sort hellocons fromcons hellofile fileio forktest fork
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -96,4 +96,9 @@ forktest: forktest.o start.o
 	$(LD) $(LDFLAGS) start.o forktest.o -o forktest.coff
 	../bin/coff2noff forktest.coff forktest
 
+fork.c: fork.c
+	$(CC) $(CFLAGS) -c fork.c
+fork: fork.o start.o
+	$(LD) $(LDFLAGS) start.o fork.o -o fork.coff
+	../bin/coff2noff fork.coff fork
 

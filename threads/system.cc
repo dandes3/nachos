@@ -33,6 +33,7 @@ SynchConsole *sConsole;
 BitMap *memMap;
 Lock *bitLock;
 SpaceId spaceId;
+Semaphore *forkSem;
 #endif
 
 #ifdef NETWORK
@@ -159,6 +160,7 @@ Initialize(int argc, char **argv)
     memMap = new(std::nothrow) BitMap(NumPhysPages);
     bitLock = new(std::nothrow) Lock("bitLock");
     spaceId = 1;
+    forkSem = new(std::nothrow) Semaphore("forkSem", 0);
 #endif
 
 #ifdef FILESYS

@@ -6,13 +6,11 @@ main()
     int i;
 
     if ( Fork() == 0){
-	for (i = 0; i < 5; i ++)
           prints("Child", ConsoleOutput);
         prints("\n", ConsoleOutput);
      }
      
      else{
-	for (i = 0; i < 5; i ++)
 	  prints("Parent", ConsoleOutput);
         prints("\n", ConsoleOutput);
      }

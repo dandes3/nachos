@@ -171,8 +171,10 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
         int curPhysMemAddr = pageTable[i].physicalPage * PageSize;
         int copyPhysMemAddr = copySpace -> pageTable[i].physicalPage * PageSize;
         
-        for (int j = 0; j < PageSize; j ++)
+        for (int j = 0; j < PageSize; j ++){
+            //fprintf(stderr, "newMem: %d, oldMem: %d\n", curPhysMemAddr + j, copyPhysMemAddr + j);
             machine -> mainMemory[curPhysMemAddr + j] = machine -> mainMemory[copyPhysMemAddr + j];
+        }
     }
     
 }

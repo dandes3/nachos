@@ -36,6 +36,7 @@ extern Timer *timer;				// the hardware alarm clock
 extern SpaceId spaceId;
 extern JoinList *joinList;
 extern Semaphore *joinSemaphore;
+extern Semaphore *forkSem;
 
 #ifdef USER_PROGRAM
 #include "machine.h"

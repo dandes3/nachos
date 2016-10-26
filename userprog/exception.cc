@@ -203,6 +203,7 @@ ExceptionHandler(ExceptionType which)
             
         case SC_Write:
             DEBUG('p', "Write entered\n");
+            printf("Write entered by %s\n", currentThread -> getName());
 
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
@@ -225,17 +226,25 @@ ExceptionHandler(ExceptionType which)
                 writeFile -> offsetLock -> Release();
             }
             
+            fprintf(stderr, "PC in write: %d\n", machine -> ReadRegister(PCReg));
             IncrementPc();
             break;
             
         case SC_Fork:
             fprintf(stderr, "In fork\n");
+            fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
             prevThread = currentThread;
             newThread = new(std::nothrow) Thread("forked"); //Find a way to get childId into child thread addrSpace
             machine -> WriteRegister(2, spaceId++); //Put semaphores around spaceID
             IncrementPc();
+            
+            for (int i = 0; i < NumTotalRegs; i++)
+                newThread -> userRegisters[i] = machine -> ReadRegister(i);
+            
             newThread -> Fork(CopyThread, (int)prevThread); //Probably won't work, where does newThread go after finishing CopyThread
-            currentThread -> Yield();
+            
+            forkSem -> P();
+            
             break;
             
         case SC_Join:
@@ -276,7 +285,7 @@ ExceptionHandler(ExceptionType which)
           break;
 					    // invalid physical address
     case AddressErrorException: // Unaligned reference or one that
-        fprintf(stderr, "AddressError\n");
+          //fprintf(stderr, "AddressError\n");
           break;
 					    // was beyond the end of the
 					    // address space
@@ -340,10 +349,17 @@ int ConvertAddr (int virtualAddress){
 }
 
 void CopyThread(int prevThreadPtr){
+    fprintf(stderr, "In CopyThread\n");
     Thread* prevThread = (Thread*) prevThreadPtr;
     currentThread -> space = new (std::nothrow) AddrSpace(prevThread -> space);
-    prevThread -> RestoreUserState();
+    //prevThread -> RestoreUserState();
+    fprintf(stderr, "After AddrSpace is copied\n");
+    currentThread -> RestoreUserState();
     machine -> WriteRegister(2, 0);
+    fprintf(stderr, "PC in machine: %d, PC in child: %d\n", machine -> ReadRegister(PCReg), currentThread -> userRegisters[PCReg]);
+    
+    fprintf(stderr, "Before run\n");
+    forkSem -> V();
     machine -> Run();
 }
 
