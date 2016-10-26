@@ -344,6 +344,7 @@ void CopyThread(int prevThreadPtr){
     currentThread -> space = new (std::nothrow) AddrSpace(prevThread -> space);
     prevThread -> RestoreUserState();
     machine -> WriteRegister(2, 0);
+    machine -> Run();
 }
 
 #endif
