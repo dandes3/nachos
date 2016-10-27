@@ -206,7 +206,7 @@ ExceptionHandler(ExceptionType which)
         case SC_Write:
             DEBUG('p', "Write entered\n");
             //printf("Write entered by %s\n", currentThread -> getName());
-            //printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
+            printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
 
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
@@ -231,7 +231,8 @@ ExceptionHandler(ExceptionType which)
             
             
             IncrementPc();
-            //printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
+            printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
+            printf("%s's personal PC %d\n", currentThread -> getName(), currentThread -> userRegisters[PCReg]);
             break;
             
         case SC_Fork:
@@ -263,7 +264,7 @@ ExceptionHandler(ExceptionType which)
             forkSem -> P();
             machine -> WriteRegister(2, cid);
             
-            printf("Parent off semaphore\n");
+            //printf("Parent off semaphore\n");
             
             break;
             
@@ -272,8 +273,7 @@ ExceptionHandler(ExceptionType which)
             cid = machine -> ReadRegister(4);
            
             joinSem -> P();
-            joinNode = NULL;
-            joinList -> getNode(joinNode, currentThread, cid);
+            joinNode = joinList -> getNode(currentThread, cid);
             joinSem -> V();
             
             if (joinNode == NULL)
@@ -284,11 +284,12 @@ ExceptionHandler(ExceptionType which)
                 machine -> WriteRegister(2, joinNode -> exitVal);
                 
                 joinSem -> P();
+                //fprintf(stderr, "About to delete node\n");
                 joinList -> deleteNode(joinNode);
                 joinSem -> V();
             }
             
-            
+            //fprintf(stderr, "Exiting Join\n");
             
             IncrementPc();
             break;
@@ -416,12 +417,13 @@ void killThread(int exitVal){
         memMap -> Clear(space -> pageTable[i].physicalPage);   
     
     joinSem -> P();
-    JoinNode* joinNode = NULL;
-    joinList -> getNode(joinNode, (Thread*) space -> parentThreadPtr, space -> mySpaceId);
+    JoinNode* joinNode = joinList -> getNode((Thread*) space -> parentThreadPtr, space -> mySpaceId);
     joinSem -> V();
     
     joinNode -> exitVal = exitVal;
     joinNode -> permission -> V();
+    
+    fprintf(stderr, "Exiting killThread\n");
     
     currentThread -> Finish();
     

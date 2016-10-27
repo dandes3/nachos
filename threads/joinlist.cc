@@ -27,18 +27,19 @@ JoinList::addNode(Thread *me, SpaceId child){
 }
 
 
-void
-JoinList::getNode(JoinNode* retVal, Thread *me, SpaceId child){
+JoinNode * 
+JoinList::getNode(Thread *me, SpaceId child){
     
     JoinNode *cur;
     
     for (cur = head; cur != NULL; cur = cur -> next){
-        printf("in for loop, me == %d, cur parent == %d\n", me, cur -> parent);
-        printf("given childId: %d, cur child id: %d\n", child, cur -> childId);
+        //printf("in for loop, me == %d, cur parent == %d\n", me, cur -> parent);
+       // printf("given childId: %d, cur child id: %d\n", child, cur -> childId);
         if (cur -> parent == me && cur -> childId == child)
-            retVal = cur;
+            return cur;
     }
     printf("Null ret\n");
+    return NULL;
 }
 
 
@@ -60,14 +61,18 @@ JoinList::deleteNode(JoinNode *garbage){
                 delete temp;
             }
             
-            for (prev = head; prev -> next != cur; prev = prev -> next);
+            else{
+                for (prev = head; prev -> next != cur; prev = prev -> next);
             
-            prev -> next = cur -> next;
+                prev -> next = cur -> next;
             
-            if (cur == tail)
-                tail = prev;
+                if (cur == tail)
+                    tail = prev;
             
-            delete cur;
+                delete cur;
+            }
+            
+            break;
         }
     }
 }

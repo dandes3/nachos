@@ -14,23 +14,23 @@ main()
   int joinval;
   int openFile = Open("forktest.out");
 
-  prints("PARENT exists\n", openFile);
+  prints("PARENT exists\n", ConsoleOutput);
   kid = Fork();
   if (kid != 0) {
-    prints("PARENT after fork; kid pid is ", openFile);
-    printd((int)kid, openFile);
-    prints("\n", openFile);
+    prints("PARENT after fork; kid pid is ", ConsoleOutput);
+    printd((int)kid, ConsoleOutput);
+    prints("\n", ConsoleOutput);
     
     joinval = Join(kid);
     
-    prints("PARENT off Join with value of ", openFile);
-    printd(joinval, openFile);
-    prints("\n", openFile);
+    prints("PARENT off Join with value of ", ConsoleOutput);
+    printd(joinval, ConsoleOutput);
+    prints("\n", ConsoleOutput);
 
     Halt();
   /* not reached */
   } else {
-    prints("KID running, about to Exit()\n", openFile);
+    prints("KID running, about to Exit()\n", ConsoleOutput);
     Exit(17);
   }
 }
