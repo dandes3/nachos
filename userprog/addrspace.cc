@@ -154,9 +154,9 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
     pageTable = new(std::nothrow) TranslationEntry[numPages];
     
     for (i = 0; i < numPages; i++) {
-	   pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
+	   pageTable[i].virtualPage = copySpace -> pageTable[i].virtualPage;
 	   bitLock -> Acquire();
-	   pageTable[i].physicalPage = memMap -> Find();
+	   ASSERT((pageTable[i].physicalPage = memMap -> Find()) >= 0);
        bitLock -> Release();
 	   pageTable[i].valid = true;
 	   pageTable[i].use = false;
@@ -170,9 +170,9 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
     for (i = 0; i < numPages; i++){
         int curPhysMemAddr = pageTable[i].physicalPage * PageSize;
         int copyPhysMemAddr = copySpace -> pageTable[i].physicalPage * PageSize;
-        
+        //fprintf(stderr, "Virtual Page: %d, old Physical Page: %d, new Physical Page: %d\n", i, copySpace -> pageTable[i].physicalPage, pageTable[i].physicalPage );
         for (int j = 0; j < PageSize; j ++){
-            //fprintf(stderr, "newMem: %d, oldMem: %d\n", curPhysMemAddr + j, copyPhysMemAddr + j);
+          //  fprintf(stderr, "newMem: %d, oldMem: %d\n", curPhysMemAddr + j, copyPhysMemAddr + j);
             machine -> mainMemory[curPhysMemAddr + j] = machine -> mainMemory[copyPhysMemAddr + j];
         }
     }

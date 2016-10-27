@@ -34,6 +34,9 @@ BitMap *memMap;
 Lock *bitLock;
 SpaceId spaceId;
 Semaphore *forkSem;
+Semaphore *joinSem;
+Semaphore *spaceIdSem;
+JoinList *joinList;
 #endif
 
 #ifdef NETWORK
@@ -161,6 +164,9 @@ Initialize(int argc, char **argv)
     bitLock = new(std::nothrow) Lock("bitLock");
     spaceId = 1;
     forkSem = new(std::nothrow) Semaphore("forkSem", 0);
+    joinSem = new(std::nothrow) Semaphore("joinSem", 1);
+    spaceIdSem = new(std::nothrow) Semaphore("spaceIdSem", 1);
+    joinList =  new(std::nothrow) JoinList();
 #endif
 
 #ifdef FILESYS

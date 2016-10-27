@@ -34,8 +34,9 @@ extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
 extern SpaceId spaceId;
+extern Semaphore *spaceIdSem;
 extern JoinList *joinList;
-extern Semaphore *joinSemaphore;
+extern Semaphore *joinSem;
 extern Semaphore *forkSem;
 
 #ifdef USER_PROGRAM

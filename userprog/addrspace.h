@@ -49,7 +49,8 @@ class AddrSpace {
     OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
     int registerVector[40];
     int mySpaceId;
-    
+    int parentThreadPtr;
+    unsigned int numPages;		// Number of pages in the virtual 
 #endif
 #ifndef USE_TLB
     TranslationEntry *pageTable;	// Assume linear page table translation
@@ -57,7 +58,7 @@ class AddrSpace {
 
   private:
     int convertVirtualtoPhysical(int virtualAddr); 
-    unsigned int numPages;		// Number of pages in the virtual 
+    
 					// address space
 
 

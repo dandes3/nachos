@@ -10,7 +10,7 @@ typedef struct  JoinNode{
     Thread *parent;
     SpaceId childId;
     int exitVal;
-    Semaphore *access;
+    Semaphore *permission;
     JoinNode *next;
 } JoinNode;
 
@@ -24,7 +24,7 @@ class JoinList{
     public:
         JoinList();
         void addNode(Thread *me, SpaceId child);
-        JoinNode *getNode(Thread *me, SpaceId child);
+        void getNode(JoinNode *retVal,Thread *me, SpaceId child);
         void deleteNode(JoinNode *garbage);
         
     

@@ -12,26 +12,26 @@ main()
 
   SpaceId kid;
   int joinval;
+  int openFile = Open("forktest.out");
 
-  prints("PARENT exists\n", ConsoleOutput);
+  prints("PARENT exists\n", openFile);
   kid = Fork();
   if (kid != 0) {
-    prints("PARENT after fork; kid pid is ", ConsoleOutput);
-    printd((int)kid, ConsoleOutput);
-    prints("\n", ConsoleOutput);
+    prints("PARENT after fork; kid pid is ", openFile);
+    printd((int)kid, openFile);
+    prints("\n", openFile);
     
-    /*
     joinval = Join(kid);
     
-    prints("PARENT off Join with value of ", ConsoleOutput);
-    printd(joinval, ConsoleOutput);
-    prints("\n", ConsoleOutput);
-*/
+    prints("PARENT off Join with value of ", openFile);
+    printd(joinval, openFile);
+    prints("\n", openFile);
+
     Halt();
   /* not reached */
   } else {
-    prints("KID running, about to Exit()\n", ConsoleOutput);
-  /*  Exit(17);*/
+    prints("KID running, about to Exit()\n", openFile);
+    Exit(17);
   }
 }
 

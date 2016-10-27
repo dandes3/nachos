@@ -12,7 +12,7 @@ JoinList::addNode(Thread *me, SpaceId child){
     JoinNode *newNode = new(std::nothrow) JoinNode;
     newNode -> parent = me;
     newNode -> childId = child;
-    newNode -> access = new(std::nothrow) Semaphore("foo", 1);
+    newNode -> permission = new(std::nothrow) Semaphore("foo", 0);
     newNode -> next = NULL;
     
     if (head == NULL){
@@ -27,17 +27,18 @@ JoinList::addNode(Thread *me, SpaceId child){
 }
 
 
-JoinNode * 
-JoinList::getNode(Thread *me, SpaceId child){
+void
+JoinList::getNode(JoinNode* retVal, Thread *me, SpaceId child){
     
     JoinNode *cur;
     
     for (cur = head; cur != NULL; cur = cur -> next){
+        printf("in for loop, me == %d, cur parent == %d\n", me, cur -> parent);
+        printf("given childId: %d, cur child id: %d\n", child, cur -> childId);
         if (cur -> parent == me && cur -> childId == child)
-            return cur;
+            retVal = cur;
     }
-    
-    return NULL;
+    printf("Null ret\n");
 }
 
 
