@@ -26,7 +26,7 @@ class JoinList{
         void addNode(Thread *me, SpaceId child);
         JoinNode *getNode(Thread *me, SpaceId child);
         void deleteNode(JoinNode *garbage);
-        
+        void print();        
     
 };
 #endif

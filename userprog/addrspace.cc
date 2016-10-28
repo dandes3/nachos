@@ -120,7 +120,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
 			noffH.code.virtualAddr, noffH.code.size);
           executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.code.virtualAddr)]),
-         //executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
+	//executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
 			noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
@@ -129,7 +129,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
 			noffH.initData.virtualAddr, noffH.initData.size);
             executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.initData.virtualAddr)]),
-        //executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
+          //executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
     
@@ -250,6 +250,7 @@ void AddrSpace::RestoreState()
 {
 #ifndef USE_TLB
     machine->pageTable = pageTable;
+    fprintf(stderr, "Physical page one in memory after restore %d\n", machine -> pageTable[0].physicalPage);
     machine->pageTableSize = numPages;
 #endif
 }

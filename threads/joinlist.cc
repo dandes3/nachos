@@ -14,6 +14,7 @@ JoinList::addNode(Thread *me, SpaceId child){
     newNode -> childId = child;
     newNode -> permission = new(std::nothrow) Semaphore("foo", 0);
     newNode -> next = NULL;
+    newNode -> exitVal = 1337;
     
     if (head == NULL){
         head = newNode;
@@ -76,3 +77,24 @@ JoinList::deleteNode(JoinNode *garbage){
         }
     }
 }
+
+void
+JoinList::print(){
+	
+	JoinNode * cur;
+
+	for (cur = head; cur != NULL; cur = cur -> next){
+       printf("Parent: %s           ", cur -> parent -> getName());
+	}
+	printf("\n");
+   for (cur = head; cur != NULL; cur = cur -> next){
+       printf("ExitVal: %d    -->    ", cur -> exitVal);
+    }
+	printf("\n");
+   for (cur = head; cur != NULL; cur = cur -> next){
+       printf("ChildID: %d                 ", cur ->  childId);
+    }
+
+	printf("\n");
+}
+

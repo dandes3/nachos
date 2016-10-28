@@ -110,6 +110,7 @@ ExceptionHandler(ExceptionType which)
     Thread* newThread;
  
     char* arg, *readContent, stdinChar;
+    char childName[1024];
     JoinNode* joinNode;
 #endif
     
@@ -206,7 +207,7 @@ ExceptionHandler(ExceptionType which)
         case SC_Write:
             DEBUG('p', "Write entered\n");
             //printf("Write entered by %s\n", currentThread -> getName());
-            printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
+         //   printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
 
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
@@ -231,20 +232,24 @@ ExceptionHandler(ExceptionType which)
             
             
             IncrementPc();
-            printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
-            printf("%s's personal PC %d\n", currentThread -> getName(), currentThread -> userRegisters[PCReg]);
+          //  currentThread -> space -> RestoreState();
+     //       printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
+       //     printf("%s's personal PC %d\n", currentThread -> getName(), currentThread -> userRegisters[PCReg]);
             break;
             
         case SC_Fork:
-            fprintf(stderr, "In fork\n");
-            //fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
+
+            fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
+            fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+            fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
             
             spaceIdSem -> P();
             cid = spaceId ++;
+            bzero(childName, 1024);
+            snprintf(childName, 1024, "child%d", cid);
             spaceIdSem -> V();
             
-    
-            newThread = new(std::nothrow) Thread("forked"); //Find a way to get childId into child thread addrSpace
+            newThread = new(std::nothrow) Thread(childName); //Find a way to get childId into child thread addrSpace
             newThread -> space = new (std::nothrow) AddrSpace(currentThread -> space);
             newThread -> space -> parentThreadPtr = (int) currentThread;
             newThread -> space -> mySpaceId = cid;
@@ -255,21 +260,26 @@ ExceptionHandler(ExceptionType which)
             
             machine -> WriteRegister(2, 0); //Put semaphores around spaceID
             IncrementPc();
-            
+            currentThread -> SaveUserState();
+ 
             for (int i = 0; i < NumTotalRegs; i++)
                 newThread -> userRegisters[i] = machine -> ReadRegister(i);
             
-            newThread -> Fork(CopyThread, 0); //Probably won't work, where does newThread go after finishing CopyThread
+            newThread -> Fork(CopyThread, 0); 
             
+            //printf("JoinList after fork\n");
+            //joinList -> print();
+
             forkSem -> P();
+            currentThread -> space ->  RestoreState();
+            currentThread -> RestoreUserState();
             machine -> WriteRegister(2, cid);
-            
-            //printf("Parent off semaphore\n");
-            
+            printf("%s off lock semaphore\n", currentThread -> getName());
+            fprintf(stderr, "PC after fork: %d\n", machine -> ReadRegister(PCReg));
             break;
             
         case SC_Join:
-            fprintf(stderr, "In Join\n");
+            //fprintf(stderr, "In Join\n");
             cid = machine -> ReadRegister(4);
            
             joinSem -> P();
@@ -291,11 +301,14 @@ ExceptionHandler(ExceptionType which)
             
             //fprintf(stderr, "Exiting Join\n");
             
+            //printf("JoinList after join\n");
+            //joinList -> print();
+
             IncrementPc();
             break;
             
         case SC_Exit:
-            fprintf(stderr, "In Exit\n");
+            //fprintf(stderr, "In Exit\n");
             killThread(machine -> ReadRegister(4));
             break;
             
@@ -405,6 +418,12 @@ void CopyThread(int prevThreadPtr){
 
 void CopyThread(int garbage){
     forkSem -> V();
+     
+    currentThread -> space -> RestoreState();
+    for (int i = 0; i < NumTotalRegs; i++)
+       //printf("Machine : %d, forked thread: %d\n", machine -> ReadRegister(i), currentThread -> userRegisters[i]);
+	machine -> WriteRegister(i, currentThread -> userRegisters[i]);
+
     machine -> Run();
 }
 #endif
@@ -421,9 +440,11 @@ void killThread(int exitVal){
     joinSem -> V();
     
     joinNode -> exitVal = exitVal;
+    //printf("JoinList after exit\n");
+   // joinList -> print();
     joinNode -> permission -> V();
     
-    fprintf(stderr, "Exiting killThread\n");
+    //fprintf(stderr, "Exiting killThread\n");
     
     currentThread -> Finish();
     

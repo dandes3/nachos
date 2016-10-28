@@ -8,14 +8,14 @@ main()
     int openFile = Open("fork.out");
 
     if ( forkval == 0){
-          prints("Child\n", openFile);
-          prints("Child\n", openFile);
+          prints("Child\n", ConsoleOutput);
+          prints("Child\n", ConsoleOutput);
           Exit(0);
      }
      
      else{
-	    prints("Parent\n", openFile);
-        prints("\n", openFile);
+	    prints("Parent\n", ConsoleOutput);
+        prints("\n", ConsoleOutput);
         Join(forkval);
      }
     

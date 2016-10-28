@@ -131,6 +131,8 @@ Scheduler::Run (Thread *nextThread)
         currentThread->RestoreUserState();     // to restore, do it.
 	currentThread->space->RestoreState();
     }
+    else
+      printf("ADDRSPACE IS NULL!!!\n");
 #endif
 }
 
