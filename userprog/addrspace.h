@@ -47,7 +47,6 @@ class AddrSpace {
     OpenFile* stdIn;   //Cookie corresponding to stdIn, not a "real" OpenFile object
     OpenFile* stdOut;  //Cookie corresponding to stdOut, not a "real" OpenFile object
     OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
-    int registerVector[40];
     int mySpaceId;
     int parentThreadPtr;
     unsigned int numPages;		// Number of pages in the virtual 

@@ -98,7 +98,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	   pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
 	   bitLock -> Acquire();
 	   pageTable[i].physicalPage = memMap -> Find();
-           bitLock -> Release();
+       bzero(machine -> mainMemory + pageTable[i].physicalPage * PageSize, PageSize);
+       bitLock -> Release();
       //pageTable[i].physicalPage = i;
 	   pageTable[i].valid = true;
 	   pageTable[i].use = false;
@@ -111,7 +112,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
-    bzero(machine->mainMemory, size);
+    
 
   
 // then, copy in the code and data segments into memory
@@ -250,7 +251,7 @@ void AddrSpace::RestoreState()
 {
 #ifndef USE_TLB
     machine->pageTable = pageTable;
-    fprintf(stderr, "Physical page one in memory after restore %d\n", machine -> pageTable[0].physicalPage);
+    //fprintf(stderr, "Physical page one in memory after restore %d\n", machine -> pageTable[0].physicalPage);
     machine->pageTableSize = numPages;
 #endif
 }

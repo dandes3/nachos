@@ -96,6 +96,7 @@ void IncrementPc();
 void CopyThread(int prevThreadPtr);
 int ConvertAddr (int virtualAddress);
 void killThread(int exitVal);
+void execThread(int garbage);
 
 void
 ExceptionHandler(ExceptionType which)
@@ -239,9 +240,9 @@ ExceptionHandler(ExceptionType which)
             
         case SC_Fork:
 
-            fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
-            fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
-            fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
+            //fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
+            //fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+            //fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
             
             spaceIdSem -> P();
             cid = spaceId ++;
@@ -274,8 +275,9 @@ ExceptionHandler(ExceptionType which)
             currentThread -> space ->  RestoreState();
             currentThread -> RestoreUserState();
             machine -> WriteRegister(2, cid);
-            printf("%s off lock semaphore\n", currentThread -> getName());
-            fprintf(stderr, "PC after fork: %d\n", machine -> ReadRegister(PCReg));
+            //fprintf(stderr, "%s off lock semaphore\n", currentThread -> getName());
+            //fprintf(stderr, "PC after fork: %d\n", machine -> ReadRegister(PCReg));
+            //fprintf(stderr, "Leaving fork: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
             break;
             
         case SC_Join:
@@ -311,6 +313,29 @@ ExceptionHandler(ExceptionType which)
             //fprintf(stderr, "In Exit\n");
             killThread(machine -> ReadRegister(4));
             break;
+            
+        case SC_Exec:
+            //fprintf(stderr, "In exec\n");
+            arg = new(std::nothrow) char[128];
+            ReadArg(arg, 127);
+            
+            bzero(childName, 1024);
+            snprintf(childName, 1024, "%s exec", currentThread -> name);
+            newThread = new(std::nothrow) Thread(childName); //TODO: What if file doesn't exist?
+            //printf("name created\n");
+            newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg));
+            //printf("space created\n");
+            newThread -> space -> parentThreadPtr = currentThread -> space -> parentThreadPtr;
+            newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
+            newThread -> space -> stdIn = currentThread -> space -> stdIn;
+            newThread -> space -> stdOut = currentThread -> space -> stdOut;
+            
+            for (int i = 0; i < 20; i++)
+                newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
+            
+            newThread -> Fork(execThread, 0);
+            killThread(-12);
+            
             
             
 #endif              
@@ -417,16 +442,26 @@ void CopyThread(int prevThreadPtr){
 */
 
 void CopyThread(int garbage){
+    //printf("In CopyThread\n");
     forkSem -> V();
      
     currentThread -> space -> RestoreState();
+    //printf("Past RestoreState\n");
     for (int i = 0; i < NumTotalRegs; i++)
        //printf("Machine : %d, forked thread: %d\n", machine -> ReadRegister(i), currentThread -> userRegisters[i]);
-	machine -> WriteRegister(i, currentThread -> userRegisters[i]);
+	   machine -> WriteRegister(i, currentThread -> userRegisters[i]);
 
     machine -> Run();
 }
 #endif
+
+void execThread(int garbage){
+    currentThread -> space -> RestoreState();
+    currentThread -> space -> InitRegisters();
+    
+    machine -> Run();
+    
+}
 
 void killThread(int exitVal){
     
@@ -435,18 +470,20 @@ void killThread(int exitVal){
     for (int i = 0; i < space -> numPages; i ++)
         memMap -> Clear(space -> pageTable[i].physicalPage);   
     
-    joinSem -> P();
-    JoinNode* joinNode = joinList -> getNode((Thread*) space -> parentThreadPtr, space -> mySpaceId);
-    joinSem -> V();
-    
-    joinNode -> exitVal = exitVal;
-    //printf("JoinList after exit\n");
-   // joinList -> print();
-    joinNode -> permission -> V();
+    if (exitVal != -12){
+        joinSem -> P();
+        JoinNode* joinNode = joinList -> getNode((Thread*) space -> parentThreadPtr, space -> mySpaceId);
+        joinSem -> V();
+        
+        if (joinNode != NULL){
+            joinNode -> exitVal = exitVal;
+            //printf("JoinList after exit\n");
+            // joinList -> print();
+            joinNode -> permission -> V();
+        }
+    }
     
     //fprintf(stderr, "Exiting killThread\n");
     
-    currentThread -> Finish();
-    
-    
+    currentThread -> Finish();    
 }
