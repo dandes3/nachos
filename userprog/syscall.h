@@ -57,7 +57,9 @@ typedef int SpaceId;
  * of the current address space. Should not return unless there is an
  * error, in which case a -1 is returned.
  */
-int Exec(char *name);
+/*int Exec(char *name);*/
+
+int Exec(char *name, char *args[]);
  
 /* Only return once the the user program "id" has finished.  
  * Return the exit status.

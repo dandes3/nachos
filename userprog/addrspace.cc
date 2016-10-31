@@ -77,7 +77,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     }
     
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
-    printf("Past readat\n");
+    //printf("Past readat\n");
     if ((noffH.noffMagic != NOFFMAGIC) && 
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
     	SwapHeader(&noffH);
@@ -87,7 +87,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
         return;
     }
 
-    printf("Past noffcheck\n");
+    //printf("Past noffcheck\n");
 // how big is address space?
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size 
 			+ UserStackSize;	// we need to increase the size

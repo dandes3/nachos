@@ -12,7 +12,12 @@ main()
 
   SpaceId kid;
   int joinval;
+    char *args[3];
 
+  args[0] = "argument1";
+  args[1] = "argument2";
+  args[2] = (char *)0;
+  
   prints("PARENT exists\n", ConsoleOutput);
   kid = Fork();
   if (kid != 0) {
@@ -29,7 +34,7 @@ main()
     Halt();
   /* not reached */
   } else 
-    Exec("test/kid");
+    Exec("test/kid", args);
 }
 
 /* Print a null-terminated string "s" on open file descriptor "file". */

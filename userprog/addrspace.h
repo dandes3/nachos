@@ -51,6 +51,7 @@ class AddrSpace {
     int parentThreadPtr;
     bool failed;
     unsigned int numPages;		// Number of pages in the virtual 
+    char* fileName;
 #endif
 #ifndef USE_TLB
     TranslationEntry *pageTable;	// Assume linear page table translation

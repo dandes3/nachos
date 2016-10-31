@@ -322,7 +322,7 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Exec:
-            //fprintf(stderr, "In exec\n");
+            fprintf(stderr, "In exec\n");
             arg = new(std::nothrow) char[128];
             ReadArg(arg, 127);
             
@@ -342,11 +342,12 @@ ExceptionHandler(ExceptionType which)
             newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
             newThread -> space -> stdIn = currentThread -> space -> stdIn;
             newThread -> space -> stdOut = currentThread -> space -> stdOut;
+            newThread -> space -> fileName = arg;
             
             for (int i = 0; i < 20; i++)
                 newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
             
-            newThread -> Fork(execThread, 0);
+            newThread -> Fork(execThread, (int)machine -> ReadRegister(5));
             killThread(-12);
             ASSERT(false); //Should never be reached
 
@@ -468,10 +469,75 @@ void CopyThread(int garbage){
 }
 #endif
 
-void execThread(int garbage){
+void execThread(int argsInt){
     currentThread -> space -> RestoreState();
     currentThread -> space -> InitRegisters();
     
+    char** args = new(std::nothrow) char* [128];
+    int physAddr = ConvertAddr(argsInt);
+    printf("Phys addr is:%d, at that address is %c, as int is %d\n", physAddr, machine -> mainMemory[physAddr], machine -> mainMemory[physAddr] );
+    printf("At that address is: %d\n", machine -> mainMemory[ConvertAddr(machine -> mainMemory[physAddr])]);
+    
+    int str;
+    int argc = 0;
+    
+    printf("Above while\n");
+    while ((str = (int) &machine -> mainMemory[physAddr]) != 0){ 
+        printf("Str equals: %d\n", str);
+        int curChar = ConvertAddr((int)str);
+        int count = 0;
+        printf("IN while, curChar equals: %d\n", curChar);
+        
+        while (machine -> mainMemory[curChar] != '\0')
+            count ++;
+        
+        args[argc] = new(std::nothrow) char[count + 1]; //TODO: Check not over 128 args
+        argc ++;
+        
+        printf("Count: %d\n", count);
+    }
+    
+    
+     printf("execThread entered\n");
+    while (args[argc] != NULL){
+        fprintf(stderr, "Argument %d: %s\n", argc, args[argc]);
+        argc ++;
+    }
+    
+    printf("argc created\n");
+    
+    int sp = machine -> ReadRegister(StackReg);
+    
+    int len = strlen(currentThread -> space -> fileName) + 1;
+    sp -= len;
+    for (int i = 0; i < len; i++)
+        machine -> mainMemory[ConvertAddr(sp + i)] =  currentThread -> space -> fileName[i];
+    
+    printf("Filename put in mem\n");
+    
+    
+    for (int i = 0; i < argc; i ++){
+        
+        len = strlen(args[i]) + 1;
+        sp -= len;
+        for (int j = 0; i < len; j++)
+            machine -> mainMemory[ConvertAddr(sp + j)] = args[i][j];   
+     }
+    
+     sp = sp & ~3;
+     
+     sp -= sizeof(int) * argc;
+     
+     for (int i = 0; i < argc; i ++)
+         *(unsigned int *) &machine -> mainMemory[ConvertAddr(sp + i*4)] = WordToMachine((unsigned int) args[i]);
+     
+     machine -> WriteRegister(4, argc);
+     machine -> WriteRegister(5, sp);
+     
+     machine -> WriteRegister(StackReg, sp - 8);
+     
+    
+    printf("about run\n");
     machine -> Run();
     
 }
