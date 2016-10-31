@@ -252,6 +252,13 @@ ExceptionHandler(ExceptionType which)
             
             newThread = new(std::nothrow) Thread(childName); //Find a way to get childId into child thread addrSpace
             newThread -> space = new (std::nothrow) AddrSpace(currentThread -> space);
+            
+            if (newThread -> space -> failed){
+                machine -> WriteRegister(2, -1);
+                IncrementPc();
+                break;
+            }
+            
             newThread -> space -> parentThreadPtr = (int) currentThread;
             newThread -> space -> mySpaceId = cid;
             
@@ -321,10 +328,16 @@ ExceptionHandler(ExceptionType which)
             
             bzero(childName, 1024);
             snprintf(childName, 1024, "%s exec", currentThread -> name);
-            newThread = new(std::nothrow) Thread(childName); //TODO: What if file doesn't exist?
+            newThread = new(std::nothrow) Thread(childName); 
             //printf("name created\n");
             newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg));
-            //printf("space created\n");
+            if (newThread -> space -> failed){
+                machine -> WriteRegister(2, -1);
+                IncrementPc();
+                break;
+            }
+                
+            printf("space created\n");
             newThread -> space -> parentThreadPtr = currentThread -> space -> parentThreadPtr;
             newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
             newThread -> space -> stdIn = currentThread -> space -> stdIn;
@@ -335,8 +348,8 @@ ExceptionHandler(ExceptionType which)
             
             newThread -> Fork(execThread, 0);
             killThread(-12);
-            
-            
+            ASSERT(false); //Should never be reached
+
             
 #endif              
         default:

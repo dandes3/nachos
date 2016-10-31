@@ -61,7 +61,7 @@ SwapHeader (NoffHeader *noffH)
 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
-     
+    failed = false;
     stdOut = new(std::nothrow) OpenFile(1);
     stdIn = new(std::nothrow) OpenFile(0);
 
@@ -71,12 +71,23 @@ AddrSpace::AddrSpace(OpenFile *executable)
     unsigned int i;
 #endif
 
+    if (executable == NULL){
+        failed = true;
+        return;
+    }
+    
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
+    printf("Past readat\n");
     if ((noffH.noffMagic != NOFFMAGIC) && 
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
     	SwapHeader(&noffH);
-    ASSERT(noffH.noffMagic == NOFFMAGIC);
+    
+    if (noffH.noffMagic != NOFFMAGIC){
+        failed = true;
+        return;
+    }
 
+    printf("Past noffcheck\n");
 // how big is address space?
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size 
 			+ UserStackSize;	// we need to increase the size
@@ -84,8 +95,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumPhysPages);		// check we're not trying
-						// to run anything too big --
+    if (numPages > NumPhysPages){
+       failed = true; 
+       return;      // check we're not trying
+    }						// to run anything too big --
 						// at least until we have
 						// virtual memory
 
@@ -97,7 +110,12 @@ AddrSpace::AddrSpace(OpenFile *executable)
     for (i = 0; i < numPages; i++) {
 	   pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
 	   bitLock -> Acquire();
-	   pageTable[i].physicalPage = memMap -> Find();
+       
+	   if ((pageTable[i].physicalPage = memMap -> Find()) == -1){
+           failed = true;
+           return;
+       }
+       
        bzero(machine -> mainMemory + pageTable[i].physicalPage * PageSize, PageSize);
        bitLock -> Release();
       //pageTable[i].physicalPage = i;
@@ -143,6 +161,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 }
 
 AddrSpace::AddrSpace (AddrSpace* copySpace){
+    failed = false;
     stdOut = copySpace -> stdOut;
     stdIn = copySpace -> stdIn;
     unsigned int i;
@@ -157,7 +176,11 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
     for (i = 0; i < numPages; i++) {
 	   pageTable[i].virtualPage = copySpace -> pageTable[i].virtualPage;
 	   bitLock -> Acquire();
-	   ASSERT((pageTable[i].physicalPage = memMap -> Find()) >= 0);
+	   if ((pageTable[i].physicalPage = memMap -> Find()) < 0){
+           failed = true;
+           return;
+       }
+       
        bitLock -> Release();
 	   pageTable[i].valid = true;
 	   pageTable[i].use = false;
