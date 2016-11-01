@@ -91,7 +91,7 @@ machine->tlb[victim].readOnly = false;
 //	are in machine.h.
 //----------------------------------------------------------------------
 
-void ReadArg(char* result, int size);
+void ReadArg(char* result, int size, bool write);
 void IncrementPc();
 void CopyThread(int prevThreadPtr);
 int ConvertAddr (int virtualAddress);
@@ -129,7 +129,7 @@ ExceptionHandler(ExceptionType which)
             DEBUG('a', "Create entered\n");
 
             arg = new(std::nothrow) char[128];
-            ReadArg(arg, 127); //put name of file in arg, max 127 chars, truncated if over 
+            ReadArg(arg, 127, false); //put name of file in arg, max 127 chars, truncated if over 
     
             fileSystem -> Create(arg, -1); 
             
@@ -140,7 +140,7 @@ ExceptionHandler(ExceptionType which)
             DEBUG('a', "Open entered\n");
 
             arg = new(std::nothrow) char[128];
-            ReadArg(arg, 127);
+            ReadArg(arg, 127, false);
 
             fileId = currentThread -> space -> fileOpen(arg); //Put OpenFile object in thread file vector, get file descriptor
             machine -> WriteRegister(2, fileId); //Return file descriptor
@@ -217,7 +217,7 @@ ExceptionHandler(ExceptionType which)
             //Pull content to be written into local memory
             arg = new(std::nothrow) char[size];
             DEBUG('p', "arg allocated\n");
-            ReadArg(arg, size);
+            ReadArg(arg, size, true);
            
 	    DEBUG('p', "After ReadArg\n");
  
@@ -237,7 +237,7 @@ ExceptionHandler(ExceptionType which)
             
             
             IncrementPc();
-            fprintf(stderr, "Exiting write: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+            //fprintf(stderr, "Exiting write: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
           //  currentThread -> space -> RestoreState();
      //       printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
        //     printf("%s's personal PC %d\n", currentThread -> getName(), currentThread -> userRegisters[PCReg]);
@@ -245,8 +245,8 @@ ExceptionHandler(ExceptionType which)
             
         case SC_Fork:
 
-            fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
-            fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+          //  fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
+          //  fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
             //fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
             
             spaceIdSem -> P();
@@ -289,7 +289,7 @@ ExceptionHandler(ExceptionType which)
             machine -> WriteRegister(2, cid);
             //fprintf(stderr, "%s off lock semaphore\n", currentThread -> getName());
            // fprintf(stderr, "PC after fork: %d\n", machine -> ReadRegister(PCReg));
-            fprintf(stderr, "Leaving fork: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+            //fprintf(stderr, "Leaving fork: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
             break;
             
         case SC_Join:
@@ -315,8 +315,8 @@ ExceptionHandler(ExceptionType which)
             
             //fprintf(stderr, "Exiting Join\n");
             
-            printf("JoinList after join\n");
-            joinList -> print();
+            //printf("JoinList after join\n");
+            //joinList -> print();
 
             IncrementPc();
             break;
@@ -327,10 +327,9 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Exec:
-            fprintf(stderr, "In exec\n");
+            //fprintf(stderr, "In exec\n");
             arg = new(std::nothrow) char[128];
-            ReadArg(arg, 127);
-            
+            ReadArg(arg, 127, false); 
             bzero(childName, 1024);
             snprintf(childName, 1024, "%s exec", currentThread -> name);
             newThread = new(std::nothrow) Thread(childName); 
@@ -342,7 +341,7 @@ ExceptionHandler(ExceptionType which)
                 break;
             }
                 
-            printf("space created\n");
+            //printf("space created\n");
             newThread -> space -> parentThreadPtr = currentThread -> space -> parentThreadPtr;
             newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
             newThread -> space -> stdIn = currentThread -> space -> stdIn;
@@ -458,7 +457,7 @@ ExceptionHandler(ExceptionType which)
 * Pulls "size" number of characters from register 4, and puts them into
 * the local buffer "result".
 */
-void ReadArg(char* result, int size){ //Size refers to last index of array
+void ReadArg(char* result, int size, bool write){ //Size refers to last index of array
     
     int location, physAddr;
     location = machine->ReadRegister(4);
@@ -471,7 +470,8 @@ void ReadArg(char* result, int size){ //Size refers to last index of array
         location++;
     }
     
-    result[size] = '\0';
+    if (!write)
+       result[size] = '\0';
 }
 
 /*
@@ -530,7 +530,7 @@ void CopyThread(int garbage){
      
     currentThread -> space -> RestoreState();
     
-    fprintf(stderr, "In copythread, my pageTable %x, machine page table %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+   // fprintf(stderr, "In copythread, my pageTable %x, machine page table %x\n", currentThread -> space -> pageTable, machine -> pageTable);
     //printf("Past RestoreState\n");
     for (int i = 0; i < NumTotalRegs; i++)
        //printf("Machine : %d, forked thread: %d\n", machine -> ReadRegister(i), currentThread -> userRegisters[i]);
@@ -617,8 +617,8 @@ void killThread(int exitVal){
         
         if (joinNode != NULL){
             joinNode -> exitVal = exitVal;
-            //printf("JoinList after exit\n");
-            // joinList -> print();
+            printf("JoinList after exit\n");
+            joinList -> print();
             joinNode -> permission -> V();
         }
     }

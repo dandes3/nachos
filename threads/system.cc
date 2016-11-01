@@ -198,7 +198,7 @@ Cleanup()
     
 #ifdef USER_PROGRAM
     delete machine;
-    delete memMap;
+    //delete memMap;
 #endif
 
 #ifdef FILESYS_NEEDED
