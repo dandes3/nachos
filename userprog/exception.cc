@@ -233,6 +233,7 @@ ExceptionHandler(ExceptionType which)
             
             
             IncrementPc();
+            fprintf(stderr, "Exiting write: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
           //  currentThread -> space -> RestoreState();
      //       printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
        //     printf("%s's personal PC %d\n", currentThread -> getName(), currentThread -> userRegisters[PCReg]);
@@ -240,8 +241,8 @@ ExceptionHandler(ExceptionType which)
             
         case SC_Fork:
 
-            //fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
-            //fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+            fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
+            fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
             //fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
             
             spaceIdSem -> P();
@@ -268,23 +269,23 @@ ExceptionHandler(ExceptionType which)
             
             machine -> WriteRegister(2, 0); //Put semaphores around spaceID
             IncrementPc();
-            currentThread -> SaveUserState();
+            newThread -> SaveUserState();
  
             for (int i = 0; i < NumTotalRegs; i++)
                 newThread -> userRegisters[i] = machine -> ReadRegister(i);
             
             newThread -> Fork(CopyThread, 0); 
             
-            //printf("JoinList after fork\n");
-            //joinList -> print();
+            printf("JoinList after fork\n");
+            joinList -> print();
 
             forkSem -> P();
-            currentThread -> space ->  RestoreState();
+            //currentThread -> space ->  RestoreState();
             currentThread -> RestoreUserState();
             machine -> WriteRegister(2, cid);
             //fprintf(stderr, "%s off lock semaphore\n", currentThread -> getName());
-            //fprintf(stderr, "PC after fork: %d\n", machine -> ReadRegister(PCReg));
-            //fprintf(stderr, "Leaving fork: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+           // fprintf(stderr, "PC after fork: %d\n", machine -> ReadRegister(PCReg));
+            fprintf(stderr, "Leaving fork: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
             break;
             
         case SC_Join:
@@ -310,8 +311,8 @@ ExceptionHandler(ExceptionType which)
             
             //fprintf(stderr, "Exiting Join\n");
             
-            //printf("JoinList after join\n");
-            //joinList -> print();
+            printf("JoinList after join\n");
+            joinList -> print();
 
             IncrementPc();
             break;
@@ -322,7 +323,7 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Exec:
-            //fprintf(stderr, "In exec\n");
+            fprintf(stderr, "In exec\n");
             arg = new(std::nothrow) char[128];
             ReadArg(arg, 127);
             
@@ -337,58 +338,64 @@ ExceptionHandler(ExceptionType which)
                 break;
             }
                 
-            //printf("space created\n");
+            printf("space created\n");
             newThread -> space -> parentThreadPtr = currentThread -> space -> parentThreadPtr;
             newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
             newThread -> space -> stdIn = currentThread -> space -> stdIn;
             newThread -> space -> stdOut = currentThread -> space -> stdOut;
             newThread -> space -> fileName = arg;
             
-            execArgs = new(std::nothrow) char* [128];
+            
             argAddr = machine -> ReadRegister(5);
-            physAddr = ConvertAddr(argAddr);
-            //printf("Phys addr is:%d, at that address is %c, as int is %d\n", physAddr, machine -> mainMemory[physAddr], machine -> mainMemory[physAddr] );
-            //printf("At that address is: %d\n", machine -> mainMemory[ConvertAddr(machine -> mainMemory[physAddr])]);
-
-            argc = 0;
-
-           // printf("Above while\n");
-            while ((str = *(unsigned int *) &machine -> mainMemory[physAddr]) != 0){ 
-              //  printf("Str equals: %d\n", str);
-                int curChar = ConvertAddr((int)str);
-                int count = 0;
-                //printf("IN while, curChar equals: %d, and the char is: %c\n", curChar, machine -> mainMemory[curChar]);
-                
-                
-                while (machine -> mainMemory[curChar] != '\0'){
-                    str ++;
-                    curChar = ConvertAddr((int) str);
-                    count ++;
-                }
-                
-                execArgs[argc] = new(std::nothrow) char[count + 1]; //TODO: Check not over 128 args
-                
-                
-                str = str - count;
-                curChar = ConvertAddr((int)str);
-                count = 0;
-                while (machine -> mainMemory[curChar] != '\0'){
-                    execArgs[argc][count] = machine -> mainMemory[curChar];
-                    str ++;
-                    curChar = ConvertAddr((int) str);
-                    count ++;
-                }
-                
-                execArgs[argc][count] = '\0';
-                
-                argc ++;
-                
-                argAddr += 4;
+            if (argAddr != 0){
+                execArgs = new(std::nothrow) char* [128];
                 physAddr = ConvertAddr(argAddr);
-              //  printf("Count: %d\n", count);
+                //printf("Phys addr is:%d, at that address is %c, as int is %d\n", physAddr, machine -> mainMemory[physAddr], machine -> mainMemory[physAddr] );
+                //printf("At that address is: %d\n", machine -> mainMemory[ConvertAddr(machine -> mainMemory[physAddr])]);
+
+                argc = 0;
+
+            // printf("Above while\n");
+                while ((str = *(unsigned int *) &machine -> mainMemory[physAddr]) != 0){ 
+                //  printf("Str equals: %d\n", str);
+                    int curChar = ConvertAddr((int)str);
+                    int count = 0;
+                    //printf("IN while, curChar equals: %d, and the char is: %c\n", curChar, machine -> mainMemory[curChar]);
+                    
+                    
+                    while (machine -> mainMemory[curChar] != '\0'){
+                        str ++;
+                        curChar = ConvertAddr((int) str);
+                        count ++;
+                    }
+                    
+                    execArgs[argc] = new(std::nothrow) char[count + 1]; //TODO: Check not over 128 args
+                    
+                    
+                    str = str - count;
+                    curChar = ConvertAddr((int)str);
+                    count = 0;
+                    while (machine -> mainMemory[curChar] != '\0'){
+                        execArgs[argc][count] = machine -> mainMemory[curChar];
+                        str ++;
+                        curChar = ConvertAddr((int) str);
+                        count ++;
+                    }
+                    
+                    execArgs[argc][count] = '\0';
+                    
+                    argc ++;
+                    
+                    argAddr += 4;
+                    physAddr = ConvertAddr(argAddr);
+                //  printf("Count: %d\n", count);
+               }
+                
+                execArgs[argc] = NULL;
             }
             
-            execArgs[argc] = NULL;
+            else
+                execArgs = NULL;
             
             for (int i = 0; i < 20; i++)
                 newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
@@ -518,10 +525,12 @@ void CopyThread(int garbage){
     forkSem -> V();
      
     currentThread -> space -> RestoreState();
+    
+    fprintf(stderr, "In copythread, my pageTable %x, machine page table %x\n", currentThread -> space -> pageTable, machine -> pageTable);
     //printf("Past RestoreState\n");
     for (int i = 0; i < NumTotalRegs; i++)
        //printf("Machine : %d, forked thread: %d\n", machine -> ReadRegister(i), currentThread -> userRegisters[i]);
-	   machine -> WriteRegister(i, currentThread -> userRegisters[i]);
+	    machine -> WriteRegister(i, currentThread -> userRegisters[i]);
 
     machine -> Run();
 }
@@ -531,84 +540,59 @@ void execThread(int argsInt){
     currentThread -> space -> RestoreState();
     currentThread -> space -> InitRegisters();
     
-    char** args = (char**) argsInt;
-    int argc = 0;
-    
-    /*
-    char** args = new(std::nothrow) char* [128];
-    int physAddr = ConvertAddr(argsInt);
-    printf("Phys addr is:%d, at that address is %c, as int is %d\n", physAddr, machine -> mainMemory[physAddr], machine -> mainMemory[physAddr] );
-    printf("At that address is: %d\n", machine -> mainMemory[ConvertAddr(machine -> mainMemory[physAddr])]);
-    
-    int str;
-    int argc = 0;
-    
-    printf("Above while\n");
-    while ((str = (int) &machine -> mainMemory[physAddr]) != 0){ 
-        printf("Str equals: %d\n", str);
-        int curChar = ConvertAddr((int)str);
-        int count = 0;
-        printf("IN while, curChar equals: %d\n", curChar);
+    if (argsInt != 0){//TODO: If no args, file name should still be arg 0
+        char** args = (char**) argsInt;
+        int argc = 0;
         
-        while (machine -> mainMemory[curChar] != '\0')
-            count ++;
         
-        args[argc] = new(std::nothrow) char[count + 1]; //TODO: Check not over 128 args
-        argc ++;
+    // printf("execThread entered\n");
+        while (args[argc] != NULL){
+            //fprintf(stderr, "Argument %d: %s\n", argc, args[argc]);
+            argc ++;
+        }
         
-        printf("Count: %d\n", count);
-    }
-    
-    */
-    
-   // printf("execThread entered\n");
-    while (args[argc] != NULL){
-        //fprintf(stderr, "Argument %d: %s\n", argc, args[argc]);
-        argc ++;
-    }
-    
-    int* argAddrs = new(std::nothrow) int[argc + 1];
-    
-   // printf("argc created\n");
-    
-   // fprintf(stderr, "Sp equals %d\n", machine -> ReadRegister(StackReg));
-    
-    
-    int sp = machine -> ReadRegister(StackReg);
-    
-    int len = strlen(currentThread -> space -> fileName) + 1;
-    sp -= len;
-    for (int i = 0; i < len; i++)
-        machine -> mainMemory[ConvertAddr(sp + i)] =  currentThread -> space -> fileName[i];
-    
-    argAddrs[0] = sp;
-    //fprintf(stderr, "Filename put in mem\n");
-    
-    
-    for (int i = 0; i < argc; i ++){
-        //fprintf(stderr, "Argumet: %s, Arglen: %d, Sp physaddr: %d
-        len = strlen(args[i]) + 1;
+        int* argAddrs = new(std::nothrow) int[argc + 1];
+        
+    // printf("argc created\n");
+        
+    // fprintf(stderr, "Sp equals %d\n", machine -> ReadRegister(StackReg));
+        
+        
+        int sp = machine -> ReadRegister(StackReg);
+        
+        int len = strlen(currentThread -> space -> fileName) + 1;
         sp -= len;
-        for (int j = 0; j < len; j++)
-            machine -> mainMemory[ConvertAddr(sp + j)] = args[i][j];   
+        for (int i = 0; i < len; i++)
+            machine -> mainMemory[ConvertAddr(sp + i)] =  currentThread -> space -> fileName[i];
         
-        argAddrs[i + 1] = sp;
-     }
-     
-     //fprintf(stderr, "Args put in mem\n");
-    
-     sp = sp & ~3;
-     
-     sp -= sizeof(int) * (argc + 1);
-     
-     for (int i = 0; i < argc + 1; i ++)
-         *(unsigned int *) &machine -> mainMemory[ConvertAddr(sp + i*4)] = WordToMachine((unsigned int) argAddrs[i]);
-     
-     machine -> WriteRegister(4, argc + 1);
-     machine -> WriteRegister(5, sp);
-     
-     machine -> WriteRegister(StackReg,sp - 8);
-     
+        argAddrs[0] = sp;
+        //fprintf(stderr, "Filename put in mem\n");
+        
+        
+        for (int i = 0; i < argc; i ++){
+            //fprintf(stderr, "Argumet: %s, Arglen: %d, Sp physaddr: %d
+            len = strlen(args[i]) + 1;
+            sp -= len;
+            for (int j = 0; j < len; j++)
+                machine -> mainMemory[ConvertAddr(sp + j)] = args[i][j];   
+            
+            argAddrs[i + 1] = sp;
+        }
+        
+        //fprintf(stderr, "Args put in mem\n");
+        
+        sp = sp & ~3;
+        
+        sp -= sizeof(int) * (argc + 1);
+        
+        for (int i = 0; i < argc + 1; i ++)
+            *(unsigned int *) &machine -> mainMemory[ConvertAddr(sp + i*4)] = WordToMachine((unsigned int) argAddrs[i]);
+        
+        machine -> WriteRegister(4, argc + 1);
+        machine -> WriteRegister(5, sp);
+        
+        machine -> WriteRegister(StackReg,sp - 8);
+    }
     
    // fprintf(stderr, "about run\n");
     machine -> Run();

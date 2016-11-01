@@ -24,17 +24,18 @@ main()
    /* Halt();*/
   /* not reached */
   } else {
+           int join2;
     	   SpaceId grandKid = Fork();
-
- 	   if (kid != 0){	
-    	   prints("Grand PARENT after fork; kid pid is ", ConsoleOutput);
-  	      printd((int)kid, ConsoleOutput);
+            
+ 	   if (grandKid != 0){	
+    	   prints("Grand PARENT after fork; grandKid pid is ", ConsoleOutput);
+  	      printd((int)grandKid, ConsoleOutput);
          prints("\n", ConsoleOutput);
 
-    	   joinval = Join(grandKid);
+    	   join2 = Join(grandKid);
 
     	   prints("Grand PARENT off Join with value of ", ConsoleOutput);
-   	   printd(joinval, ConsoleOutput);
+   	   printd(join2, ConsoleOutput);
     	   prints("\n", ConsoleOutput);
 
          prints("KID about to Exit()\n", ConsoleOutput);
@@ -42,18 +43,18 @@ main()
       }
 
       else{
-
+         int join3;
          SpaceId greatGrandKid = Fork();
 
-         if (kid != 0){
-            prints("PARENT after fork; kid pid is ", ConsoleOutput);
-            printd((int)kid, ConsoleOutput);
+         if (greatGrandKid != 0){
+            prints("PARENT after fork; greatGrandKid pid is ", ConsoleOutput);
+            printd((int)greatGrandKid, ConsoleOutput);
             prints("\n", ConsoleOutput);
 
-            joinval = Join(greatGrandKid);
+            join3 = Join(greatGrandKid);
 
             prints("PARENT off Join with value of ", ConsoleOutput);
-            printd(joinval, ConsoleOutput);
+            printd(join3, ConsoleOutput);
             prints("\n", ConsoleOutput);
 
             prints("Grand KID about to Exit()\n", ConsoleOutput);
