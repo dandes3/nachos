@@ -213,10 +213,14 @@ ExceptionHandler(ExceptionType which)
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
             
+            DEBUG('p', "size is: %d\n", size); 
             //Pull content to be written into local memory
             arg = new(std::nothrow) char[size];
+            DEBUG('p', "arg allocated\n");
             ReadArg(arg, size);
-            
+           
+	    DEBUG('p', "After ReadArg\n");
+ 
             writeFile = currentThread -> space -> readWrite(fileId); //OpenFile object corresponding to file descriptor
             fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
 

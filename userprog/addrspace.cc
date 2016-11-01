@@ -177,10 +177,10 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
 	   pageTable[i].virtualPage = copySpace -> pageTable[i].virtualPage;
 	   bitLock -> Acquire();
 	   if ((pageTable[i].physicalPage = memMap -> Find()) < 0){
-           failed = true;
-           return;
-       }
-       
+               failed = true;
+                return;
+           }
+           bzero(machine -> mainMemory + pageTable[i].physicalPage * PageSize, PageSize);
        bitLock -> Release();
 	   pageTable[i].valid = true;
 	   pageTable[i].use = false;

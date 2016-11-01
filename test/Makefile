@@ -32,7 +32,7 @@ LD = $(GCCDIR)decstation-ultrix-ld
 
 CPP = /usr/bin/cpp -E
 INCDIR =-I../userprog -I../threads
-CFLAGS = -G 0 -c $(INCDIR) -DCHANGED -nostartfiles
+CFLAGS = -g -G 0 -c $(INCDIR) -DCHANGED -nostartfiles
 
 all: halt shell matmult sort hellocons fromcons hellofile fileio forktest fork grandchildren parentchild kid seqchild deepfork deepkid1 deepkid2 maxfork argkid argtest argseqchild
 
