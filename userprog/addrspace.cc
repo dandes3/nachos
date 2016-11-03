@@ -95,6 +95,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
+    //fprintf(stderr, "Physical pages taken by exec:");
     if (numPages > NumPhysPages){
        failed = true; 
        return;      // check we're not trying
@@ -116,7 +117,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
            failed = true;
            return;
        }
-       
+      // fprintf(stderr, "%d ", pageTable[i].physicalPage);
        bzero(machine -> mainMemory + pageTable[i].physicalPage * PageSize, PageSize);
        bitLock -> Release();
       //pageTable[i].physicalPage = i;
@@ -127,21 +128,20 @@ AddrSpace::AddrSpace(OpenFile *executable)
 					// a separate page, we could set its 
 					// pages to be read-only
     }
+    //fprintf(stderr, "\n");
 #endif    
 
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
     
 
-  
+  /*
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
         //fprintf(stderr, "init data virtual add: %d\n", noffH.code.virtualAddr);
-        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
-			noffH.code.virtualAddr, noffH.code.size);
-          executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.code.virtualAddr)]),
-	//executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
-			noffH.code.size, noffH.code.inFileAddr);
+        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
+         
+        executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.code.virtualAddr)]), noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
         //fprintf(stderr, "init data virtual add: %d", noffH.initData.virtualAddr);
@@ -149,8 +149,28 @@ AddrSpace::AddrSpace(OpenFile *executable)
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
 			noffH.initData.virtualAddr, noffH.initData.size);
             executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.initData.virtualAddr)]),
-          //executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
 			noffH.initData.size, noffH.initData.inFileAddr);
+    }
+    
+    */
+      if (noffH.code.size > 0) {
+        //fprintf(stderr, "init data virtual add: %d\n", noffH.code.virtualAddr);
+        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
+        
+        for (int j = 0; j < noffH.code.size; j ++){
+            //fprintf(stderr, "Virtual addr + j: %d, Physcial addr: %d\n", noffH.code.virtualAddr + j, convertVirtualtoPhysical(noffH.code.virtualAddr + j));
+            executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.code.virtualAddr + j)]), 1, noffH.code.inFileAddr + j);
+            
+        }
+    }
+    
+       
+    if (noffH.initData.size > 0) {
+        //fprintf(stderr, "init data virtual add: %d", noffH.initData.virtualAddr);
+        
+        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
+        for (int j = 0; j < noffH.initData.size; j ++)
+            executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.initData.virtualAddr + j)]), 1, noffH.initData.inFileAddr + j);
     }
     
     for (int j = 0; j < 20; j++)
@@ -195,13 +215,13 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
 					// pages to be read-only
     }
     
-    
+    //fprintf(stderr, "Number of pages: %d\n", numPages);
     for (i = 0; i < numPages; i++){
         int curPhysMemAddr = pageTable[i].physicalPage * PageSize;
         int copyPhysMemAddr = copySpace -> pageTable[i].physicalPage * PageSize;
-        fprintf(stderr, "Virtual Page: %d, old Physical Page: %d, new Physical Page: %d\n", i, copySpace -> pageTable[i].physicalPage, pageTable[i].physicalPage );
+        //fprintf(stderr, "Virtual Page: %d, old Physical Page: %d, new Physical Page: %d\n", i, copySpace -> pageTable[i].physicalPage, pageTable[i].physicalPage );
         for (int j = 0; j < PageSize; j ++){
-            fprintf(stderr, "newMem: %d, oldMem: %d\n", curPhysMemAddr + j, copyPhysMemAddr + j);
+            //fprintf(stderr, "newMem: %d, oldMem: %d\n", curPhysMemAddr + j, copyPhysMemAddr + j);
             machine -> mainMemory[curPhysMemAddr + j] = machine -> mainMemory[copyPhysMemAddr + j];
         }
     }
@@ -211,7 +231,7 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
 //----------------------------------------------------------------------
 // AddrSpace::~AddrSpace
 // 	Dealloate an address space.  Nothing for now!
-//----------------------------------------------------------------------
+// //---------------------------------------------------------------------
 
 AddrSpace::~AddrSpace()
 {
@@ -406,6 +426,7 @@ OpenFileId AddrSpace::dupFd(int fd){
     return -1;
     
 }
+
 
 
 #endif

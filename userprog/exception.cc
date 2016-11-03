@@ -560,10 +560,10 @@ void CopyThread(int prevThreadPtr){
 */
 
 void CopyThread(int garbage){
-    //printf("In CopyThread\n");
+    fprintf(stderr, "%s In CopyThread\n", currentThread -> name);
     forkSem -> V();
      
-    //currentThread -> space -> RestoreState();
+    currentThread -> space -> RestoreState();
     
      //fprintf(stderr, "In copythread, my pageTable %x, machine page table %x\n", currentThread -> space -> pageTable, machine -> pageTable);
     //printf("Past RestoreState\n");
@@ -572,6 +572,7 @@ void CopyThread(int garbage){
 	    machine -> WriteRegister(i, currentThread -> userRegisters[i]);
 
     machine -> Run();
+    fprintf(stderr, "Past machine run\n");
 }
 #endif
 
@@ -632,6 +633,8 @@ void execThread(int argsInt){
         
         machine -> WriteRegister(StackReg,sp - 8);
     }
+    else
+        fprintf(stderr, "skipped exec args\n");
     
     currentThread -> SaveUserState();
     
@@ -645,20 +648,18 @@ void killThread(int exitVal){
     AddrSpace* space = currentThread -> space;
     
     
-    /*
-     *Seems to work with this commented out. Not great, but works 
-    /*
      
-    /*
-    fprintf(stderr, "PhysicalPages cleared:");
+    
+    //fprintf(stderr, "PhysicalPages cleared by %s:", currentThread -> name);
+    
     for (int i = 0; i < space -> numPages; i ++){
         bitLock -> Acquire();
-        fprintf(stderr, "%d ", space -> pageTable[i].physicalPage);
+        //fprintf(stderr, "%d ", space -> pageTable[i].physicalPage);
         memMap -> Clear(space -> pageTable[i].physicalPage);   
         bitLock -> Release();
     }
-    fprintf(stderr, "\n");
-    */
+   // fprintf(stderr, "\n");
+    
    
     if (exitVal != -12){
         joinSem -> P();
