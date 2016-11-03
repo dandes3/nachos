@@ -16,8 +16,8 @@ Thread *threadToBeDestroyed;  		// the thread that just finished
 Scheduler *scheduler;			// the ready list
 Interrupt *interrupt;			// interrupt status
 Statistics *stats;			// performance metrics
-Timer *timer;				// the hardware timer device,
-					// for invoking context switches
+//SlicingTimer *timer;				// the hardware timer device,
+Timer *timer;					// for invoking context switches
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -37,6 +37,8 @@ Semaphore *forkSem;
 Semaphore *joinSem;
 Semaphore *spaceIdSem;
 JoinList *joinList;
+Lock *forkExec;
+Lock *stdOut;
 #endif
 
 #ifdef NETWORK
@@ -144,8 +146,9 @@ Initialize(int argc, char **argv)
     stats = new(std::nothrow) Statistics();			// collect statistics
     interrupt = new(std::nothrow) Interrupt;			// start up interrupt handling
     scheduler = new(std::nothrow) Scheduler();		// initialize the ready queue
-    if (randomYield)				// start the timer (if needed)
-	timer = new(std::nothrow) Timer(TimerInterruptHandler, 0, randomYield);
+    				// start the timer (if needed)
+	//timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
+    timer = new(std::nothrow) Timer(TimerInterruptHandler, 0, false);
     threadToBeDestroyed = NULL;
 
     // We didn't explicitly allocate the current thread we are running in.
@@ -167,6 +170,8 @@ Initialize(int argc, char **argv)
     joinSem = new(std::nothrow) Semaphore("joinSem", 1);
     spaceIdSem = new(std::nothrow) Semaphore("spaceIdSem", 1);
     joinList =  new(std::nothrow) JoinList();
+    forkExec = new(std::nothrow) Lock("forkExec");
+    stdOut = new(std::nothrow) Lock("stdOut");
 #endif
 
 #ifdef FILESYS

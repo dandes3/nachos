@@ -15,6 +15,7 @@
 #include "scheduler.h"
 #include "interrupt.h"
 #include "stats.h"
+//#include "slicingTimer.h"
 #include "timer.h"
 #include "bitmap.h"
 #include "syscall.h"
@@ -32,21 +33,23 @@ extern Thread *threadToBeDestroyed;  		// the thread that just finished
 extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
-extern Timer *timer;				// the hardware alarm clock
+//extern SlicingTimer *timer;				// the hardware alarm clock
+extern Timer *timer;
+#ifdef USER_PROGRAM
+#include "machine.h"
+#include "synchconsole.h"
+
 extern SpaceId spaceId;
 extern Semaphore *spaceIdSem;
 extern JoinList *joinList;
 extern Semaphore *joinSem;
 extern Semaphore *forkSem;
-
-#ifdef USER_PROGRAM
-#include "machine.h"
-#include "synchconsole.h"
-
 extern Machine* machine;	// user program memory and registers
 extern SynchConsole* sConsole;  // Console class to unify I/O operations
 extern BitMap *memMap;              // global memory map
 extern Lock *bitLock;
+extern Lock *forkExec;
+extern Lock *stdOut;
 
 #endif
 

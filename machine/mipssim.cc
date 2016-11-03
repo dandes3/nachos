@@ -576,6 +576,7 @@ Machine::OneInstruction(Instruction *instr)
 void
 Machine::DelayedLoad(int nextReg, int nextValue)
 {
+    //fprintf(stderr, "LoadReg register is: %d\n", registers[LoadReg]);
     registers[registers[LoadReg]] = registers[LoadValueReg];
     registers[LoadReg] = nextReg;
     registers[LoadValueReg] = nextValue;

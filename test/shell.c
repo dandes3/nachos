@@ -41,8 +41,8 @@ main()
                 if (buffer[count] == ' ' && actualFirstSpace == 0)
                     actualFirstSpace = count;
                 
-                if (buffer[count] == ' ' && buffer[count + 1] != ' ' && buffer[count + 1] != '\0'){
-                    argc ++; /* Includes the name of the executable, meaning it is one size too large. Therefore, enough for NULL ptr*/
+                if (buffer[count] == ' ' && count < 60 && buffer[count + 1] != ' ' && buffer[count + 1] != '\0'){
+                    argc ++; /*Includes the name of the executable, meaning it is one size too large. Therefore, enough for NULL ptr*/
                     firstSpace = count;
                 }
                 
@@ -58,7 +58,7 @@ main()
             
                 prints("After exec\n", ConsoleOutput);
             }
-            
+            /*
             if (argc != 0){
                 char* args[60];
                 int start = firstSpace;
@@ -79,8 +79,8 @@ main()
                                 args[argNum][start] = buffer[start];
                             
                             args[argNum][++start] = '\0';
-                           /* prints(args[argNum], ConsoleOutput);
-                            prints("\n", ConsoleOutput);*/
+                            prints(args[argNum], ConsoleOutput);
+                            prints("\n", ConsoleOutput);
                             
                             argNum ++;
                             end ++;
@@ -101,7 +101,8 @@ main()
                 
                 buffer[actualFirstSpace] = '\0';
                 Exec(buffer, (char**) args);
-            } 
+            } */
+            
             
         }
     else Join(newProc);

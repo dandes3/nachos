@@ -206,6 +206,7 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Write:
+            
             DEBUG('p', "Write entered\n");
             //printf("Write entered by %s\n", currentThread -> getName());
          //   printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
@@ -219,14 +220,17 @@ ExceptionHandler(ExceptionType which)
             DEBUG('p', "arg allocated\n");
             ReadArg(arg, size, true);
            
-	    DEBUG('p', "After ReadArg\n");
+	        DEBUG('p', "After ReadArg\n");
  
             writeFile = currentThread -> space -> readWrite(fileId); //OpenFile object corresponding to file descriptor
             fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
 
             if (fileType  == 1){ //stdout
+               // stdOut -> Acquire();
                 for (int i = 0; i < size; i++)
                     sConsole -> PutChar(arg[i]); //Put each char using SynchConsole
+                    
+                //stdOut -> Release();
             } 
 
             else if (writeFile != NULL && fileType != 0) {//File descriptor was valid and not stdin
@@ -244,18 +248,19 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Fork:
-
-          //  fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
-          //  fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+            forkExec -> Acquire();
+            
+           // fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
+            //fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
             //fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
             
             spaceIdSem -> P();
             cid = spaceId ++;
-            bzero(childName, 1024);
+             bzero(childName, 1024);
             snprintf(childName, 1024, "child%d", cid);
             spaceIdSem -> V();
             
-            newThread = new(std::nothrow) Thread(childName); //Find a way to get childId into child thread addrSpace
+            newThread = new Thread(childName); //Find a way to get childId into child thread addrSpace
             newThread -> space = new (std::nothrow) AddrSpace(currentThread -> space);
             
             if (newThread -> space -> failed){
@@ -280,13 +285,14 @@ ExceptionHandler(ExceptionType which)
             
             newThread -> Fork(CopyThread, 0); 
             
-            printf("JoinList after fork\n");
-            joinList -> print();
+            //printf("JoinList after fork\n");
+            //joinList -> print();
 
             forkSem -> P();
             //currentThread -> space ->  RestoreState();
             currentThread -> RestoreUserState();
             machine -> WriteRegister(2, cid);
+            forkExec -> Release();
             //fprintf(stderr, "%s off lock semaphore\n", currentThread -> getName());
            // fprintf(stderr, "PC after fork: %d\n", machine -> ReadRegister(PCReg));
             //fprintf(stderr, "Leaving fork: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
@@ -327,6 +333,8 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Exec:
+            forkExec -> Acquire();
+            
             //fprintf(stderr, "In exec\n");
             arg = new(std::nothrow) char[128];
             ReadArg(arg, 127, false); 
@@ -404,6 +412,8 @@ ExceptionHandler(ExceptionType which)
                 newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
             
             newThread -> Fork(execThread, (int) execArgs);
+            forkExec -> Release();
+            
             killThread(-12);
             ASSERT(false); //Should never be reached
 
@@ -528,9 +538,9 @@ void CopyThread(int garbage){
     //printf("In CopyThread\n");
     forkSem -> V();
      
-    currentThread -> space -> RestoreState();
+    //currentThread -> space -> RestoreState();
     
-   // fprintf(stderr, "In copythread, my pageTable %x, machine page table %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+     //fprintf(stderr, "In copythread, my pageTable %x, machine page table %x\n", currentThread -> space -> pageTable, machine -> pageTable);
     //printf("Past RestoreState\n");
     for (int i = 0; i < NumTotalRegs; i++)
        //printf("Machine : %d, forked thread: %d\n", machine -> ReadRegister(i), currentThread -> userRegisters[i]);
@@ -607,8 +617,11 @@ void killThread(int exitVal){
     
     AddrSpace* space = currentThread -> space;
     
-    for (int i = 0; i < space -> numPages; i ++)
+    for (int i = 0; i < space -> numPages; i ++){
+        bitLock -> Acquire();
         memMap -> Clear(space -> pageTable[i].physicalPage);   
+        bitLock -> Release();
+    }
     
     if (exitVal != -12){
         joinSem -> P();
@@ -617,8 +630,8 @@ void killThread(int exitVal){
         
         if (joinNode != NULL){
             joinNode -> exitVal = exitVal;
-            printf("JoinList after exit\n");
-            joinList -> print();
+           // printf("JoinList after exit\n");
+           //joinList -> print();
             joinNode -> permission -> V();
         }
     }

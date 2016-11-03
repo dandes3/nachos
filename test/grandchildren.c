@@ -7,8 +7,9 @@ main()
 
   SpaceId kid;
   int joinval;
+  int fileId = Open("testout");
 
-  prints("Great Grand PARENT exists\n", ConsoleOutput);
+  prints("Great Grand PARENT exists\n", fileId);
   kid = Fork();
   if (kid != 0) {
     prints("Great Grand PARENT after fork; kid pid is ", ConsoleOutput);
@@ -21,7 +22,7 @@ main()
     printd(joinval, ConsoleOutput);
     prints("\n", ConsoleOutput);
 
-   /* Halt();*/
+   Halt(); 
   /* not reached */
   } else {
            int join2;
