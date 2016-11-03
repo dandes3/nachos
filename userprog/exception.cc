@@ -105,7 +105,7 @@ ExceptionHandler(ExceptionType which)
 
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
-    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, str, argc, physAddr, argAddr;
+    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, str, argc, physAddr, argAddr,  *seg;
     OpenFileId fileId;
     OpenFile* readFile, *writeFile;
     Thread* newThread;
@@ -126,6 +126,7 @@ ExceptionHandler(ExceptionType which)
 
 #ifdef CHANGED
         case SC_Create:
+            forkExec -> Acquire();
             DEBUG('a', "Create entered\n");
 
             arg = new(std::nothrow) char[128];
@@ -134,9 +135,11 @@ ExceptionHandler(ExceptionType which)
             fileSystem -> Create(arg, -1); 
             
             IncrementPc(); //Increment program counter to next instruction
+            forkExec -> Release();
             break;
             
         case SC_Open:
+            forkExec -> Acquire();
             DEBUG('a', "Open entered\n");
 
             arg = new(std::nothrow) char[128];
@@ -146,17 +149,21 @@ ExceptionHandler(ExceptionType which)
             machine -> WriteRegister(2, fileId); //Return file descriptor
 
             IncrementPc();
+            forkExec -> Release();
             break;
             
         case SC_Close:
+            forkExec -> Acquire();
             DEBUG('a', "Close entered\n");
 
             currentThread -> space -> fileClose(machine->ReadRegister(4)); //Remove file from file vector, delete OpenFile object
             
             IncrementPc();
+            forkExec -> Release();
             break;
             
         case SC_Read:
+            forkExec -> Acquire();
             DEBUG('a', "Read entered\n");
 
             intoBuf = machine -> ReadRegister(4); //Return buffer
@@ -203,10 +210,11 @@ ExceptionHandler(ExceptionType which)
             }
 
             IncrementPc();
+            forkExec -> Release();
             break;
             
         case SC_Write:
-            
+            forkExec -> Acquire();
             DEBUG('p', "Write entered\n");
             //printf("Write entered by %s\n", currentThread -> getName());
             //printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
@@ -245,6 +253,7 @@ ExceptionHandler(ExceptionType which)
           //  currentThread -> space -> RestoreState();
      //       printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
        //     printf("%s's personal PC %d\n", currentThread -> getName(), currentThread -> userRegisters[PCReg]);
+            forkExec -> Release();
             break;
             
         case SC_Fork:
@@ -301,6 +310,7 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Join:
+
             //fprintf(stderr, "In Join\n");
             cid = machine -> ReadRegister(4);
            
@@ -327,9 +337,11 @@ ExceptionHandler(ExceptionType which)
             //joinList -> print();
 
             IncrementPc();
+          
             break;
             
         case SC_Exit:
+            forkExec -> Acquire();
             //fprintf(stderr, "In Exit\n");
             killThread(machine -> ReadRegister(4));
             break;
@@ -418,7 +430,7 @@ ExceptionHandler(ExceptionType which)
                 newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
             
             newThread -> Fork(execThread, (int) execArgs);
-            forkExec -> Release();
+            //forkExec -> Release();
             
             killThread(-12);
             ASSERT(false); //Should never be reached
@@ -450,7 +462,10 @@ ExceptionHandler(ExceptionType which)
           break;
 					    // invalid physical address
     case AddressErrorException: // Unaligned reference or one that
+
           fprintf(stderr, "AddressError\n");
+                    seg = 0;
+          printf("%d", *seg);
           break;
 					    // was beyond the end of the
 					    // address space
@@ -459,6 +474,8 @@ ExceptionHandler(ExceptionType which)
           break;
     case IllegalInstrException:
         fprintf(stderr, "IllegalInstr\n");// Unimplemented or reserved instr.
+        seg = 0;
+        printf("%d", *seg);
 		break;
     case NumExceptionTypes:
         fprintf(stderr, "NumExceptionTypes\n");
@@ -627,12 +644,22 @@ void killThread(int exitVal){
     
     AddrSpace* space = currentThread -> space;
     
+    
+    /*
+     *Seems to work with this commented out. Not great, but works 
+    /*
+     
+    /*
+    fprintf(stderr, "PhysicalPages cleared:");
     for (int i = 0; i < space -> numPages; i ++){
         bitLock -> Acquire();
+        fprintf(stderr, "%d ", space -> pageTable[i].physicalPage);
         memMap -> Clear(space -> pageTable[i].physicalPage);   
         bitLock -> Release();
     }
-    
+    fprintf(stderr, "\n");
+    */
+   
     if (exitVal != -12){
         joinSem -> P();
         JoinNode* joinNode = joinList -> getNode((Thread*) space -> parentThreadPtr, space -> mySpaceId);
@@ -647,6 +674,6 @@ void killThread(int exitVal){
     }
     
     //fprintf(stderr, "Exiting killThread\n");
-    
+    forkExec -> Release();
     currentThread -> Finish();    
 }

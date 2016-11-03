@@ -179,13 +179,13 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
     pageTable = new(std::nothrow) TranslationEntry[numPages];
     
     for (i = 0; i < numPages; i++) {
-	   pageTable[i].virtualPage = copySpace -> pageTable[i].virtualPage;
+	   pageTable[i].virtualPage = i;
 	   bitLock -> Acquire();
 	   if ((pageTable[i].physicalPage = memMap -> Find()) < 0){
                failed = true;
                 return;
            }
-       bzero(machine -> mainMemory + pageTable[i].physicalPage * PageSize, PageSize);
+       bzero(machine -> mainMemory + (pageTable[i].physicalPage * PageSize), PageSize);
        bitLock -> Release();
 	   pageTable[i].valid = true;
 	   pageTable[i].use = false;
@@ -199,9 +199,9 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
     for (i = 0; i < numPages; i++){
         int curPhysMemAddr = pageTable[i].physicalPage * PageSize;
         int copyPhysMemAddr = copySpace -> pageTable[i].physicalPage * PageSize;
-        //fprintf(stderr, "Virtual Page: %d, old Physical Page: %d, new Physical Page: %d\n", i, copySpace -> pageTable[i].physicalPage, pageTable[i].physicalPage );
+        fprintf(stderr, "Virtual Page: %d, old Physical Page: %d, new Physical Page: %d\n", i, copySpace -> pageTable[i].physicalPage, pageTable[i].physicalPage );
         for (int j = 0; j < PageSize; j ++){
-          //  fprintf(stderr, "newMem: %d, oldMem: %d\n", curPhysMemAddr + j, copyPhysMemAddr + j);
+            fprintf(stderr, "newMem: %d, oldMem: %d\n", curPhysMemAddr + j, copyPhysMemAddr + j);
             machine -> mainMemory[curPhysMemAddr + j] = machine -> mainMemory[copyPhysMemAddr + j];
         }
     }
