@@ -109,6 +109,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     pageTable = new(std::nothrow) TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
 	   pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
+	   
 	   bitLock -> Acquire();
        
 	   if ((pageTable[i].physicalPage = memMap -> Find()) == -1){
@@ -184,7 +185,7 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
                failed = true;
                 return;
            }
-           bzero(machine -> mainMemory + pageTable[i].physicalPage * PageSize, PageSize);
+       bzero(machine -> mainMemory + pageTable[i].physicalPage * PageSize, PageSize);
        bitLock -> Release();
 	   pageTable[i].valid = true;
 	   pageTable[i].use = false;
@@ -217,8 +218,10 @@ AddrSpace::~AddrSpace()
 #ifndef USE_TLB
    delete pageTable;
 #endif
+   /*
    for (int i = 0; i < 20; i++)
       delete fileVector[i];
+   */
 }
 
 //----------------------------------------------------------------------

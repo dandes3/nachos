@@ -39,6 +39,7 @@ Semaphore *spaceIdSem;
 JoinList *joinList;
 Lock *forkExec;
 Lock *stdOut;
+Lock *MEGALOCK;
 #endif
 
 #ifdef NETWORK
@@ -172,6 +173,8 @@ Initialize(int argc, char **argv)
     joinList =  new(std::nothrow) JoinList();
     forkExec = new(std::nothrow) Lock("forkExec");
     stdOut = new(std::nothrow) Lock("stdOut");
+    
+    MEGALOCK = new(std::nothrow) Lock("MEGALOCK");
 #endif
 
 #ifdef FILESYS

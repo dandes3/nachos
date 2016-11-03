@@ -50,7 +50,7 @@ extern BitMap *memMap;              // global memory map
 extern Lock *bitLock;
 extern Lock *forkExec;
 extern Lock *stdOut;
-
+extern Lock *MEGALOCK;
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 

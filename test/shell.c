@@ -58,7 +58,7 @@ main()
             
                 prints("After exec\n", ConsoleOutput);
             }
-            /*
+            
             if (argc != 0){
                 char* args[60];
                 int start = firstSpace;
@@ -101,7 +101,7 @@ main()
                 
                 buffer[actualFirstSpace] = '\0';
                 Exec(buffer, (char**) args);
-            } */
+            } 
             
             
         }

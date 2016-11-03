@@ -102,6 +102,7 @@ void
 ExceptionHandler(ExceptionType which)
 {
 
+
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
     int size, intoBuf, readBytes, fileType, physIntoBuf, cid, str, argc, physAddr, argAddr;
@@ -208,7 +209,7 @@ ExceptionHandler(ExceptionType which)
             
             DEBUG('p', "Write entered\n");
             //printf("Write entered by %s\n", currentThread -> getName());
-         //   printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
+            //printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
 
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
@@ -255,12 +256,14 @@ ExceptionHandler(ExceptionType which)
             
             spaceIdSem -> P();
             cid = spaceId ++;
-            // bzero(childName, 1024);
-            //snprintf(childName, 1024, "child%d", cid);
+           
             spaceIdSem -> V();
-            
-            newThread = new Thread("fork"); //Find a way to get childId into child thread addrSpace
+            MEGALOCK -> Acquire();
+             bzero(childName, 1024);
+            snprintf(childName, 1024, "child%d", cid);
+            newThread = new Thread(childName); //Find a way to get childId into child thread addrSpace
             newThread -> space = new (std::nothrow) AddrSpace(currentThread -> space);
+            MEGALOCK -> Release();
             
             if (newThread -> space -> failed){
                 machine -> WriteRegister(2, -1);
@@ -337,9 +340,13 @@ ExceptionHandler(ExceptionType which)
             //fprintf(stderr, "In exec\n");
             arg = new(std::nothrow) char[128];
             ReadArg(arg, 127, false); 
-            //bzero(childName, 1024);
-            //snprintf(childName, 1024, "%s exec", currentThread -> name);
-            newThread = new(std::nothrow) Thread("execer"); 
+            
+            MEGALOCK -> Acquire();
+            bzero(childName, 1024);
+            snprintf(childName, 1024, "%s exec", currentThread -> name);
+            newThread = new(std::nothrow) Thread(childName);
+            MEGALOCK -> Release();
+            
             //printf("name created\n");
             newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg));
             if (newThread -> space -> failed){
@@ -417,7 +424,7 @@ ExceptionHandler(ExceptionType which)
             ASSERT(false); //Should never be reached
 
             case SC_Dup:
-              machine -> WriteRegister(2, currentThread -> space -> dupFd(machine -> ReadRegister(4)));
+                machine -> WriteRegister(2, currentThread -> space -> dupFd(machine -> ReadRegister(4)));
               break;
 #endif            
         default:
@@ -608,6 +615,8 @@ void execThread(int argsInt){
         
         machine -> WriteRegister(StackReg,sp - 8);
     }
+    
+    currentThread -> SaveUserState();
     
    // fprintf(stderr, "about run\n");
     machine -> Run();

@@ -52,6 +52,11 @@ JoinList::deleteNode(JoinNode *garbage){
     JoinNode* temp;
     
     for(cur = head; cur != NULL; cur = cur -> next){
+        fprintf(stderr, "About to segfault? addr of cur is %x and addr of head is %x and addr of tail is %x\n", cur, head, tail);
+        if (cur -> exitVal == NULL)
+            fprintf(stderr, "cur is null\n");
+        
+        fprintf(stderr, "cur exit val is: %d\n", cur -> exitVal);
         if (cur == garbage){
             if (cur == head){
                 if (cur == tail)
@@ -59,7 +64,7 @@ JoinList::deleteNode(JoinNode *garbage){
                 
                 temp = head;
                 head = head -> next;
-                delete temp;
+               // delete temp;
             }
             
             else{
@@ -70,7 +75,7 @@ JoinList::deleteNode(JoinNode *garbage){
                 if (cur == tail)
                     tail = prev;
             
-                delete cur;
+                //delete cur;
             }
             
             break;
