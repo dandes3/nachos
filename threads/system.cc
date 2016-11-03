@@ -148,7 +148,7 @@ Initialize(int argc, char **argv)
     interrupt = new(std::nothrow) Interrupt;			// start up interrupt handling
     scheduler = new(std::nothrow) Scheduler();		// initialize the ready queue
     				// start the timer (if needed)
-	//timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
+	timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
     //timer = new(std::nothrow) Timer(TimerInterruptHandler, 0, false);
     threadToBeDestroyed = NULL;
 
