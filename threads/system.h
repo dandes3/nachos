@@ -15,7 +15,7 @@
 #include "scheduler.h"
 #include "interrupt.h"
 #include "stats.h"
-//#include "slicingTimer.h"
+#include "slicingTimer.h"
 #include "timer.h"
 #include "bitmap.h"
 #include "syscall.h"
@@ -33,8 +33,8 @@ extern Thread *threadToBeDestroyed;  		// the thread that just finished
 extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
-//extern SlicingTimer *timer;				// the hardware alarm clock
-extern Timer *timer;
+extern SlicingTimer *timer;				// the hardware alarm clock
+//extern Timer *timer;
 #ifdef USER_PROGRAM
 #include "machine.h"
 #include "synchconsole.h"

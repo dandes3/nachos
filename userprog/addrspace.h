@@ -38,12 +38,15 @@ class AddrSpace {
 
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch 
+    
    
 #ifdef CHANGED
     OpenFileId fileOpen(char* fileName); 
     OpenFile* readWrite(OpenFileId fileId);
     void fileClose(OpenFileId fileId);
     int isConsoleFile(OpenFile* file);
+    OpenFileId dupFd(int fd);
+    
     OpenFile* stdIn;   //Cookie corresponding to stdIn, not a "real" OpenFile object
     OpenFile* stdOut;  //Cookie corresponding to stdOut, not a "real" OpenFile object
     OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects

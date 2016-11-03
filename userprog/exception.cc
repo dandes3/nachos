@@ -101,7 +101,6 @@ void execThread(int garbage);
 void
 ExceptionHandler(ExceptionType which)
 {
-//IMPORTANT: All code written assumes that ExceptionHandler cannot be executed by two threads concurrently 
 
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
@@ -417,8 +416,10 @@ ExceptionHandler(ExceptionType which)
             killThread(-12);
             ASSERT(false); //Should never be reached
 
-            
-#endif              
+            case SC_Dup:
+              machine -> WriteRegister(2, currentThread -> space -> dupFd(machine -> ReadRegister(4)));
+              break;
+#endif            
         default:
             printf("Undefined SYSCALL %d\n", type);
             ASSERT(false);

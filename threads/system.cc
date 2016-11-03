@@ -16,8 +16,8 @@ Thread *threadToBeDestroyed;  		// the thread that just finished
 Scheduler *scheduler;			// the ready list
 Interrupt *interrupt;			// interrupt status
 Statistics *stats;			// performance metrics
-//SlicingTimer *timer;				// the hardware timer device,
-Timer *timer;					// for invoking context switches
+SlicingTimer *timer;				// the hardware timer device,
+//Timer *timer;					// for invoking context switches
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -147,7 +147,7 @@ Initialize(int argc, char **argv)
     interrupt = new(std::nothrow) Interrupt;			// start up interrupt handling
     scheduler = new(std::nothrow) Scheduler();		// initialize the ready queue
     				// start the timer (if needed)
-	//timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
+	timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
     //timer = new(std::nothrow) Timer(TimerInterruptHandler, 0, false);
     threadToBeDestroyed = NULL;
 

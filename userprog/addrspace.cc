@@ -166,9 +166,13 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
     stdIn = copySpace -> stdIn;
     unsigned int i;
     
-    for (i = 0; i < 20; i++)
-        fileVector[i] = copySpace -> fileVector[i];
-    
+    for (i = 0; i < 20; i++){
+        if ((fileVector[i] = copySpace -> fileVector[i]) != NULL){
+            fileVector[i] -> linkLock -> Acquire();
+            fileVector[i] -> links ++;
+            fileVector[i] -> linkLock -> Release();
+        }
+    }
     numPages = copySpace -> numPages;
     
     pageTable = new(std::nothrow) TranslationEntry[numPages];
@@ -375,6 +379,29 @@ int AddrSpace::convertVirtualtoPhysical(int virtualAddr){
     int offset = virtualAddr % PageSize;
 
     return pageTable[virtualPage].physicalPage * PageSize + offset;    
+}
+
+OpenFileId AddrSpace::dupFd(int fd){
+    if (fd < 0 || fd > 19)
+        return -1;
+    
+    if (fileVector[fd] == NULL)
+        return -1;
+    
+    for (int i = 0; i++; i < 20){
+        if (fileVector[i] == NULL){
+            fileVector[i] = fileVector[fd];
+            
+            fileVector[i] -> linkLock -> Acquire();
+            fileVector[i] -> links ++;
+            fileVector[i] -> linkLock -> Release();
+            
+            return i;
+        }
+    }
+    
+    return -1;
+    
 }
 
 
