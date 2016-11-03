@@ -30,7 +30,7 @@ main()
     if( i > 0 ) {
     newProc = Fork();
         if (newProc == 0) {
-           
+           /*
             char curChar;
             int count = 0;
             int argc = 0;
@@ -42,7 +42,7 @@ main()
                     actualFirstSpace = count;
                 
                 if (buffer[count] == ' ' && count < 60 && buffer[count + 1] != ' ' && buffer[count + 1] != '\0'){
-                    argc ++; /*Includes the name of the executable, meaning it is one size too large. Therefore, enough for NULL ptr*/
+                    argc ++; Includes the name of the executable, meaning it is one size too large. Therefore, enough for NULL ptr
                     firstSpace = count;
                 }
                 
@@ -52,19 +52,25 @@ main()
             prints("Argc:", ConsoleOutput);
             printd(argc, ConsoleOutput);
             prints("\n", ConsoleOutput);
+            */
+            int argc = 0;
             
             if (argc == 0){
                 Exec(buffer, (char**) 0);
             
                 prints("After exec\n", ConsoleOutput);
             }
-            /*
+            
             if (argc != 0){
                 char* args[60];
+                int firstSpace = 0;
                 int start = firstSpace;
                 int end = firstSpace + 1;
                 int argNum = 0;
                 int first = 0;
+                char curChar;
+                int actualFirstSpace;
+                
                 
                 prints("In else\n", ConsoleOutput);
                 while ((curChar = buffer[end]) != '\0'){
@@ -101,7 +107,7 @@ main()
                 
                 buffer[actualFirstSpace] = '\0';
                 Exec(buffer, (char**) args);
-            } */
+            } 
             
             
         }
