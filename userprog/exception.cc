@@ -214,7 +214,7 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Write:
-            
+            forkExec -> Acquire();
             DEBUG('p', "Write entered\n");
             //printf("Write entered by %s\n", currentThread -> getName());
             //printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
@@ -253,7 +253,7 @@ ExceptionHandler(ExceptionType which)
           //  currentThread -> space -> RestoreState();
      //       printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
        //     printf("%s's personal PC %d\n", currentThread -> getName(), currentThread -> userRegisters[PCReg]);
-           
+           forkExec -> Release();
             break;
             
         case SC_Fork:
@@ -267,12 +267,12 @@ ExceptionHandler(ExceptionType which)
             cid = spaceId ++;
            
             spaceIdSem -> V();
-            MEGALOCK -> Acquire();
+            //MEGALOCK -> Acquire();
              bzero(childName, 1024);
             snprintf(childName, 1024, "child%d", cid);
             newThread = new Thread(childName); //Find a way to get childId into child thread addrSpace
             newThread -> space = new (std::nothrow) AddrSpace(currentThread -> space);
-            MEGALOCK -> Release();
+            //MEGALOCK -> Release();
             
             if (newThread -> space -> failed){
                 machine -> WriteRegister(2, -1);
@@ -341,7 +341,7 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Exit:
-            
+            forkExec -> Acquire();
             //fprintf(stderr, "In Exit\n");
             killThread(machine -> ReadRegister(4));
             break;
@@ -353,11 +353,11 @@ ExceptionHandler(ExceptionType which)
             arg = new(std::nothrow) char[128];
             ReadArg(arg, 127, false); 
             
-            MEGALOCK -> Acquire();
+           // MEGALOCK -> Acquire();
             bzero(childName, 1024);
             snprintf(childName, 1024, "%s exec", currentThread -> name);
             newThread = new(std::nothrow) Thread(childName);
-            MEGALOCK -> Release();
+          //  MEGALOCK -> Release();
             
             //printf("name created\n");
             newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg));
@@ -430,7 +430,7 @@ ExceptionHandler(ExceptionType which)
                 newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
             
             newThread -> Fork(execThread, (int) execArgs);
-            forkExec -> Release();
+           // forkExec -> Release();
             
             killThread(-12);
             ASSERT(false); //Should never be reached
@@ -675,6 +675,6 @@ void killThread(int exitVal){
     }
     
     //fprintf(stderr, "Exiting killThread\n");
-
+    forkExec -> Release();
     currentThread -> Finish();    
 }
