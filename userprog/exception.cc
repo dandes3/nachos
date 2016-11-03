@@ -255,11 +255,11 @@ ExceptionHandler(ExceptionType which)
             
             spaceIdSem -> P();
             cid = spaceId ++;
-             bzero(childName, 1024);
-            snprintf(childName, 1024, "child%d", cid);
+            // bzero(childName, 1024);
+            //snprintf(childName, 1024, "child%d", cid);
             spaceIdSem -> V();
             
-            newThread = new Thread(childName); //Find a way to get childId into child thread addrSpace
+            newThread = new Thread("fork"); //Find a way to get childId into child thread addrSpace
             newThread -> space = new (std::nothrow) AddrSpace(currentThread -> space);
             
             if (newThread -> space -> failed){
@@ -337,9 +337,9 @@ ExceptionHandler(ExceptionType which)
             //fprintf(stderr, "In exec\n");
             arg = new(std::nothrow) char[128];
             ReadArg(arg, 127, false); 
-            bzero(childName, 1024);
-            snprintf(childName, 1024, "%s exec", currentThread -> name);
-            newThread = new(std::nothrow) Thread(childName); 
+            //bzero(childName, 1024);
+            //snprintf(childName, 1024, "%s exec", currentThread -> name);
+            newThread = new(std::nothrow) Thread("execer"); 
             //printf("name created\n");
             newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg));
             if (newThread -> space -> failed){
