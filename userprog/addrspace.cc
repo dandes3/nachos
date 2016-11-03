@@ -408,10 +408,11 @@ OpenFileId AddrSpace::dupFd(int fd){
     if (fd < 0 || fd > 19)
         return -1;
     
-    if (fileVector[fd] == NULL)
+    if (fileVector[fd] == NULL){
+        fprintf(stderr, "filevector null at fd\n");
         return -1;
-    
-    for (int i = 0; i++; i < 20){
+    }
+    for (int i = 0; i< 20; i ++){
         if (fileVector[i] == NULL){
             fileVector[i] = fileVector[fd];
             
