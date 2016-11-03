@@ -226,11 +226,11 @@ ExceptionHandler(ExceptionType which)
             fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
 
             if (fileType  == 1){ //stdout
-               // stdOut -> Acquire();
+               stdOut -> Acquire();
                 for (int i = 0; i < size; i++)
                     sConsole -> PutChar(arg[i]); //Put each char using SynchConsole
                     
-                //stdOut -> Release();
+               stdOut -> Release();
             } 
 
             else if (writeFile != NULL && fileType != 0) {//File descriptor was valid and not stdin
