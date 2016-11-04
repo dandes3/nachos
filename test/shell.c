@@ -69,13 +69,15 @@ main()
             
             if (argc != 0){ /* Yes arguments */
                 
-                char* args[60]; /* array of arguments */
+                char *args[60]; /* array of arguments */
+                char curArg[60];
                 int start = beforeFirstArg;
                 int end = beforeFirstArg + 1;
                 int argNum = 0;
                 int first = 0;
                 char temp[2];
                 int pos = 0;
+                int startPos = 0;
                 prints("yes arguments\n", ConsoleOutput);
                 while ((curChar = buffer[end]) != '\0'){
                 /*    prints("end is ", ConsoleOutput);
@@ -100,18 +102,22 @@ main()
                         else{ 
                          /* start is the space before arg, end is the space after arg */
 			/*    prints("prevChar != ' '\n", ConsoleOutput);*/
-                            pos = 0;
-                            for (start = ++start; start < end; start++)
-                                args[argNum][pos++] = buffer[start];
-                                   
-                            args[argNum][++pos] = '\0';
+                            startPos = 0;
+                            for (start = ++start; start < end; start++){
+                                Write(&buffer[start], 1, ConsoleOutput);
+                                curArg[pos++] = buffer[start];
+                                startPos ++;
+                            }
+                 
+                            curArg[++pos] = '\0';
+                            args[argNum] = curArg + (pos - startPos - 1);
                             prints("arg is ", ConsoleOutput);
                             prints(args[argNum], ConsoleOutput);
                             prints("\n", ConsoleOutput);
                             
                             argNum ++;
                             end ++;
-                            start++;
+                            pos ++;
                         }
                     }
                     
@@ -119,23 +125,34 @@ main()
                         end ++;
                     
                 }
-                pos = 0;
-                for (start = start++; start < end; start++)
-                    args[argNum][pos++] = buffer[start];
-                            
-                args[argNum][++pos] = '\0';
+                startPos = 0;
+                for (start = ++start; start < end; start++){
+                    curArg[pos++] = buffer[start];
+                    startPos ++;
+                 }
+                
+                curArg[++pos] = '\0';      
+                args[argNum] =  curArg + (pos - startPos - 1);
+
                 prints("arg is ", ConsoleOutput);
                 prints(args[argNum], ConsoleOutput);
                 prints("\n", ConsoleOutput);
                
                printd(argNum, ConsoleOutput);
                prints("\n", ConsoleOutput); 
-                args[argNum + 1] = (char*) 0;
-               
-                for (count = 0; args[count] != 0; count ++)
-                   prints(args[count], ConsoleOutput);
-                prints("Past args print", ConsoleOutput);
+               args[argNum + 1] = (char *) 0 ;
 
+            /*   
+                for (count = 0; args[count] != (char *) 0; count ++){
+	           prints("In aggs print for\n");
+                   prints(args[count], ConsoleOutput);
+                }
+                if (args[0] == (char *) 0)
+			prints("Bite me\n", ConsoleOutput);
+                printd((int) args[0], ConsoleOutput);
+                prints("\n", ConsoleOutput);
+                prints("\nPast args print", ConsoleOutput);
+*/
                 buffer[firstSpace] = '\0';
                 Exec(buffer, (char**) args);
             } 
