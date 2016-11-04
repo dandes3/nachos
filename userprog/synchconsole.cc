@@ -23,7 +23,7 @@ SynchConsole::SynchConsole(char* fileReader, char* fileWriter) //Initializes usa
                                                                               // readDummy and writeDummy passed as void pointers passed as
                                                                               // requirements for console creation 
     readLock = new Lock("Reader lock for Console Synch");
-    writeLock = new Lock("Writer lock for Console Synch");
+    writeLock = new Semaphore("Writer lock for Console Synch", 1);
     readSem = new Semaphore("Reader semaphore for Console Synch", 0);
     writeSem = new Semaphore("Writer semaphore for Console Synch", 0);
 }
@@ -51,9 +51,10 @@ void SynchConsole::GetChar(char* cp) //Lock the readlock and hang Read Semaphore
 
 void SynchConsole::PutChar(char c) //Lock the writelock and push character, hang Write Semaphore and release lock
 {
-    writeLock->Acquire();
+    writeLock->P();
     console->PutChar(c);
     writeSem -> P();
-    writeLock->Release();
+    //printf("Exiting putchar\n");
+    writeLock->V();
 }
 

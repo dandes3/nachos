@@ -121,6 +121,14 @@ Fork:
 	syscall
 	j	$31
 	.end Fork
+	
+	.global Dup
+	.ent Dup
+Dup:
+	addiu $2,$0,SC_Dup
+	syscall
+	j	$31
+	.end Dup
 
 /* dummy function to keep gcc happy */
         .globl  __main

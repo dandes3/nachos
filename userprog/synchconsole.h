@@ -18,8 +18,8 @@ class SynchConsole
         
     private:
         Console* console;
-        Semaphore *readSem, *writeSem;
-        Lock *readLock, *writeLock;
+        Semaphore *readSem, *writeSem,*writeLock;
+        Lock *readLock ;
 
 };
 

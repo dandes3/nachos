@@ -112,6 +112,10 @@ Scheduler::Run (Thread *nextThread)
     // in switch.s.  You may have to think
     // a bit to figure out what happens after this, both from the point
     // of view of the thread and from the perspective of the "outside world".
+    if (currentThread->space != NULL) {         // if there is an address space
+        currentThread->RestoreUserState();     // to restore, do it.
+        currentThread->space->RestoreState();
+    }
 
     SWITCH(oldThread, nextThread);
     
@@ -131,6 +135,8 @@ Scheduler::Run (Thread *nextThread)
         currentThread->RestoreUserState();     // to restore, do it.
 	currentThread->space->RestoreState();
     }
+    else
+      printf("ADDRSPACE IS NULL!!!\n");
 #endif
 }
 

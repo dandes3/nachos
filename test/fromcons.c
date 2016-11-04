@@ -18,7 +18,7 @@ main()
 {
   int count=0;
   char c;
-
+ 
   while (1) {
     Read(&c, 1, ConsoleInput);
     if ( c == 'Q' ) {

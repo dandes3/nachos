@@ -11,10 +11,15 @@
 #include "copyright.h"
 #include "utility.h"
 #include "thread.h"
+#include "synch.h"
 #include "scheduler.h"
 #include "interrupt.h"
 #include "stats.h"
+#include "slicingTimer.h"
 #include "timer.h"
+#include "bitmap.h"
+#include "syscall.h"
+#include "joinlist.h"
 #include <new>
 
 // Initialization and cleanup routines
@@ -28,14 +33,24 @@ extern Thread *threadToBeDestroyed;  		// the thread that just finished
 extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
-extern Timer *timer;				// the hardware alarm clock
-
+extern SlicingTimer *timer;				// the hardware alarm clock
+//extern Timer *timer;
 #ifdef USER_PROGRAM
 #include "machine.h"
 #include "synchconsole.h"
 
+extern SpaceId spaceId;
+extern Semaphore *spaceIdSem;
+extern JoinList *joinList;
+extern Semaphore *joinSem;
+extern Semaphore *forkSem;
 extern Machine* machine;	// user program memory and registers
 extern SynchConsole* sConsole;  // Console class to unify I/O operations
+extern BitMap *memMap;              // global memory map
+extern Lock *bitLock;
+extern Lock *forkExec;
+extern Lock *stdOut;
+extern Lock *MEGALOCK;
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 
