@@ -30,107 +30,64 @@ main()
     if( i > 0 ) {
         if ((newProc = Fork()) == 0) { /* Child */
            
-            char curChar;
-            char prevChar;
-            int count = 0;
+            int size = 0;
+            int i = 0;
+            char *args[60];
             int argc = 0;
-            int beforeFirstArg = -1; /* index of the space before the first argument */
-            int firstSpace = 0; /* index of first space in buffer */
-            
-            while ((curChar = buffer[count]) != '\0'){
-                if (buffer[count] == ' ' && firstSpace == 0) /* Sets the position of the first space in the buffer */
-                    firstSpace = count;
-                
-                if (buffer[count] == ' ' && count < 60 && buffer[count + 1] != ' ' && buffer[count + 1] != '\0'){ /* If current character is the first space after a word */
-                    argc ++;
-                    if (beforeFirstArg == -1)
-                        beforeFirstArg = count;
-                }
-                
-                count ++;
+            char *executable = 0;
+
+            while ( buffer[size] != '\0'){
+                if (buffer[size] == ' ')
+                   buffer[size] = '\0';
+                size ++;
             }
-          
+
+            while (i < size){
+               prints("Top of while\n", ConsoleOutput);
+               if (buffer[i] != '\0'){
+		  if (executable == 0)
+                     executable = &buffer[i];
+
+                  else{
+	             args[argc] = &buffer[i];
+                     argc ++;
+                  }
+
+                  while (buffer[i] != '\0')
+                      i++;
+              }  
+
+               else
+                 i++;  
+            }
+
             if (argc == 0){ /* No arguments */
-                Exec(buffer, (char**) 0);
+                Exec(executable, (char**) 0);
                 Exit(-1);
                 prints("After exec\n", ConsoleOutput);
             }
+             argc --;
+             args[argc + 1] = (char *) 0;  
             
-            if (argc != 0){ /* Yes arguments */
-                
-                char *args[60]; /* array of arguments */
-                char curArg[60];
-                int start = beforeFirstArg;
-                int end = beforeFirstArg + 1;
-                int argNum = 0;
-                int pos = 0;
-                int startPos = 0;
-       
-                while ((curChar = buffer[end]) != '\0'){ 
-                    if (curChar == ' '){
-                   
-                        if (buffer[end - 1] == ' '){  
-                            end ++;
-                            start ++;
-                        }
-                     
-                        else{ 
-                         /* start is the space before arg, end is the space after arg */
-                            startPos = 0;
-                            for (start = ++start; start < end; start++){
-                                curArg[pos++] = buffer[start];
-                                startPos ++;
-                            }
-                 
-                            curArg[++pos] = '\0';
-                            args[argNum] = curArg + (pos - startPos - 1);
-                                
-                            argNum ++;
-                            end ++;
-                            pos ++;
-                        }
-                    }
-                    
-                    else
-                        end ++;
-                    
-                }
+             if ((*(args[argc - 1]) == '>') && (*(args[argc - 1] + 1) == '\0')){ 
+		int fd;
+                prints("In dup stuff\n", ConsoleOutput);
+                if ((fd = Open(args[argc])) == -1){
+                   Create(args[argc]);
+                   if ((fd = Open(args[argc])) == -1){
+                       prints("Cannot open file\n", ConsoleOutput);
+                       Exit(-1);
+                   }
+                }                     
+                Close(1);
+                Dup(fd);
+                Close(fd);
+                args[argc - 1] = (char *) 0;
+             } 
 
-                startPos = 0;
-                for (start = ++start; start < end; start++){
-                    curArg[pos++] = buffer[start];
-                    startPos ++;
-                 }                
-                curArg[++pos] = '\0';      
-                args[argNum] =  curArg + (pos - startPos - 1);
-                args[argNum + 1] = (char *) 0;
-                
-                prints("Important val:-------\n", ConsoleOutput);  
-                Write(args[argNum - 1], 1, ConsoleOutput);
-                prints("\n", ConsoleOutput);
-
-                if ((*(args[argNum - 1]) == '>') && (*(args[argNum - 1] + 1) == '\0')){ 
-		   int fd;
-                   prints("In dup stuff\n", ConsoleOutput);
-                   if ((fd = Open(args[1])) == -1){
-                       Create(args[1]);
-                       if ((fd = Open(args[1])) == -1){
-                           prints("Cannot open file\n", ConsoleOutput);
-                           Exit(-1);
-                       }
-                    }
-                     
-                    Close(1);
-                    Dup(fd);
-                    Close(fd);
-                    args[argNum - 1] = (char *) 0;
-                } 
-
-                buffer[firstSpace] = '\0';
-                Exec(buffer, (char**) args);
-                Exit(-1);
-            }   
-        }
+           Exec(executable, (char**) args);
+           Exit(-1);
+    }
 
 
     else Join(newProc);
