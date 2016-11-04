@@ -366,8 +366,10 @@ ExceptionHandler(ExceptionType which)
             //printf("name created\n");
             newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg));
             if (newThread -> space -> failed){
+                DEBUG('j', "Failed\n");
                 machine -> WriteRegister(2, -1);
                 IncrementPc();
+                forkExec -> Release();
                 break;
             }
                 
@@ -649,10 +651,7 @@ void execThread(int argsInt){
 void killThread(int exitVal){
     
     AddrSpace* space = currentThread -> space;
-    
-    
-     
-    
+   
     //fprintf(stderr, "PhysicalPages cleared by %s:", currentThread -> name);
     
     for (int i = 0; i < space -> numPages; i ++){

@@ -52,7 +52,7 @@ main()
           
             if (argc == 0){ /* No arguments */
                 Exec(buffer, (char**) 0);
-            
+                Exit(-1);
                 prints("After exec\n", ConsoleOutput);
             }
             
@@ -103,13 +103,36 @@ main()
                  }                
                 curArg[++pos] = '\0';      
                 args[argNum] =  curArg + (pos - startPos - 1);
+                args[argNum + 1] = (char *) 0;
+                
+                prints("Important val:-------\n", ConsoleOutput);  
+                Write(args[argNum - 1], 1, ConsoleOutput);
+                prints("\n", ConsoleOutput);
+
+                if ((*(args[argNum - 1]) == '>') && (*(args[argNum - 1] + 1) == '\0')){ 
+		   int fd;
+                   prints("In dup stuff\n", ConsoleOutput);
+                   if ((fd = Open(args[1]) == -1)){
+                       Create(args[1]);
+                       if ((fd = Open(args[1])) == -1){
+                           prints("Cannot open file\n", ConsoleOutput);
+                           Exit(-1);
+                       }
+                    }
+                     
+                    Close(1);
+                    Dup(fd);
+                    Close(fd);
+                    args[argNum - 1] = (char *) 0;
+                } 
 
                 buffer[firstSpace] = '\0';
                 Exec(buffer, (char**) args);
-            } 
-            
-            
+                Exit(-1);
+            }   
         }
+
+
     else Join(newProc);
     }
     }
