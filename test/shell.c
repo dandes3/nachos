@@ -55,10 +55,10 @@ main()
                     if (buffer[i] != '\0'){
                         if (executable == 0)
                             executable = &buffer[i];
-                        else{
-                            args[argc] = &buffer[i];
-                            argc ++;
-                        }
+                        
+                        args[argc] = &buffer[i];
+                        argc ++;
+                        
                         while (buffer[i] != '\0')
                             i++;
                     }  

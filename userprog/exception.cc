@@ -581,7 +581,7 @@ void execThread(int argsInt){
             argc ++;
         }
         
-        int* argAddrs = new(std::nothrow) int[argc + 1];
+        int* argAddrs = new(std::nothrow) int[argc];
         
     // printf("argc created\n");
         
@@ -590,14 +590,16 @@ void execThread(int argsInt){
         
         int sp = machine -> ReadRegister(StackReg);
         
-        int len = strlen(currentThread -> space -> fileName) + 1;
+        int len;
+
+/*
         sp -= len;
         for (int i = 0; i < len; i++)
             machine -> mainMemory[ConvertAddr(sp + i)] =  currentThread -> space -> fileName[i];
         
         argAddrs[0] = sp;
         //fprintf(stderr, "Filename put in mem\n");
-        
+  */      
         
         for (int i = 0; i < argc; i ++){
             //fprintf(stderr, "Argumet: %s, Arglen: %d, Sp physaddr: %d
@@ -606,19 +608,19 @@ void execThread(int argsInt){
             for (int j = 0; j < len; j++)
                 machine -> mainMemory[ConvertAddr(sp + j)] = args[i][j];   
             
-            argAddrs[i + 1] = sp;
+            argAddrs[i] = sp;
         }
         
         //fprintf(stderr, "Args put in mem\n");
         
         sp = sp & ~3;
         
-        sp -= sizeof(int) * (argc + 1);
+        sp -= sizeof(int) * (argc);
         
-        for (int i = 0; i < argc + 1; i ++)
+        for (int i = 0; i < argc; i ++)
             *(unsigned int *) &machine -> mainMemory[ConvertAddr(sp + i*4)] = WordToMachine((unsigned int) argAddrs[i]);
         
-        machine -> WriteRegister(4, argc + 1);
+        machine -> WriteRegister(4, argc);
         machine -> WriteRegister(5, sp);
         
         machine -> WriteRegister(StackReg,sp - 8);
