@@ -364,10 +364,11 @@ ExceptionHandler(ExceptionType which)
             if (newThread -> space -> failed){
                 machine -> WriteRegister(2, -1);
                 IncrementPc();
+                forkExec -> Release();
                 break;
             }
                 
-            //printf("space created\n");
+            printf("space created\n");
             newThread -> space -> parentThreadPtr = currentThread -> space -> parentThreadPtr;
             newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
             newThread -> space -> stdIn = currentThread -> space -> stdIn;
@@ -434,10 +435,15 @@ ExceptionHandler(ExceptionType which)
             
             killThread(-12);
             ASSERT(false); //Should never be reached
-
+            break;
+            
             case SC_Dup:
+                fprintf(stderr, "in dup\n");
+                fprintf(stderr, "arg to dup is %d\n", machine -> ReadRegister(4));
                 machine -> WriteRegister(2, currentThread -> space -> dupFd(machine -> ReadRegister(4)));
-              break;
+                fprintf(stderr, "past dup stuff\n");
+                IncrementPc();
+             break;
 #endif            
         default:
             printf("Undefined SYSCALL %d\n", type);
@@ -542,22 +548,7 @@ int ConvertToVirtual (int physicalAddress){
     
     return -1;
 }
-/*
-void CopyThread(int prevThreadPtr){
-    fprintf(stderr, "In CopyThread\n");
-    Thread* prevThread = (Thread*) prevThreadPtr;
-   
-    //prevThread -> RestoreUserState();
-    fprintf(stderr, "After AddrSpace is copied\n");
-    currentThread -> RestoreUserState();
-    machine -> WriteRegister(2, 0);
-    fprintf(stderr, "PC in machine: %d, PC in child: %d\n", machine -> ReadRegister(PCReg), currentThread -> userRegisters[PCReg]);
-    
-    fprintf(stderr, "Before run\n");
-    forkSem -> V();
-    machine -> Run();
-}
-*/
+
 
 void CopyThread(int garbage){
     fprintf(stderr, "%s In CopyThread\n", currentThread -> name);
@@ -591,7 +582,7 @@ void execThread(int argsInt){
             argc ++;
         }
         
-        int* argAddrs = new(std::nothrow) int[argc + 1];
+        int* argAddrs = new(std::nothrow) int[argc];
         
     // printf("argc created\n");
         
@@ -600,14 +591,16 @@ void execThread(int argsInt){
         
         int sp = machine -> ReadRegister(StackReg);
         
-        int len = strlen(currentThread -> space -> fileName) + 1;
+        int len;
+
+/*
         sp -= len;
         for (int i = 0; i < len; i++)
             machine -> mainMemory[ConvertAddr(sp + i)] =  currentThread -> space -> fileName[i];
         
         argAddrs[0] = sp;
         //fprintf(stderr, "Filename put in mem\n");
-        
+  */      
         
         for (int i = 0; i < argc; i ++){
             //fprintf(stderr, "Argumet: %s, Arglen: %d, Sp physaddr: %d
@@ -616,19 +609,19 @@ void execThread(int argsInt){
             for (int j = 0; j < len; j++)
                 machine -> mainMemory[ConvertAddr(sp + j)] = args[i][j];   
             
-            argAddrs[i + 1] = sp;
+            argAddrs[i] = sp;
         }
         
         //fprintf(stderr, "Args put in mem\n");
         
         sp = sp & ~3;
         
-        sp -= sizeof(int) * (argc + 1);
+        sp -= sizeof(int) * (argc);
         
-        for (int i = 0; i < argc + 1; i ++)
+        for (int i = 0; i < argc; i ++)
             *(unsigned int *) &machine -> mainMemory[ConvertAddr(sp + i*4)] = WordToMachine((unsigned int) argAddrs[i]);
         
-        machine -> WriteRegister(4, argc + 1);
+        machine -> WriteRegister(4, argc);
         machine -> WriteRegister(5, sp);
         
         machine -> WriteRegister(StackReg,sp - 8);

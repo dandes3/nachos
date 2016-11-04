@@ -28,6 +28,7 @@ main()
   printd(joinval, ConsoleOutput);
   print("\n");
 
+  /*Exit(1);*/
   Halt();
   /* not reached */
 }

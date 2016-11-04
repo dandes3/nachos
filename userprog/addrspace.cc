@@ -22,6 +22,8 @@
 #include "noff.h"
 #include <new>
 
+#define SCRIPT 0x52435323
+extern void StartProcess(char *filename, char *inputName);
 //----------------------------------------------------------------------
 // SwapHeader
 // 	Do little endian to big endian conversion on the bytes in the 
@@ -61,6 +63,10 @@ SwapHeader (NoffHeader *noffH)
 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
+    //FILE * source;
+    //source = fopen("
+    //fprintf(stderr, "\n File name is %s\n",  executable->fileName);
+    
     failed = false;
     stdOut = new(std::nothrow) OpenFile(1);
     stdIn = new(std::nothrow) OpenFile(0);
@@ -77,6 +83,19 @@ AddrSpace::AddrSpace(OpenFile *executable)
     }
     
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
+    //fprintf(stderr, "noffMagic is %x\n", noffH.noffMagic);
+    if (noffH.noffMagic == SCRIPT){
+        //fprintf(stderr,"Script detected\n");
+        int scriptOpenId = fileOpen(executable->fileName);
+        fileClose(0);
+        dupFd(scriptOpenId);
+        fileClose(scriptOpenId);
+        StartProcess("test/shell", executable->fileName);
+        //fprintf(stderr, "hello\n");
+        failed = true;
+        return;
+        //execl("test/shell", (char *) 0);
+    }
     //printf("Past readat\n");
     if ((noffH.noffMagic != NOFFMAGIC) && 
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
@@ -160,6 +179,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
         for (int j = 0; j < noffH.code.size; j ++){
             //fprintf(stderr, "Virtual addr + j: %d, Physcial addr: %d\n", noffH.code.virtualAddr + j, convertVirtualtoPhysical(noffH.code.virtualAddr + j));
             executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.code.virtualAddr + j)]), 1, noffH.code.inFileAddr + j);
+
             
         }
     }
@@ -169,8 +189,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
         //fprintf(stderr, "init data virtual add: %d", noffH.initData.virtualAddr);
         
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
-        for (int j = 0; j < noffH.initData.size; j ++)
+        
+        for (int j = 0; j < noffH.initData.size; j ++){
             executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.initData.virtualAddr + j)]), 1, noffH.initData.inFileAddr + j);
+        }
     }
     
     for (int j = 0; j < 20; j++)
@@ -317,7 +339,7 @@ void AddrSpace::RestoreState()
 //	and opening "/dev/ttyout" opens stdout.
 //----------------------------------------------------------------------
 OpenFileId AddrSpace::fileOpen(char* fileName){
-    
+    fprintf(stderr, "in fileOpen, addrspace\n");
     OpenFile* newFile;
     
     //Opening connection to console, not actual files
@@ -327,6 +349,7 @@ OpenFileId AddrSpace::fileOpen(char* fileName){
        newFile = stdOut;
     else //some other file
         newFile = fileSystem -> Open(fileName); 
+
     /*
     if (newFile == NULL){ // If newFile is null, fileName does not exist. Try to create it and open again.
       if (not fileSystem -> Create(fileName, -1))
@@ -338,7 +361,8 @@ OpenFileId AddrSpace::fileOpen(char* fileName){
 
     if (newFile == NULL)
         return -1;
-
+    
+    newFile->fileName = fileName;
     //Put newFile in fileVector at first open spot
     for (int i = 0; i < 20; i++){
         if (fileVector[i] == NULL){
@@ -412,10 +436,11 @@ OpenFileId AddrSpace::dupFd(int fd){
     if (fd < 0 || fd > 19)
         return -1;
     
-    if (fileVector[fd] == NULL)
+    if (fileVector[fd] == NULL){
+        fprintf(stderr, "filevector null at fd\n");
         return -1;
-    
-    for (int i = 0; i++; i < 20){
+    }
+    for (int i = 0; i< 20; i ++){
         if (fileVector[i] == NULL){
             fileVector[i] = fileVector[fd];
             
