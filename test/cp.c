@@ -16,9 +16,9 @@ int main (int argc, char ** argv)
 
 	if (argc != 3)
 	{
-		prints("Incorrect amount of arguments, try again");
+		prints("Incorrect amount of arguments, try again", ConsoleOutput);
 		Exit(-1);
-
+	}
 		else
 		{
 			pull = Open(argv[1]); /* Open the file to be copied */
@@ -32,10 +32,25 @@ int main (int argc, char ** argv)
 			else
 			{
 				push = Open(argv[2]); /* Open the file to be made */
+
+				if(push == -1)
+				{
+					Create(argv[2]);
+					pushFile = (Open(argv[2]));
+				}
+
+				while(Read(&marker, 1, pullFile) == 1)
+				{
+					Write(&marker, 1, pushFile);
+				}
+
+				Close(pullFile);
+				Close(pushFile);
 			}
 		}
-	}
 
+		Exit(0); /* Successful */ 
+}
 
 /* Fancy print function */
 prints(s,file)
