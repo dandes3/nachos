@@ -454,24 +454,18 @@ ExceptionHandler(ExceptionType which)
     HandleTLBFault(machine->ReadRegister(BadVAddrReg));
     break;
 #endif
- 
     case NoException:
-          //fprintf(stderr, "NoException\n");
+
           break;
-        
+    /*
     case ReadOnlyException:
-        fprintf(stderr, "ReadOnly\n");
           break;
         
     case BusErrorException:
-        fprintf(stderr, "BusError\n");// Translation resulted in an 
           break;
 					    // invalid physical address
-    case AddressErrorException: // Unaligned reference or one that
+    case AddressErrorException: 
 
-          fprintf(stderr, "AddressError\n");
-                    seg = 0;
-          printf("%d", *seg);
           break;
 					    // was beyond the end of the
 					    // address space
@@ -485,9 +479,10 @@ ExceptionHandler(ExceptionType which)
 		break;
     case NumExceptionTypes:
         fprintf(stderr, "NumExceptionTypes\n");
-        break;
-    default: 
-        fprintf(stderr, "defaulting\n");
+        break;*/
+    default:
+        forkExec->Acquire(); //TODO: determine this
+        killThread(2);
     }
     
     
