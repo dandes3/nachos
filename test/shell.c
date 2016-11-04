@@ -27,10 +27,7 @@ main()
         } while( buffer[i++] != '\n' );
         
         buffer[--i] = '\0';
-        prints("buffer is ", output);
-        prints(buffer, output);
-        prints("\n", output);
-        
+      
         if (buffer[0] == '#'){
             goto Label;
         }
@@ -49,9 +46,8 @@ main()
                         buffer[size] = '\0';
                     size ++;
                 }
-
+      
                 while (i < size){
-                    prints("Top of while\n", ConsoleOutput);
                     if (buffer[i] != '\0'){
                         if (executable == 0)
                             executable = &buffer[i];
@@ -66,11 +62,6 @@ main()
                         i++;  
                 }
 
-                if (argc == 0){ /* No arguments */
-                    Exec(executable, (char**) 0);
-                    Exit(-1);
-                    prints("After exec\n", ConsoleOutput);
-                }
                 argc --;
                 args[argc + 1] = (char *) 0;  
                 
@@ -89,8 +80,9 @@ main()
                     Close(fd);
                     args[argc - 1] = (char *) 0;
                 } 
-
+  
             Exec(executable, (char**) args);
+            prints("Error, executable does not exist\n", ConsoleOutput);
             Exit(-1);
         }
 

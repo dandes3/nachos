@@ -364,10 +364,11 @@ ExceptionHandler(ExceptionType which)
             if (newThread -> space -> failed){
                 machine -> WriteRegister(2, -1);
                 IncrementPc();
+                forkExec -> Release();
                 break;
             }
                 
-            //printf("space created\n");
+            printf("space created\n");
             newThread -> space -> parentThreadPtr = currentThread -> space -> parentThreadPtr;
             newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
             newThread -> space -> stdIn = currentThread -> space -> stdIn;
