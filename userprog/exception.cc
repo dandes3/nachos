@@ -443,10 +443,15 @@ ExceptionHandler(ExceptionType which)
             DEBUG('j', "in exec. About to call killthread\n");
             killThread(-12);
             ASSERT(false); //Should never be reached
-
+            break;
+            
             case SC_Dup:
+                fprintf(stderr, "in dup\n");
+                fprintf(stderr, "arg to dup is %d\n", machine -> ReadRegister(4));
                 machine -> WriteRegister(2, currentThread -> space -> dupFd(machine -> ReadRegister(4)));
-              break;
+                fprintf(stderr, "past dup stuff\n");
+                IncrementPc();
+             break;
 #endif            
         default:
             printf("Undefined SYSCALL %d\n", type);
@@ -551,22 +556,7 @@ int ConvertToVirtual (int physicalAddress){
     
     return -1;
 }
-/*
-void CopyThread(int prevThreadPtr){
-    fprintf(stderr, "In CopyThread\n");
-    Thread* prevThread = (Thread*) prevThreadPtr;
-   
-    //prevThread -> RestoreUserState();
-    fprintf(stderr, "After AddrSpace is copied\n");
-    currentThread -> RestoreUserState();
-    machine -> WriteRegister(2, 0);
-    fprintf(stderr, "PC in machine: %d, PC in child: %d\n", machine -> ReadRegister(PCReg), currentThread -> userRegisters[PCReg]);
-    
-    fprintf(stderr, "Before run\n");
-    forkSem -> V();
-    machine -> Run();
-}
-*/
+
 
 void CopyThread(int garbage){
     fprintf(stderr, "%s In CopyThread\n", currentThread -> name);
