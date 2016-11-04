@@ -12,6 +12,10 @@ main(int argc, char **argv)
   
   int i,j;
   prints("In argkid\n",ConsoleOutput);
+  prints("argc is ", ConsoleOutput);
+  printd(argc, ConsoleOutput);
+  prints("\n", ConsoleOutput);
+  
   for (i=0; i<10000; i++) j++ ;
 
   for (i=0; i<argc; i++) {
