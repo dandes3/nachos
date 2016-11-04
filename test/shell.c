@@ -9,13 +9,15 @@ main()
     OpenFileId output = ConsoleOutput;
     char prompt[2], ch, buffer[60];
     int i;
-
+    int script = 0;
+    int j;
     prompt[0] = '-';
     prompt[1] = '-';
 
     while( 1 )
     {
         Label:
+
         Write(prompt, 2, output);
 
         i = 0;
@@ -23,12 +25,21 @@ main()
 
         do {
         
-            Read(&buffer[i], 1, input); 
+            j = Read(&buffer[i], 1, input);
+            
+            if (j == 0){
+                Halt();
+            }
+            
+            /*if ((int) buffer[i] == -1){
+                Halt();
+            }*/
         } while( buffer[i++] != '\n' );
         
         buffer[--i] = '\0';
       
         if (buffer[0] == '#'){
+            script = 1;
             goto Label;
         }
         
@@ -80,10 +91,13 @@ main()
                     Close(fd);
                     args[argc - 1] = (char *) 0;
                 } 
-  
-            Exec(executable, (char**) args);
-            prints("Error, executable does not exist\n", ConsoleOutput);
-            Exit(-1);
+                 
+                else if (script)
+                    Open("/dev/ttyout");
+                    
+                Exec(executable, (char**) args);
+                prints("Error, executable does not exist\n", ConsoleOutput);
+                Exit(-1);
         }
 
 

@@ -1,4 +1,4 @@
 #SCRIPT
-test/deepfork
-test/maxfork
-test/argtest
+test/argkid arg1      arg3 arg4
+test/matmult
+#comment

@@ -62,6 +62,7 @@ StartProcess(char *filename, char *inputName)
     int scriptOpenId = space->fileOpen(inputName);
     
     space->fileClose(0);
+    space -> fileClose(1);
     space->dupFd(scriptOpenId);
     space->fileClose(scriptOpenId);
     

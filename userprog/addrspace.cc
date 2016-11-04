@@ -85,11 +85,11 @@ AddrSpace::AddrSpace(OpenFile *executable)
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     //fprintf(stderr, "noffMagic is %x\n", noffH.noffMagic);
     if (noffH.noffMagic == SCRIPT){
-        //fprintf(stderr,"Script detected\n");
-        int scriptOpenId = fileOpen(executable->fileName);
+        fprintf(stderr,"Script detected\n");
+       /* int scriptOpenId = fileOpen(executable->fileName);
         fileClose(0);
         dupFd(scriptOpenId);
-        fileClose(scriptOpenId);
+        fileClose(scriptOpenId);*/
         StartProcess("test/shell", executable->fileName);
         //fprintf(stderr, "hello\n");
         failed = true;

@@ -238,7 +238,7 @@ FileSystem::Open(char *name)
     if (sector >= 0) 		
 	//openFile = new(std::nothrow) OpenFile(sector);	// name was found in directory
     openFile = new(std::nothrow) OpenFile(sector);
-    openFile->fileName = name;
+
     delete directory;
     return openFile;				// return NULL if not found
 }
