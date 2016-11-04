@@ -112,7 +112,7 @@ main()
                 if ((*(args[argNum - 1]) == '>') && (*(args[argNum - 1] + 1) == '\0')){ 
 		   int fd;
                    prints("In dup stuff\n", ConsoleOutput);
-                   if ((fd = Open(args[1]) == -1)){
+                   if ((fd = Open(args[1])) == -1){
                        Create(args[1]);
                        if ((fd = Open(args[1])) == -1){
                            prints("Cannot open file\n", ConsoleOutput);
