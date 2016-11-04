@@ -339,14 +339,16 @@ void AddrSpace::RestoreState()
 //	and opening "/dev/ttyout" opens stdout.
 //----------------------------------------------------------------------
 OpenFileId AddrSpace::fileOpen(char* fileName){
-    fprintf(stderr, "in fileOpen, addrspace\n");
+    //fprintf(stderr, "in fileOpen, addrspace\n");
     OpenFile* newFile;
     
     //Opening connection to console, not actual files
     if (strcmp(fileName, "/dev/ttyin") == 0) //stdin
        newFile = stdIn; 
-    else if (strcmp(fileName, "/dev/ttyout") == 0) //stdout
+    else if (strcmp(fileName, "/dev/ttyout") == 0){ //stdout
+       //fprintf(stderr, "Opening stdout\n");
        newFile = stdOut;
+    }
     else //some other file
         newFile = fileSystem -> Open(fileName); 
     

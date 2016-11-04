@@ -11,6 +11,7 @@ main()
     int i;
     int script = 0;
     int j;
+
     prompt[0] = '-';
     prompt[1] = '-';
 
@@ -27,19 +28,22 @@ main()
         
             j = Read(&buffer[i], 1, input);
             
-            if (j == 0){
+            if (j == 0)
                 Halt();
-            }
+            
             
             /*if ((int) buffer[i] == -1){
                 Halt();
             }*/
-        } while( buffer[i++] != '\n' );
+        } while( buffer[i++] != '\n');
         
+
         buffer[--i] = '\0';
       
         if (buffer[0] == '#'){
             script = 1;
+            /*printd(script, temp);
+            prints("\n", temp);*/
             goto Label;
         }
         
@@ -51,7 +55,8 @@ main()
                 char *args[60];
                 int argc = 0;
                 char *executable = 0;
-
+        
+                
                 while ( buffer[size] != '\0'){
                     if (buffer[size] == ' ')
                         buffer[size] = '\0';
@@ -76,9 +81,13 @@ main()
                 argc --;
                 args[argc + 1] = (char *) 0;  
                 
+
                 if ((*(args[argc - 1]) == '>') && (*(args[argc - 1] + 1) == '\0')){ 
                     int fd;
-                    prints("In dup stuff\n", ConsoleOutput);
+                    
+                    if (script)
+                        Open("/dev/ttyout");
+                
                     if ((fd = Open(args[argc])) == -1){
                         Create(args[argc]);
                         if ((fd = Open(args[argc])) == -1){
@@ -91,9 +100,11 @@ main()
                     Close(fd);
                     args[argc - 1] = (char *) 0;
                 } 
-                 
-                else if (script)
+                
+
+                if (script)
                     Open("/dev/ttyout");
+                
                     
                 Exec(executable, (char**) args);
                 prints("Error, executable does not exist\n", ConsoleOutput);

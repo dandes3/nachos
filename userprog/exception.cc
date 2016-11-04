@@ -259,7 +259,7 @@ ExceptionHandler(ExceptionType which)
         case SC_Fork:
             forkExec -> Acquire();
             
-           // fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
+            fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
             //fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
             //fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
             

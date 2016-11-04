@@ -1,4 +1,5 @@
 #SCRIPT
-test/argkid arg1      arg3 arg4
-test/matmult
-#comment
+test/cp hello.out  a.out
+test/cat a.out > b.out
+test/cp b.out c.out
+test/cat c.out
