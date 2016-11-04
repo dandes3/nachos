@@ -328,12 +328,17 @@ OpenFileId AddrSpace::fileOpen(char* fileName){
     else //some other file
         newFile = fileSystem -> Open(fileName); 
     
+    /*
     if (newFile == NULL){ // If newFile is null, fileName does not exist. Try to create it and open again.
       if (not fileSystem -> Create(fileName, -1))
         return -1; //Can't create or open file
 
       newFile = fileSystem -> Open(fileName);
     }
+*/
+
+    if (newFile == NULL)
+	return -1;
 
     //Put newFile in fileVector at first open spot
     for (int i = 0; i < 20; i++){
