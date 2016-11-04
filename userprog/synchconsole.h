@@ -15,11 +15,11 @@ class SynchConsole
         void PutChar(char c);
         void ReadAvail();
         void WriteDone();
-        
+        void setConsole(char *fileIn, char *fileOut);
     private:
         Console* console;
-        Semaphore *readSem, *writeSem;
-        Lock *readLock, *writeLock;
+        Semaphore *readSem, *writeSem,*writeLock;
+        Lock *readLock ;
 
 };
 

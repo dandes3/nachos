@@ -1,13 +1,6 @@
-/*imple program to read characters from the
- *      console and echo them. Stop when a Q is read.
- *      Assumes uniprogrammed system.
- *	
- *      Invoke as:
- *        (stty cbreak -echo; userprog/nachos -x test/fromcons)
- *      Produces:
- *         abcd <--- I also typed a 'Q' to terminate the input
- *         4 characters seen.
- *         Machine halting!
+/* deepkid1.c
+ *
+ * First-level child in the deepfork system.
  *
  */
 
@@ -16,25 +9,39 @@
 int
 main()
 {
-  int count=0;
-  char c;
- 
-  while (1) {
-    Read(&c, 1, ConsoleInput);
-    if ( c == 'Q' ) {
-      prints("\n", ConsoleOutput);
-      printd(count, ConsoleOutput);
-      prints(" characters seen.\n", ConsoleOutput);
-      Halt();
-    }
-    else {
-      count++;
-      Write(&c, 1, ConsoleOutput);
-    }
+  int i, joinval, tmp;
+  SpaceId kid;
+
+  for (i=0; i<100000; i++) tmp++;
+
+  /* loop to delay kid initially */
+
+  if ((kid=Fork()) == 0) {
+      Exec("test/deepkid2", (char **) 0);
+      print("ERROR: exec failed in kid\n");
+      Exit(100);
   }
 
+  print("KID1 after exec; kid1 pid is ");
+  printd((int)kid, ConsoleOutput);
+  print("\n");
+
+  print("KID1 about to Join kid2\n");
+  joinval = Join(kid);
+  print("KID1 off Join with value of ");
+  printd(joinval, ConsoleOutput);
+  print("\n");
+
+  Exit(1);
+  /* Should not get past here */
+  print("ERROR: KID1 after Exit()\n");
+  Halt();
     /* not reached */
 }
+
+
+
+
 
 /* Print a null-terminated string "s" on open file descriptor "file". */
 
@@ -88,3 +95,11 @@ OpenFileId file;
   Write(buffer,pos,file);
 }
 
+/* Print a null-terminated string "s" on ConsoleOutput. */
+
+print(s)
+char *s;
+
+{
+  prints(s, ConsoleOutput);
+}

@@ -1,13 +1,6 @@
-/*imple program to read characters from the
- *      console and echo them. Stop when a Q is read.
- *      Assumes uniprogrammed system.
- *	
- *      Invoke as:
- *        (stty cbreak -echo; userprog/nachos -x test/fromcons)
- *      Produces:
- *         abcd <--- I also typed a 'Q' to terminate the input
- *         4 characters seen.
- *         Machine halting!
+/* fork.c
+ *
+ * Simple parent/child system without an Exec()
  *
  */
 
@@ -16,24 +9,30 @@
 int
 main()
 {
-  int count=0;
-  char c;
- 
-  while (1) {
-    Read(&c, 1, ConsoleInput);
-    if ( c == 'Q' ) {
-      prints("\n", ConsoleOutput);
-      printd(count, ConsoleOutput);
-      prints(" characters seen.\n", ConsoleOutput);
-      Halt();
-    }
-    else {
-      count++;
-      Write(&c, 1, ConsoleOutput);
-    }
-  }
 
-    /* not reached */
+  SpaceId kid;
+  int joinval;
+  int openFile = Open("forktest.out");
+
+  prints("PARENT exists\n", ConsoleOutput);
+  kid = Fork();
+  if (kid != 0) {
+    prints("PARENT after fork; kid pid is ", ConsoleOutput);
+    printd((int)kid, ConsoleOutput);
+    prints("\n", ConsoleOutput);
+    
+    joinval = Join(kid);
+    
+    prints("PARENT off Join with value of ", ConsoleOutput);
+    printd(joinval, ConsoleOutput);
+    prints("\n", ConsoleOutput);
+
+    Halt();
+  /* not reached */
+  } else {
+    prints("KID running, about to Exit()\n", ConsoleOutput);
+    Exit(17);
+  }
 }
 
 /* Print a null-terminated string "s" on open file descriptor "file". */
@@ -87,4 +86,8 @@ OpenFileId file;
   }
   Write(buffer,pos,file);
 }
+
+
+
+
 

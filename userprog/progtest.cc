@@ -25,6 +25,7 @@ void
 StartProcess(char *filename)
 {
     OpenFile *executable = fileSystem->Open(filename);
+    executable->fileName = filename;
     AddrSpace *space;
 
     if (executable == NULL) {
@@ -34,6 +35,40 @@ StartProcess(char *filename)
     space = new(std::nothrow) AddrSpace(executable);    
     currentThread->space = space;
 
+    delete executable;			// close file
+
+    space->InitRegisters();		// set the initial register values
+    space->RestoreState();		// load page table register
+
+    machine->Run();			// jump to the user progam
+    ASSERT(false);			// machine->Run never returns;
+					// the address space exits
+					// by doing the syscall "exit"
+}
+
+void
+StartProcess(char *filename, char *inputName)
+{
+    OpenFile *executable = fileSystem->Open(filename);
+    executable->fileName = filename;
+    AddrSpace *space;
+
+    if (executable == NULL) {
+	printf("Unable to open file %s\n", filename);
+	return;
+    }
+    space = new(std::nothrow) AddrSpace(executable);
+    
+    int scriptOpenId = space->fileOpen(inputName);
+    
+    space->fileClose(0);
+    space->dupFd(scriptOpenId);
+    space->fileClose(scriptOpenId);
+    
+    currentThread->space = space;
+    
+
+    
     delete executable;			// close file
 
     space->InitRegisters();		// set the initial register values

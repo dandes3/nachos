@@ -1,39 +1,47 @@
-/*imple program to read characters from the
- *      console and echo them. Stop when a Q is read.
- *      Assumes uniprogrammed system.
- *	
- *      Invoke as:
- *        (stty cbreak -echo; userprog/nachos -x test/fromcons)
- *      Produces:
- *         abcd <--- I also typed a 'Q' to terminate the input
- *         4 characters seen.
- *         Machine halting!
+/* arg_seq_child.c
  *
+ * Simple parent/child system with a sequence of Fork/Execs
+ * EXEC WITH ARGS IN THIS.
+ * Note that there is only a single live child at any time.
  */
 
 #include "syscall.h"
 
+#define NUMKIDS 10
+
 int
 main()
 {
-  int count=0;
-  char c;
- 
-  while (1) {
-    Read(&c, 1, ConsoleInput);
-    if ( c == 'Q' ) {
+
+  SpaceId kid;
+  int joinval, i;
+  char *args[2];  
+
+  prints("PARENT exists\n", ConsoleOutput);
+  
+  for(i=0; i<NUMKIDS; i++) {
+    kid = Fork();
+    if (kid != 0) {
+      prints("PARENT after fork; kid pid is ", ConsoleOutput);
+      printd((int)kid, ConsoleOutput);
       prints("\n", ConsoleOutput);
-      printd(count, ConsoleOutput);
-      prints(" characters seen.\n", ConsoleOutput);
-      Halt();
+    
+      joinval = Join(kid);
+    
+      prints("PARENT off Join with value of ", ConsoleOutput);
+      printd(joinval, ConsoleOutput);
+      prints("\n", ConsoleOutput);
+
     }
     else {
-      count++;
-      Write(&c, 1, ConsoleOutput);
+      args[0] = "kid";
+      args[1] = (char *)0;  
+      Exec("test/kid", args);
+      prints("ERROR: Exec failure\n", ConsoleOutput);
+      Halt();
     }
   }
-
-    /* not reached */
+  Halt();
 }
 
 /* Print a null-terminated string "s" on open file descriptor "file". */
@@ -87,4 +95,8 @@ OpenFileId file;
   }
   Write(buffer,pos,file);
 }
+
+
+
+
 

@@ -22,13 +22,17 @@
 
 #include "copyright.h"
 #include "utility.h"
+#include "synch.h"
+
+class FileHeader;
+//class Lock;
 
 #ifdef FILESYS_STUB			// Temporarily implement calls to 
 					// Nachos file system as calls to UNIX!
 					// See definitions listed under #else
 class OpenFile {
   public:
-    OpenFile(int f) { file = f; currentOffset = 0; }	// open the file
+    OpenFile(int f) { file = f; currentOffset = 0; links = 1; linkLock = new (std::nothrow) Lock("linkLock"); offsetLock = new (std::nothrow) Lock("offsetLock"); }	// open the file
     ~OpenFile() { Close(file); }			// close the file
 
     int ReadAt(char *into, int numBytes, int position) { 
@@ -52,9 +56,13 @@ class OpenFile {
 		}
 
     int Length() { Lseek(file, 0, 2); return Tell(file); }
-    
-  private:
+    void PrintHDR();
+    int links;
+    Lock* linkLock;
+    Lock* offsetLock;
     int file;
+    char *fileName;
+  private:
     int currentOffset;
 };
 
@@ -65,6 +73,7 @@ class OpenFile {
   public:
     OpenFile(int sector);		// Open a file whose header is located
 					// at "sector" on the disk
+    OpenFile(int sector, char *name);	
     ~OpenFile();			// Close the file
 
     void Seek(int position); 		// Set the position from which to 
@@ -85,8 +94,10 @@ class OpenFile {
 					// file (this interface is simpler 
 					// than the UNIX idiom -- lseek to 
 					// end of file, tell, lseek
+    FileHeader *hdr;			// Header for this file
+    char *fileName;
   private:
-    FileHeader *hdr;			// Header for this file 
+    
     int seekPosition;			// Current position within the file
 };
 

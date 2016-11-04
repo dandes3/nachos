@@ -84,6 +84,7 @@ Create:
 
 	.globl Open
 	.ent	Open
+
 Open:
 	addiu $2,$0,SC_Open
 	syscall
@@ -92,6 +93,7 @@ Open:
 
 	.globl Read
 	.ent	Read
+	
 Read:
 	addiu $2,$0,SC_Read
 	syscall
@@ -121,6 +123,14 @@ Fork:
 	syscall
 	j	$31
 	.end Fork
+	
+	.global Dup
+	.ent	Dup
+Dup:
+	addiu $2,$0, SC_Dup
+	syscall
+	j	$31
+	.end Dup
 
 /* dummy function to keep gcc happy */
         .globl  __main

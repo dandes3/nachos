@@ -1,0 +1,4 @@
+#SCRIPT
+test/deepfork
+test/maxfork
+test/argtest

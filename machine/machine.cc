@@ -201,14 +201,18 @@ Machine::DumpState()
 
 int Machine::ReadRegister(int num)
     {
+    //MEGALOCK -> Acquire();
 	ASSERT((num >= 0) && (num < NumTotalRegs));
+    //MEGALOCK -> Release();
 	return registers[num];
     }
 
 void Machine::WriteRegister(int num, int value)
     {
+    //MEGALOCK -> Acquire();
 	ASSERT((num >= 0) && (num < NumTotalRegs));
 	// DEBUG('m', "WriteRegister %d, value %d\n", num, value);
 	registers[num] = value;
+    //MEGALOCK -> Release();
     }
 
