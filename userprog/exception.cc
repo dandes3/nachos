@@ -259,7 +259,7 @@ ExceptionHandler(ExceptionType which)
         case SC_Fork:
             forkExec -> Acquire();
             
-            fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
+           // fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
             //fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
             //fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
             
@@ -291,12 +291,8 @@ ExceptionHandler(ExceptionType which)
             IncrementPc();
             newThread -> SaveUserState();
  
-            for (int i = 0; i < NumTotalRegs; i++){
+            for (int i = 0; i < NumTotalRegs; i++)
                 newThread -> userRegisters[i] = machine -> ReadRegister(i);
-                    if (i == 5){
-                        DEBUG('j', "SC_FORK read register 5 as %d\n", machine->ReadRegister(i));
-                    }
-            }
             
             newThread -> Fork(CopyThread, 0); 
             
@@ -315,7 +311,7 @@ ExceptionHandler(ExceptionType which)
             
         case SC_Join:
 
-            fprintf(stderr, "In Join\n");
+            //fprintf(stderr, "In Join\n");
             cid = machine -> ReadRegister(4);
            
             joinSem -> P();
@@ -346,14 +342,14 @@ ExceptionHandler(ExceptionType which)
             
         case SC_Exit:
             forkExec -> Acquire();
-            fprintf(stderr, "In Exit\n");
+            //fprintf(stderr, "In Exit\n");
             killThread(machine -> ReadRegister(4));
             break;
             
         case SC_Exec:
             forkExec -> Acquire();
             
-            DEBUG('j', "In exec\n");
+            //fprintf(stderr, "In exec\n");
             arg = new(std::nothrow) char[128];
             ReadArg(arg, 127, false); 
             
@@ -366,14 +362,12 @@ ExceptionHandler(ExceptionType which)
             //printf("name created\n");
             newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg));
             if (newThread -> space -> failed){
-                DEBUG('j', "Failed\n");
                 machine -> WriteRegister(2, -1);
                 IncrementPc();
-                forkExec -> Release();
                 break;
             }
                 
-            DEBUG('j', "space created\n");
+            //printf("space created\n");
             newThread -> space -> parentThreadPtr = currentThread -> space -> parentThreadPtr;
             newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
             newThread -> space -> stdIn = currentThread -> space -> stdIn;
@@ -383,24 +377,19 @@ ExceptionHandler(ExceptionType which)
             
             argAddr = machine -> ReadRegister(5);
             if (argAddr != 0){
-                DEBUG('j', "argAddr is not 0\n");
-                DEBUG('j', "argAddr is %d\n", argAddr);
                 execArgs = new(std::nothrow) char* [128];
                 physAddr = ConvertAddr(argAddr);
-                DEBUG('j', "Phys addr is:%d, at that address is %c, as int is %d\n", physAddr, machine -> mainMemory[physAddr], machine -> mainMemory[physAddr] );
-                DEBUG('j', "At that address is: %d\n", machine ->  mainMemory[ConvertAddr(machine -> mainMemory[physAddr])]);
+                //printf("Phys addr is:%d, at that address is %c, as int is %d\n", physAddr, machine -> mainMemory[physAddr], machine -> mainMemory[physAddr] );
+                //printf("At that address is: %d\n", machine -> mainMemory[ConvertAddr(machine -> mainMemory[physAddr])]);
 
                 argc = 0;
-                DEBUG('j', "STRING 1 is %u\n", *(unsigned int *) &machine -> mainMemory[physAddr]);
-                DEBUG('j', "STRING 2 is %u\n", ConvertAddr((int)*(unsigned int *) &machine -> mainMemory[physAddr]));
-                
+
             // printf("Above while\n");
                 while ((str = *(unsigned int *) &machine -> mainMemory[physAddr]) != 0){ 
                 //  printf("Str equals: %d\n", str);
                     int curChar = ConvertAddr((int)str);
                     int count = 0;
-                    //fprintf(stderr, "HHELRKHFS\n");
-                    DEBUG('j', "IN while, curChar equals: %c, and the char is: %c\n", curChar, machine -> mainMemory[curChar]);
+                    //printf("IN while, curChar equals: %d, and the char is: %c\n", curChar, machine -> mainMemory[curChar]);
                     
                     
                     while (machine -> mainMemory[curChar] != '\0'){
@@ -428,21 +417,21 @@ ExceptionHandler(ExceptionType which)
                     
                     argAddr += 4;
                     physAddr = ConvertAddr(argAddr);
-                    DEBUG('j', "Count: %d\n", count);
+                //  printf("Count: %d\n", count);
                }
                 
                 execArgs[argc] = NULL;
             }
-            else{
-                DEBUG('j', "execArgs is NULL\n");
+            
+            else
                 execArgs = NULL;
-            }
+            
             for (int i = 0; i < 20; i++)
                 newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
             
             newThread -> Fork(execThread, (int) execArgs);
            // forkExec -> Release();
-            DEBUG('j', "in exec. About to call killthread\n");
+            
             killThread(-12);
             ASSERT(false); //Should never be reached
             break;
@@ -568,13 +557,10 @@ void CopyThread(int garbage){
     
      //fprintf(stderr, "In copythread, my pageTable %x, machine page table %x\n", currentThread -> space -> pageTable, machine -> pageTable);
     //printf("Past RestoreState\n");
-    for (int i = 0; i < NumTotalRegs; i++){
+    for (int i = 0; i < NumTotalRegs; i++)
        //printf("Machine : %d, forked thread: %d\n", machine -> ReadRegister(i), currentThread -> userRegisters[i]);
 	    machine -> WriteRegister(i, currentThread -> userRegisters[i]);
-        if (i == 5){
-            DEBUG('j', "copy thread wrote to arg %d with value of %d\n", i, currentThread->userRegisters[i]);
-        }
-    }
+
     machine -> Run();
     fprintf(stderr, "Past machine run\n");
 }
@@ -583,7 +569,7 @@ void CopyThread(int garbage){
 void execThread(int argsInt){
     currentThread -> space -> RestoreState();
     currentThread -> space -> InitRegisters();
-    DEBUG('j', "ExecThread\n");
+    
     if (argsInt != 0){//TODO: If no args, file name should still be arg 0
         char** args = (char**) argsInt;
         int argc = 0;
@@ -634,7 +620,6 @@ void execThread(int argsInt){
         
         machine -> WriteRegister(4, argc + 1);
         machine -> WriteRegister(5, sp);
-        DEBUG('j', "execThread just wrote to arg 5\n");
         
         machine -> WriteRegister(StackReg,sp - 8);
     }
@@ -651,7 +636,10 @@ void execThread(int argsInt){
 void killThread(int exitVal){
     
     AddrSpace* space = currentThread -> space;
-   
+    
+    
+     
+    
     //fprintf(stderr, "PhysicalPages cleared by %s:", currentThread -> name);
     
     for (int i = 0; i < space -> numPages; i ++){

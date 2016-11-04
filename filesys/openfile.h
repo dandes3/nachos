@@ -24,6 +24,7 @@
 #include "utility.h"
 #include "synch.h"
 
+class FileHeader;
 //class Lock;
 
 #ifdef FILESYS_STUB			// Temporarily implement calls to 
@@ -55,13 +56,13 @@ class OpenFile {
 		}
 
     int Length() { Lseek(file, 0, 2); return Tell(file); }
-    
+    void PrintHDR();
     int links;
     Lock* linkLock;
     Lock* offsetLock;
-    
-  private:
     int file;
+    char *fileName;
+  private:
     int currentOffset;
 };
 
@@ -72,6 +73,7 @@ class OpenFile {
   public:
     OpenFile(int sector);		// Open a file whose header is located
 					// at "sector" on the disk
+    OpenFile(int sector, char *name);	
     ~OpenFile();			// Close the file
 
     void Seek(int position); 		// Set the position from which to 
@@ -92,8 +94,10 @@ class OpenFile {
 					// file (this interface is simpler 
 					// than the UNIX idiom -- lseek to 
 					// end of file, tell, lseek
+    FileHeader *hdr;			// Header for this file
+    char *fileName;
   private:
-    FileHeader *hdr;			// Header for this file 
+    
     int seekPosition;			// Current position within the file
 };
 

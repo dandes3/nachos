@@ -232,11 +232,13 @@ FileSystem::Open(char *name)
     OpenFile *openFile = NULL;
     int sector;
 
-    DEBUG('f', "Opening file %s\n", name);
+    DEBUG('j', "Opening file %s\n", name);
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name); 
     if (sector >= 0) 		
-	openFile = new(std::nothrow) OpenFile(sector);	// name was found in directory 
+	//openFile = new(std::nothrow) OpenFile(sector);	// name was found in directory
+    openFile = new(std::nothrow) OpenFile(sector);
+    openFile->fileName = name;
     delete directory;
     return openFile;				// return NULL if not found
 }

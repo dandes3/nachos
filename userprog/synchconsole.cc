@@ -58,3 +58,6 @@ void SynchConsole::PutChar(char c) //Lock the writelock and push character, hang
     writeLock->V();
 }
 
+void SynchConsole::setConsole(char *fileIn, char *fileOut){
+    console = new Console(fileIn, fileOut, (VoidFunctionPtr) SConsoleReadAvail, (VoidFunctionPtr) SConsoleWriteAvail, (int)this);
+}
