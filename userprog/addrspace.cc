@@ -349,7 +349,7 @@ OpenFileId AddrSpace::fileOpen(char* fileName){
        newFile = stdOut;
     else //some other file
         newFile = fileSystem -> Open(fileName); 
-    
+
     /*
     if (newFile == NULL){ // If newFile is null, fileName does not exist. Try to create it and open again.
       if (not fileSystem -> Create(fileName, -1))
@@ -357,10 +357,10 @@ OpenFileId AddrSpace::fileOpen(char* fileName){
 
       newFile = fileSystem -> Open(fileName);
     }
-*/
+    */
 
     if (newFile == NULL)
-	return -1;
+        return -1;
     
     newFile->fileName = fileName;
     //Put newFile in fileVector at first open spot
