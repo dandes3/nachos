@@ -25,7 +25,7 @@ int main (int argc, char ** argv)
 
 			if (pullFile == -1)
 			{
-				prints("File could not be opened", ConsoleOutput);
+				prints("File could not be opened or does not exist\n", ConsoleOutput);
 			    Exit(-1);
 			}
 

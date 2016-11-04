@@ -15,14 +15,14 @@ int main (int argc, char **argv)
         int i;
 
         /*prints("in cat\n", ConsoleOutput);*/
-	for (i = 0; i < argc; i++)
+	for (i = 1; i < argc; i++)
 	{
 	/* 	prints("in loop\n", ConsoleOutput);*/
 		pullFile = Open(argv[i]);
 		/*prints("sucessfuly opened\n", ConsoleOutput);*/
 		if (pullFile == -1) /* File does not exist or is locked */
 		{
-			prints("File could not be opened", ConsoleOutput);
+			prints("File could not be opened or does not exist\n", ConsoleOutput);
 			/*break();*/
 			Exit(-1);
 		}
