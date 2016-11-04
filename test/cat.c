@@ -12,8 +12,9 @@ int main (int argc, char ** argv)
 	int counter;
 	char marker;
 	OpenFileId pullFile;
+        int i;
 
-	for (int i = 1; i < argc; i++)
+	for (i = 1; i < argc; i++)
 	{
 		pullFile = Open(argv[i]);
 		

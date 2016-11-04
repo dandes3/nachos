@@ -21,9 +21,9 @@ int main (int argc, char ** argv)
 	}
 		else
 		{
-			pull = Open(argv[1]); /* Open the file to be copied */
+			pullFile = Open(argv[1]); /* Open the file to be copied */
 
-			if (pull == -1)
+			if (pullFile == -1)
 			{
 				prints("File could not be opened", ConsoleOutput);
 			    Exit(-1);
@@ -31,9 +31,9 @@ int main (int argc, char ** argv)
 
 			else
 			{
-				push = Open(argv[2]); /* Open the file to be made */
+				pushFile = Open(argv[2]); /* Open the file to be made */
 
-				if(push == -1)
+				if(pushFile == -1)
 				{
 					Create(argv[2]);
 					pushFile = (Open(argv[2]));
