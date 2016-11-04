@@ -64,7 +64,8 @@ JoinList::deleteNode(JoinNode *garbage){
                 
                 temp = head;
                 head = head -> next;
-               // delete temp;
+                //elete temp->permission;
+                //delete temp;
             }
             
             else{
@@ -74,8 +75,8 @@ JoinList::deleteNode(JoinNode *garbage){
             
                 if (cur == tail)
                     tail = prev;
-            
-                //delete cur;
+                delete cur->permission;
+                delete cur;
             }
             
             break;

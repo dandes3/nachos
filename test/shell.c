@@ -28,62 +28,66 @@ main()
     buffer[--i] = '\0';
 
     if( i > 0 ) {
-    newProc = Fork();
-        if (newProc == 0) {
+        if ((newProc = Fork()) == 0) { /* Child */
            
             char curChar;
+            char prevChar;
             int count = 0;
             int argc = 0;
-            int firstSpace = 0;
-            int actualFirstSpace = 0;
+            int beforeFirstArg = -1; /* index of the space before the first argument */
+            int firstSpace = 0; /* index of first space in buffer */
             
             while ((curChar = buffer[count]) != '\0'){
-                if (buffer[count] == ' ' && actualFirstSpace == 0)
-                    actualFirstSpace = count;
-                
-                if (buffer[count] == ' ' && count < 60 && buffer[count + 1] != ' ' && buffer[count + 1] != '\0'){
-                    argc ++; /*Includes the name of the executable, meaning it is one size too large. Therefore, enough for NULL ptr*/
+                if (buffer[count] == ' ' && firstSpace == 0) /* Sets the position of the first space in the buffer */
                     firstSpace = count;
+                
+                if (buffer[count] == ' ' && count < 60 && buffer[count + 1] != ' ' && buffer[count + 1] != '\0'){ /* If current character is the first space after a word */
+                    argc ++;
+                    if (beforeFirstArg == -1)
+                        beforeFirstArg = count;
                 }
                 
                 count ++;
             }
-            
-            prints("Argc:", ConsoleOutput);
-            printd(argc, ConsoleOutput);
-            prints("\n", ConsoleOutput);
-            
-            if (argc == 0){
+          
+            if (argc == 0){ /* No arguments */
                 Exec(buffer, (char**) 0);
             
                 prints("After exec\n", ConsoleOutput);
             }
             
-            if (argc != 0){
-                char* args[60];
-                int start = firstSpace;
-                int end = firstSpace + 1;
-                int argNum = 0;
-                int first = 0;
+            if (argc != 0){ /* Yes arguments */
                 
-                prints("In else\n", ConsoleOutput);
-                while ((curChar = buffer[end]) != '\0'){
-                    if (buffer[end] == ' '){
-                        if (buffer[end - 1] == ' '){
+                char *args[60]; /* array of arguments */
+                char curArg[60];
+                int start = beforeFirstArg;
+                int end = beforeFirstArg + 1;
+                int argNum = 0;
+                int pos = 0;
+                int startPos = 0;
+       
+                while ((curChar = buffer[end]) != '\0'){ 
+                    if (curChar == ' '){
+                   
+                        if (buffer[end - 1] == ' '){  
                             end ++;
                             start ++;
                         }
-                        
-                        else{
-                            for (start = start++; start < end; start++)
-                                args[argNum][start] = buffer[start];
-                            
-                            args[argNum][++start] = '\0';
-                            prints(args[argNum], ConsoleOutput);
-                            prints("\n", ConsoleOutput);
-                            
+                     
+                        else{ 
+                         /* start is the space before arg, end is the space after arg */
+                            startPos = 0;
+                            for (start = ++start; start < end; start++){
+                                curArg[pos++] = buffer[start];
+                                startPos ++;
+                            }
+                 
+                            curArg[++pos] = '\0';
+                            args[argNum] = curArg + (pos - startPos - 1);
+                                
                             argNum ++;
                             end ++;
+                            pos ++;
                         }
                     }
                     
@@ -91,15 +95,16 @@ main()
                         end ++;
                     
                 }
-                
-                for (start = start++; start < end; start++)
-                    args[argNum][start] = buffer[start];
-                            
-                args[argNum][++start] = '\0';
-                
-                args[argNum + 1] = (char*) 0;
-                
-                buffer[actualFirstSpace] = '\0';
+
+                startPos = 0;
+                for (start = ++start; start < end; start++){
+                    curArg[pos++] = buffer[start];
+                    startPos ++;
+                 }                
+                curArg[++pos] = '\0';      
+                args[argNum] =  curArg + (pos - startPos - 1);
+
+                buffer[firstSpace] = '\0';
                 Exec(buffer, (char**) args);
             } 
             
