@@ -34,7 +34,7 @@ CPP = /usr/bin/cpp -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -g -G 0 -c $(INCDIR) -DCHANGED -nostartfiles
 
-all: halt shell matmult sort hellocons fromcons hellofile fileio forktest fork cat cp grandchildren parentchild kid seqchild deepfork deepkid1 deepkid2 maxfork argkid argtest argseqchild sharekid share duptest dupkid
+all: halt shell matmult sort hellocons fromcons hellofile fileio forktest fork cat cp grandchildren parentchild kid seqchild deepfork deepkid1 deepkid2 maxfork argkid argtest argseqchild sharekid share duptest dupkid atomicwrite
 
 
 start.o: start.s ../userprog/syscall.h
@@ -206,5 +206,11 @@ duptest.c: duptest.c
 duptest: duptest.o start.o
 	$(LD) $(LDFLAGS) start.o duptest.o -o duptest.coff
 	../bin/coff2noff duptest.coff duptest
+
+atomicwrite.c: atomicwrite.c
+	$(CC) $(CFLAGS) -c atomicwrite.c
+atomicwrite: atomicwrite.o start.o
+	$(LD) $(LDFLAGS) start.o atomicwrite.o -o atomicwrite.coff
+	../bin/coff2noff atomicwrite.coff atomicwrite
 
 
