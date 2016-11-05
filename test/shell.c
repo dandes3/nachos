@@ -107,6 +107,9 @@ main()
                 
                     
                 Exec(executable, (char**) args);
+                Close(1);
+                Open("/dev/ttyout");
+                
                 prints("Error, executable does not exist\n", ConsoleOutput);
                 Exit(-1);
         }

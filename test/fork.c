@@ -26,12 +26,12 @@ main()
     prints("PARENT off Join with value of ", ConsoleOutput);
     printd(joinval, ConsoleOutput);
     prints("\n", ConsoleOutput);
-
-    Halt();
+    /*Exit(14);*/
+    /*Halt();*/
   /* not reached */
   } else {
     prints("KID running, about to Exit()\n", ConsoleOutput);
-    Exit(17);
+    /*Exit(17);*/
   }
 }
 
