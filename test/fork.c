@@ -14,7 +14,6 @@ main()
   int joinval;
   int openFile = Open("forktest.out");
   int k = 5;
-  k = k/0;
   prints("PARENT exists\n", ConsoleOutput);
   kid = Fork();
   if (kid != 0) {

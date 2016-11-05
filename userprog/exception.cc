@@ -268,9 +268,9 @@ ExceptionHandler(ExceptionType which)
            
             spaceIdSem -> V();
             //MEGALOCK -> Acquire();
-             bzero(childName, 1024);
-            snprintf(childName, 1024, "child%d", cid);
-            newThread = new Thread(childName); //Find a way to get childId into child thread addrSpace
+            // bzero(childName, 1024);
+           // snprintf(childName, 1024, "child%d", cid);
+            newThread = new Thread("fork"); //Find a way to get childId into child thread addrSpace
             newThread -> space = new (std::nothrow) AddrSpace(currentThread -> space);
             //MEGALOCK -> Release();
             
@@ -304,9 +304,9 @@ ExceptionHandler(ExceptionType which)
             currentThread -> RestoreUserState();
             machine -> WriteRegister(2, cid);
             forkExec -> Release();
-            //fprintf(stderr, "%s off lock semaphore\n", currentThread -> getName());
+            fprintf(stderr, "%s off lock semaphore\n", currentThread -> getName());
            // fprintf(stderr, "PC after fork: %d\n", machine -> ReadRegister(PCReg));
-            //fprintf(stderr, "Leaving fork: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+            fprintf(stderr, "Leaving fork: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
             break;
             
         case SC_Join:
@@ -354,9 +354,9 @@ ExceptionHandler(ExceptionType which)
             ReadArg(arg, 127, false); 
             
            // MEGALOCK -> Acquire();
-            bzero(childName, 1024);
-            snprintf(childName, 1024, "%s exec", currentThread -> name);
-            newThread = new(std::nothrow) Thread(childName);
+           // bzero(childName, 1024);
+          //  snprintf(childName, 1024, "%s exec", currentThread -> name);
+            newThread = new(std::nothrow) Thread("exec");
           //  MEGALOCK -> Release();
             
             //printf("name created\n");
@@ -375,7 +375,7 @@ ExceptionHandler(ExceptionType which)
             newThread -> space -> stdOut = currentThread -> space -> stdOut;
             newThread -> space -> fileName = arg;
             
-            
+            fprintf(stderr, "Pointers arranged\n");
             argAddr = machine -> ReadRegister(5);
             if (argAddr != 0){
                 execArgs = new(std::nothrow) char* [128];
@@ -385,7 +385,7 @@ ExceptionHandler(ExceptionType which)
 
                 argc = 0;
 
-            // printf("Above while\n");
+                printf("Above while\n");
                 while ((str = *(unsigned int *) &machine -> mainMemory[physAddr]) != 0){ 
                 //  printf("Str equals: %d\n", str);
                     int curChar = ConvertAddr((int)str);
@@ -429,9 +429,11 @@ ExceptionHandler(ExceptionType which)
             
             for (int i = 0; i < 20; i++)
                 newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
-            
+           
+            fprintf(stderr, "Args arranged\n"); 
             newThread -> Fork(execThread, (int) execArgs);
            // forkExec -> Release();
+            fprintf(stderr, "New thread -> fork called");
             
             killThread(-12);
             ASSERT(false); //Should never be reached
@@ -563,6 +565,8 @@ void CopyThread(int garbage){
 #endif
 
 void execThread(int argsInt){
+    fprintf(stderr, "In execThread\n");
+
     currentThread -> space -> RestoreState();
     currentThread -> space -> InitRegisters();
     
@@ -632,7 +636,9 @@ void execThread(int argsInt){
 }
 
 void killThread(int exitVal){
-    
+   
+
+    fprintf(stderr, "In killThread\n"); 
     AddrSpace* space = currentThread -> space;
     
     
