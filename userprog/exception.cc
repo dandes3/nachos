@@ -95,8 +95,9 @@ void ReadArg(char* result, int size, bool write);
 void IncrementPc();
 void CopyThread(int prevThreadPtr);
 int ConvertAddr (int virtualAddress);
-void killThread(int exitVal);
-void execThread(int garbage);
+void KillThread(int exitVal);
+void ExecThread(int garbage);
+void CopyExecArgs(char** execArgs, int argAddr);
 
 void
 ExceptionHandler(ExceptionType which)
@@ -105,7 +106,7 @@ ExceptionHandler(ExceptionType which)
 
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
-    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, str, argc, physAddr, argAddr,  *seg;
+    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, str,argAddr;
     OpenFileId fileId;
     OpenFile* readFile, *writeFile;
     Thread* newThread;
@@ -113,29 +114,28 @@ ExceptionHandler(ExceptionType which)
     char* arg, *readContent, stdinChar, **execArgs;
     char childName[1024];
     JoinNode* joinNode;
-#endif
+
     
     switch (which) {
     case SyscallException:
-        //fprintf(stderr, "in syscall\n");
+        
         switch (type) {
         case SC_Halt:
             DEBUG('a', "Shutdown, initiated by user program.\n");
             interrupt->Halt();
             break;
 
-#ifdef CHANGED
+
         case SC_Create:
             
             DEBUG('a', "Create entered\n");
 
             arg = new(std::nothrow) char[128];
-            ReadArg(arg, 127, false); //put name of file in arg, max 127 chars, truncated if over 
+            ReadArg(arg, 127, false); //Put name of file in arg, max 127 chars, truncated if over 
     
             fileSystem -> Create(arg, -1); 
             
             IncrementPc(); //Increment program counter to next instruction
-            
             break;
             
         case SC_Open:
@@ -149,7 +149,6 @@ ExceptionHandler(ExceptionType which)
             machine -> WriteRegister(2, fileId); //Return file descriptor
 
             IncrementPc();
-            
             break;
             
         case SC_Close:
@@ -159,7 +158,6 @@ ExceptionHandler(ExceptionType which)
             currentThread -> space -> fileClose(machine->ReadRegister(4)); //Remove file from file vector, delete OpenFile object
             
             IncrementPc();
-            
             break;
             
         case SC_Read:
@@ -201,6 +199,7 @@ ExceptionHandler(ExceptionType which)
                 readBytes  =  readFile -> Read(readContent, size); //Read into local buffer, returns number of bytes read
                 readFile -> offsetLock -> Release();
             }
+            
             //Only reached if a read is actually attempted
             machine -> WriteRegister(2, readBytes); //Write number of bytes read into return register
             for (int i = 0; i < size; i++){ //Copy local buffer into main memory at intoBuf address
@@ -210,32 +209,24 @@ ExceptionHandler(ExceptionType which)
             }
 
             IncrementPc();
-            
             break;
             
         case SC_Write:
             DEBUG('p', "Write entered\n");
-            //printf("Write entered by %s\n", currentThread -> getName());
-            //printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
-
+ 
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
             
-            DEBUG('p', "size is: %d\n", size); 
             //Pull content to be written into local memory
-            arg = new(std::nothrow) char[size];
-            DEBUG('p', "arg allocated\n");
+            arg = new(std::nothrow) char[size];  
             ReadArg(arg, size, true);
-           
-	        DEBUG('p', "After ReadArg\n");
-
             
             writeFile = currentThread -> space -> readWrite(fileId); //OpenFile object corresponding to file descriptor
             fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
 
 
             if (fileType  == 1){ //stdout
-               stdOut -> Acquire();
+               stdOut -> Acquire(); //Atomic writes to console
                 for (int i = 0; i < size; i++)
                     sConsole -> PutChar(arg[i]); //Put each char using SynchConsole
                     
@@ -243,259 +234,168 @@ ExceptionHandler(ExceptionType which)
             } 
 
             else if (writeFile != NULL && fileType != 0) {//File descriptor was valid and not stdin
-                atomicWrite -> Acquire();
-                
-                writeFile -> offsetLock -> Acquire();
+                atomicWrite -> Acquire(); //Atomic writes across different openfile 
+            
                 writeFile -> Write(arg, size);
-                writeFile -> offsetLock -> Release();
                 
                 atomicWrite -> Release();
             }
             
             
             IncrementPc();
-            //fprintf(stderr, "Exiting write: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
-          //  currentThread -> space -> RestoreState();
-     //       printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
-       //     printf("%s's personal PC %d\n", currentThread -> getName(), currentThread -> userRegisters[PCReg]);
-         //  forkExec -> Release();
             break;
             
         case SC_Fork:
-            forkExec -> Acquire();
-            
-            fprintf(stderr, "Fork entered by %s\n", currentThread -> getName());
-            //fprintf(stderr, "My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
-            //fprintf(stderr, "PC at top of fork: %d\n", machine -> ReadRegister(PCReg));
+            forkExec -> Acquire(); //Exec and Fork are mutually exclusive
             
             spaceIdSem -> P();
-            cid = spaceId ++;
+           
+            cid = spaceId ++; //Process id for a child process, locked to ensure a unique id per process
            
             spaceIdSem -> V();
-            //MEGALOCK -> Acquire();
-             bzero(childName, 1024);
-            snprintf(childName, 1024, "child%d", cid);
-            newThread = new Thread(childName); //Find a way to get childId into child thread addrSpace
-            newThread -> space = new (std::nothrow) AddrSpace(currentThread -> space);
-            //MEGALOCK -> Release();
+
+            bzero(childName, 1024);
+            snprintf(childName, 1024, "child%d", cid); //Create name for thread based on its process id
+            newThread = new(std::nothrow) Thread(childName); 
             
-            if (newThread -> space -> failed){
+            newThread -> space = new(std::nothrow) AddrSpace(currentThread -> space); //Copies parent's addr space, work done within addrspace.cc
+            
+            if (newThread -> space -> failed){ //If the fork fails, the addrspace constructor sets the failed flag, allows constructor to "return a value"
                 machine -> WriteRegister(2, -1);
                 IncrementPc();
                 break;
             }
             
-            newThread -> space -> parentThreadPtr = (int) currentThread;
-            newThread -> space -> mySpaceId = cid;
+            newThread -> space -> parentThreadPtr = (int) currentThread; //Used in join to find correct node in joinList
+            newThread -> space -> mySpaceId = cid; //See above comment
             
             joinSem -> P();
-            joinList -> addNode(currentThread, cid);
+            joinList -> addNode(currentThread, cid); //Adds a node to the global joinList
             joinSem -> V();
             
-            machine -> WriteRegister(2, 0); //Put semaphores around spaceID
-            IncrementPc();
-            newThread -> SaveUserState();
+            machine -> WriteRegister(2, 0); //Return value for child in Fork
+            IncrementPc();//Effectively Increments PC for child and parent
+            
+            newThread -> SaveUserState(); //Save prepped registers
  
-            for (int i = 0; i < NumTotalRegs; i++)
-                newThread -> userRegisters[i] = machine -> ReadRegister(i);
+            newThread -> Fork(CopyThread, 0); //Child will complete forking procedure in CopyThread
             
-            newThread -> Fork(CopyThread, 0); 
-            
+            //Uncomment the following lines to see the status of the join list after a fork
             //printf("JoinList after fork\n");
             //joinList -> print();
 
-            forkSem -> P();
-            //currentThread -> space ->  RestoreState();
-            currentThread -> RestoreUserState();
-            machine -> WriteRegister(2, cid);
+            forkSem -> P(); //Wait until child is done with CopyThread to execute
+            currentThread -> RestoreUserState(); //Ensure that registers return to state before sleeping
+            machine -> WriteRegister(2, cid); //Correct return value for parent
             forkExec -> Release();
-            fprintf(stderr, "%s off lock semaphore\n", currentThread -> getName());
-           // fprintf(stderr, "PC after fork: %d\n", machine -> ReadRegister(PCReg));
-            fprintf(stderr, "Leaving fork: My page table addr %x, machine page table addr %x\n", currentThread -> space -> pageTable, machine -> pageTable);
+
             break;
             
         case SC_Join:
 
-            //fprintf(stderr, "In Join\n");
             cid = machine -> ReadRegister(4);
            
             joinSem -> P();
-            joinNode = joinList -> getNode(currentThread, cid);
+            joinNode = joinList -> getNode(currentThread, cid); //Get node for the child for whom you are waiting
             joinSem -> V();
             
             if (joinNode == NULL)
-                machine -> WriteRegister(2, -1);
+                machine -> WriteRegister(2, -1); //Process id is not valid
             
             else{
-                joinNode -> permission -> P();
-                machine -> WriteRegister(2, joinNode -> exitVal);
+                joinNode -> permission -> P(); //Sleep here until child wakes you up
                 
+                machine -> WriteRegister(2, joinNode -> exitVal); //By the time the parent wakes up, the exit value will have been
+                                                                  //implanted in the joinNode
                 joinSem -> P();
-                //fprintf(stderr, "About to delete node\n");
-                joinList -> deleteNode(joinNode);
+                joinList -> deleteNode(joinNode); //Delete node from global join list, the child has exited and already been joined
                 joinSem -> V();
             }
             
-            //fprintf(stderr, "Exiting Join\n");
-            
+            //Uncomment these lines to see the status of the join list after a join
             //printf("JoinList after join\n");
             //joinList -> print();
 
             IncrementPc();
-          
             break;
             
         case SC_Exit:
-            forkExec -> Acquire();
-            //fprintf(stderr, "In Exit\n");
-            killThread(machine -> ReadRegister(4));
+            KillThread(machine -> ReadRegister(4)); //Release memory, update joinlist and finish thread
+            
             break;
             
         case SC_Exec:
-            forkExec -> Acquire();
+            forkExec -> Acquire(); //Exec and Fork are mutually exclusive
             
-            //fprintf(stderr, "In exec\n");
-            arg = new(std::nothrow) char[128];
+            arg = new(std::nothrow) char[128]; //Name of executable
             ReadArg(arg, 127, false); 
-            
-           // MEGALOCK -> Acquire();
+
             bzero(childName, 1024);
-           snprintf(childName, 1024, "%s exec", currentThread -> name);
+            snprintf(childName, 1024, "%s exec", currentThread -> name); //Create exec name based on name of execer
             newThread = new(std::nothrow) Thread(childName);
-          //  MEGALOCK -> Release();
+
+
+            newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg)); //Construct an addrspace just as if the main thread were being initialized
             
-            //printf("name created\n");
-            newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg));
-            if (newThread -> space -> failed){
-                machine -> WriteRegister(2, -1);
+            if (newThread -> space -> failed){ //File doesn't exist, isn't an noff, not enough memory, etc.
+                machine -> WriteRegister(2, -1); //Exec failed
                 IncrementPc();
                 forkExec -> Release();
                 break;
             }
                 
-            printf("space created\n");
+            //Update the newly execed thread so that it can exit and join as if it were the thread execing it
             newThread -> space -> parentThreadPtr = currentThread -> space -> parentThreadPtr;
             newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
             newThread -> space -> stdIn = currentThread -> space -> stdIn;
             newThread -> space -> stdOut = currentThread -> space -> stdOut;
             newThread -> space -> fileName = arg;
             
-            fprintf(stderr, "Pointers arranged\n");
-            argAddr = machine -> ReadRegister(5);
-            if (argAddr != 0){
-                execArgs = new(std::nothrow) char* [128];
-                physAddr = ConvertAddr(argAddr);
-                //printf("Phys addr is:%d, at that address is %c, as int is %d\n", physAddr, machine -> mainMemory[physAddr], machine -> mainMemory[physAddr] );
-                //printf("At that address is: %d\n", machine -> mainMemory[ConvertAddr(machine -> mainMemory[physAddr])]);
-
-                argc = 0;
-
-                printf("Above while\n");
-                while ((str = *(unsigned int *) &machine -> mainMemory[physAddr]) != 0){ 
-                //  printf("Str equals: %d\n", str);
-                    int curChar = ConvertAddr((int)str);
-                    int count = 0;
-                    //printf("IN while, curChar equals: %d, and the char is: %c\n", curChar, machine -> mainMemory[curChar]);
-                    
-                    
-                    while (machine -> mainMemory[curChar] != '\0'){
-                        str ++;
-                        curChar = ConvertAddr((int) str);
-                        count ++;
-                    }
-                    
-                    execArgs[argc] = new(std::nothrow) char[count + 1]; //TODO: Check not over 128 args
-                    
-                    
-                    str = str - count;
-                    curChar = ConvertAddr((int)str);
-                    count = 0;
-                    while (machine -> mainMemory[curChar] != '\0'){
-                        execArgs[argc][count] = machine -> mainMemory[curChar];
-                        str ++;
-                        curChar = ConvertAddr((int) str);
-                        count ++;
-                    }
-                    
-                    execArgs[argc][count] = '\0';
-                    
-                    argc ++;
-                    
-                    argAddr += 4;
-                    physAddr = ConvertAddr(argAddr);
-                //  printf("Count: %d\n", count);
-               }
-                
-                execArgs[argc] = NULL;
-            }
+            argAddr = machine -> ReadRegister(5); //Virtual address of exec argument array
+            execArgs = new(std::nothrow) char* [128];
             
-            else
-                execArgs = NULL;
+            CopyExecArgs(execArgs, argAddr); //Copy exec args from user memory to the kernel
             
+            //Copy parent's file vector
             for (int i = 0; i < 20; i++)
                 newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
            
-            fprintf(stderr, "Args arranged\n"); 
-            newThread -> Fork(execThread, (int) execArgs);
-           // forkExec -> Release();
-            fprintf(stderr, "New thread -> fork called");
+            newThread -> Fork(ExecThread, (int) execArgs); //Forked child will complete exec prep in ExecThread
             
-            killThread(-12);
+            forkExec -> Release();
+            
+            KillThread(-12); //Kill self, child will run after finishing exec prep
+            
             ASSERT(false); //Should never be reached
             break;
             
-            case SC_Dup:
-                fprintf(stderr, "in dup\n");
-                fprintf(stderr, "arg to dup is %d\n", machine -> ReadRegister(4));
-                machine -> WriteRegister(2, currentThread -> space -> dupFd(machine -> ReadRegister(4)));
-                fprintf(stderr, "past dup stuff\n");
-                IncrementPc();
-             break;
+        case SC_Dup:
+            //Duties entirely delegated to addrspace.cc
+            machine -> WriteRegister(2, currentThread -> space -> dupFd(machine -> ReadRegister(4)));
+
+            IncrementPc();
+            break;
 #endif            
         default:
             printf("Undefined SYSCALL %d\n", type);
             ASSERT(false);
     }
+    
 #ifdef USE_TLB
     case PageFaultException:
     HandleTLBFault(machine->ReadRegister(BadVAddrReg));
     break;
 #endif
+    
+#ifdef CHANGED
     case NoException:
+        break;
 
-          break;
-    /*
-    case ReadOnlyException:
-          break;
-        
-    case BusErrorException:
-          break;
-					    // invalid physical address
-    case AddressErrorException: 
-
-          break;
-					    // was beyond the end of the
-					    // address space
-    case OverflowException:
-        fprintf(stderr, "overflow\n");// Integer overflow in add or sub.
-          break;
-    case IllegalInstrException:
-        fprintf(stderr, "IllegalInstr\n");// Unimplemented or reserved instr.
-        seg = 0;
-        printf("%d", *seg);
-		break;
-    case NumExceptionTypes:
-        fprintf(stderr, "NumExceptionTypes\n");
-        break;*/
     default:
-        forkExec->Acquire(); //TODO: determine this
-        killThread(2);
-    }
-    
-    
+        KillThread(2); //Exception, exit and bring down process
+    }  
 }
 
-#ifdef CHANGED
 /*
 * Pulls "size" number of characters from register 4, and puts them into
 * the local buffer "result".
@@ -532,6 +432,9 @@ void IncrementPc(){
     machine -> WriteRegister(NextPCReg, tmp);
 }
 
+/*
+ * Converts a VA to a PA using the currentThread's pageTable
+ */
 int ConvertAddr (int virtualAddress){
     int virtPage = virtualAddress / PageSize;
     int offset = virtualAddress % PageSize;
@@ -539,141 +442,152 @@ int ConvertAddr (int virtualAddress){
     return ((currentThread -> space -> pageTable[virtPage].physicalPage) * PageSize) + offset;
 }
 
-int ConvertToVirtual (int physicalAddress){
-    int physPage = physicalAddress / PageSize;
-    int offset = physicalAddress % PageSize;
-    
-    for (int i = 0; i < currentThread -> space -> numPages; i++){
-        if (currentThread -> space -> pageTable[i].physicalPage == physPage)
-            return currentThread -> space -> pageTable[i].physicalPage * PageSize + offset;
-    }
-    
-    return -1;
-}
-
-
+/*
+ * Finishes prepping newly forked child, and puts it in execution.
+ */
 void CopyThread(int garbage){
-    fprintf(stderr, "%s In CopyThread\n", currentThread -> name);
-    forkSem -> V();
+
+    forkSem -> V(); //Wake up parent
      
-    currentThread -> space -> RestoreState();
+    currentThread -> space -> RestoreState(); //Puts page table into machine
     
-     //fprintf(stderr, "In copythread, my pageTable %x, machine page table %x\n", currentThread -> space -> pageTable, machine -> pageTable);
-    //printf("Past RestoreState\n");
-    for (int i = 0; i < NumTotalRegs; i++)
-       //printf("Machine : %d, forked thread: %d\n", machine -> ReadRegister(i), currentThread -> userRegisters[i]);
-	    machine -> WriteRegister(i, currentThread -> userRegisters[i]);
+    currenThread -> RestoreState(); //Put thread registers into the machine
 
     machine -> Run();
-    fprintf(stderr, "Past machine run\n");
 }
-#endif
 
-void execThread(int argsInt){
-    fprintf(stderr, "In execThread\n");
+/*
+ * Finishes prepping newly execed process and puts it in execution.
+ */
+void ExecThread(int argsInt){
 
-    currentThread -> space -> RestoreState();
-    currentThread -> space -> InitRegisters();
+    currentThread -> space -> RestoreState(); //Put pageTable in machine
+    currentThread -> space -> InitRegisters(); //Initialize registers as if it were a new process
     
-    if (argsInt != 0){//TODO: If no args, file name should still be arg 0
+    /*
+     * "argsInt" is a pointer to the exec args we pulled into kernel memory in exec. They will now be put 
+     * back into memory for the execed process as arguments to main.
+     */
+    if (argsInt != 0){ 
         char** args = (char**) argsInt;
         int argc = 0;
         
-        
-    // printf("execThread entered\n");
-        while (args[argc] != NULL){
-            //fprintf(stderr, "Argument %d: %s\n", argc, args[argc]);
+        while (args[argc] != NULL)
             argc ++;
-        }
         
-        int* argAddrs = new(std::nothrow) int[argc];
+        int* argAddrs = new(std::nothrow) int[argc]; //Will contain VAs of each argument 
+        int sp = machine -> ReadRegister(StackReg); 
+        int len;  
         
-    // printf("argc created\n");
-        
-    // fprintf(stderr, "Sp equals %d\n", machine -> ReadRegister(StackReg));
-        
-        
-        int sp = machine -> ReadRegister(StackReg);
-        
-        int len;
-
-/*
-        sp -= len;
-        for (int i = 0; i < len; i++)
-            machine -> mainMemory[ConvertAddr(sp + i)] =  currentThread -> space -> fileName[i];
-        
-        argAddrs[0] = sp;
-        //fprintf(stderr, "Filename put in mem\n");
-  */      
-        
-        for (int i = 0; i < argc; i ++){
-            //fprintf(stderr, "Argumet: %s, Arglen: %d, Sp physaddr: %d
-            len = strlen(args[i]) + 1;
+        for (int i = 0; i < argc; i ++){ //For each argument, put it into memory byte by byte
+            len = strlen(args[i]) + 1; //Including null byte
             sp -= len;
+            
             for (int j = 0; j < len; j++)
                 machine -> mainMemory[ConvertAddr(sp + j)] = args[i][j];   
             
-            argAddrs[i] = sp;
+            argAddrs[i] = sp; //VA of arg str
         }
         
-        //fprintf(stderr, "Args put in mem\n");
+        sp = sp & ~3; //Align for ints
         
-        sp = sp & ~3;
-        
-        sp -= sizeof(int) * (argc);
+        sp -= sizeof(int) * (argc); //Move sp for each pointer to each arg str
         
         for (int i = 0; i < argc; i ++)
-            *(unsigned int *) &machine -> mainMemory[ConvertAddr(sp + i*4)] = WordToMachine((unsigned int) argAddrs[i]);
+            *(unsigned int *) &machine -> mainMemory[ConvertAddr(sp + i*4)] = WordToMachine((unsigned int) argAddrs[i]); //Put pointer in memory
         
-        machine -> WriteRegister(4, argc);
-        machine -> WriteRegister(5, sp);
+        machine -> WriteRegister(4, argc); 
+        machine -> WriteRegister(5, sp); //Pointer to pointers to exec args
         
         machine -> WriteRegister(StackReg,sp - 8);
     }
-    else
-        fprintf(stderr, "skipped exec args\n");
     
-    currentThread -> SaveUserState();
-    
-   // fprintf(stderr, "about run\n");
-    machine -> Run();
-    
+    currentThread -> SaveUserState(); //Ensure that registers are saved in case of context switch
+
+    machine -> Run();  
 }
 
-void killThread(int exitVal){
-   
+/*
+ * Called when a thread exits or has execed a new process. Returns memory to the bitmap, updates joinlist and kills thread.
+ */
+void KillThread(int exitVal){
 
-    fprintf(stderr, "In killThread\n"); 
     AddrSpace* space = currentThread -> space;
-    
-    
-     
-    
-    //fprintf(stderr, "PhysicalPages cleared by %s:", currentThread -> name);
-    
+
     for (int i = 0; i < space -> numPages; i ++){
-        bitLock -> Acquire();
-        //fprintf(stderr, "%d ", space -> pageTable[i].physicalPage);
-        memMap -> Clear(space -> pageTable[i].physicalPage);   
+        bitLock -> Acquire()
+        memMap -> Clear(space -> pageTable[i].physicalPage); //Release each page back to the bitmap
         bitLock -> Release();
     }
-   // fprintf(stderr, "\n");
-    
-   
-    if (exitVal != -12){
+
+    if (exitVal != -12){ //Arbitrary value used to determine if function is called by exec. Should not do join stuff in that case.
         joinSem -> P();
-        JoinNode* joinNode = joinList -> getNode((Thread*) space -> parentThreadPtr, space -> mySpaceId);
+        JoinNode* joinNode = joinList -> getNode((Thread*) space -> parentThreadPtr, space -> mySpaceId); //Gets node for global join list. Uses values stored in addrspace during fork.
         joinSem -> V();
         
         if (joinNode != NULL){
             joinNode -> exitVal = exitVal;
-           // printf("JoinList after exit\n");
-           //joinList -> print();
             joinNode -> permission -> V();
         }
+        
+        //Uncomment these lines to print the joinlist after an exit.
+        //printf("JoinList after exit\n");
+        //joinList -> print();
+    }
+  
+    currentThread -> Finish(); //Kill thread
+}
+
+/*
+ * Copies exec arguments from user memory into kernel buffer execArgs from VA argAddr.
+ */
+void CopyExecArgs(char** execArgs, int argAddr){
+    
+    int str, argc, physAddr, *seg;
+    
+    if (argAddr != 0){
+        physAddr = ConvertAddr(argAddr);
+
+        argc = 0;
+        while ((str = *(unsigned int *) &machine -> mainMemory[physAddr]) != 0){ //str is a VA (pointer) where the exec arg strings reside
+
+            int curChar = ConvertAddr((int)str); //Physical address of char pointed to by str
+            int count = 0;
+                
+            while (machine -> mainMemory[curChar] != '\0'){ //Count how big the string is
+                str ++;
+                curChar = ConvertAddr((int) str);
+                count ++;
+            }
+            
+            if (argc < 128) //Args over 128 get truncated
+                execArgs[argc] = new(std::nothrow) char[count + 1]; //Allocate space for argument
+            
+            
+            str = str - count; //First char 
+            curChar = ConvertAddr((int)str);
+            count = 0;
+            
+            while (machine -> mainMemory[curChar] != '\0'){ //Actually copy the str into the execArgs buffer
+                execArgs[argc][count] = machine -> mainMemory[curChar];
+                str ++;
+                curChar = ConvertAddr((int) str);
+                count ++;
+            }
+            
+            execArgs[argc][count] = '\0';
+            
+            argc ++;
+            
+            argAddr += 4; //Go to next pointer
+            physAddr = ConvertAddr(argAddr);
+        }
+        
+        execArgs[argc] = NULL; //Last arg is NULL ptr
     }
     
-    fprintf(stderr, "Exiting killThread\n");
-    forkExec -> Release();
-    currentThread -> Finish();    
+    else
+        execArgs[0] = NULL; //No arguments       
 }
+
+#endif
