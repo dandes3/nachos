@@ -11,10 +11,15 @@
 #include "copyright.h"
 #include "utility.h"
 #include "thread.h"
+#include "synch.h"
 #include "scheduler.h"
 #include "interrupt.h"
 #include "stats.h"
+#include "slicingTimer.h"
 #include "timer.h"
+#include "bitmap.h"
+#include "syscall.h"
+#include "joinlist.h"
 #include <new>
 
 // Initialization and cleanup routines
@@ -28,14 +33,26 @@ extern Thread *threadToBeDestroyed;  		// the thread that just finished
 extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
-extern Timer *timer;				// the hardware alarm clock
 
+#ifdef CHANGED
 #ifdef USER_PROGRAM
 #include "machine.h"
 #include "synchconsole.h"
 
-extern Machine* machine;	// user program memory and registers
-extern SynchConsole* sConsole;  // Console class to unify I/O operations
+extern SlicingTimer *timer;     //Timer that forces interrupts every 100 ticks
+extern SpaceId spaceId;         //Process id for new processes
+extern Semaphore *spaceIdSem;   //Synchronizes use of spaceId
+extern JoinList *joinList;      //Linked list maintaining join related info for all parent/children pairs
+extern Semaphore *joinSem;      //Synchronizes use of joinList
+extern Semaphore *forkSem;      //Prevents a parent from executing before its child is finished initializing its address space
+extern Machine* machine;	//user program memory and registers
+extern SynchConsole* sConsole;  //Console class to unify I/O operations
+extern BitMap *memMap;          //global memory map
+extern Lock *bitLock;           //Synchronizes access to the memMap
+extern Lock *forkExec;          //Synchronizes access to the Fork and Exec syscalls
+extern Lock *stdOut;            //Synchronizes writes to the console
+extern Lock *atomicWrite;       //Synchronizes writes to files
+#endif
 #endif
 
 #ifdef FILESYS_NEEDED 		// FILESYS or FILESYS_STUB 

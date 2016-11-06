@@ -28,6 +28,7 @@
 #define SC_Write	7
 #define SC_Close	8
 #define SC_Fork		9
+#define SC_Dup		10
 
 #ifndef IN_ASM
 
@@ -57,8 +58,12 @@ typedef int SpaceId;
  * of the current address space. Should not return unless there is an
  * error, in which case a -1 is returned.
  */
-int Exec(char *name);
+
+#ifdef CHANGED
+
+int Exec(char *name, char *args[]);
  
+#endif
 /* Only return once the the user program "id" has finished.  
  * Return the exit status.
  */
@@ -113,6 +118,13 @@ int Read(char *buffer, int size, OpenFileId id);
 
 /* Close the file, we're done reading and writing to it. */
 void Close(OpenFileId id);
+
+#ifdef CHANGED	
+/* Duplicate an OpenFile object in the lowest open spot in the 
+ * file vector.
+*/
+OpenFileId Dup(OpenFileId fd);
+#endif
 
 
 #endif /* IN_ASM */

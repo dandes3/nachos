@@ -25,6 +25,7 @@ void
 StartProcess(char *filename)
 {
     OpenFile *executable = fileSystem->Open(filename);
+    executable->fileName = filename;
     AddrSpace *space;
 
     if (executable == NULL) {
@@ -34,6 +35,50 @@ StartProcess(char *filename)
     space = new(std::nothrow) AddrSpace(executable);    
     currentThread->space = space;
 
+    delete executable;			// close file
+
+    space->InitRegisters();		// set the initial register values
+    space->RestoreState();		// load page table register
+
+    machine->Run();			// jump to the user progam
+    ASSERT(false);			// machine->Run never returns;
+					// the address space exits
+					// by doing the syscall "exit"
+}
+
+
+//--------------------------------------------------------------------
+// Start Process for scripting
+//       Opens a script file (any file that begins with the
+//       line #SCRIPT). Passes the contents (line by line) to the
+//       executable's (shell) stdin. Creates the address space
+//       and runs the executable as normal.
+//--------------------------------------------------------------------
+void
+StartProcess(char *filename, char *inputName)
+{
+    OpenFile *executable = fileSystem->Open(filename); 
+    executable->fileName = filename;
+    AddrSpace *space;
+
+    if (executable == NULL) {
+	printf("Unable to open file %s\n", filename);
+	return;
+    }
+    space = new(std::nothrow) AddrSpace(executable);
+    
+    int scriptOpenId = space->fileOpen(inputName);
+                                       // gets the OpenFileId of the scriptFile
+    
+    space->fileClose(0);               // close the executable's (the shell's) stdin            
+    space -> fileClose(1);             // close the executable's (the shell's) stdout
+    space->dupFd(scriptOpenId);        // dup the OpenFileId of the scriptFile
+    space->fileClose(scriptOpenId);    // close the OpenFileId of the scriptFile
+    
+    currentThread->space = space;
+    
+
+    
     delete executable;			// close file
 
     space->InitRegisters();		// set the initial register values

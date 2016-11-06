@@ -90,15 +90,15 @@ Scheduler::FindNextToRun ()
 void
 Scheduler::Run (Thread *nextThread)
 {
-    Thread *oldThread = currentThread;
-    
+  Thread *oldThread = currentThread;
+   
 #ifdef USER_PROGRAM			// ignore until running user programs 
     if (currentThread->space != NULL) {	// if this thread is a user program,
         currentThread->SaveUserState(); // save the user's CPU registers
 	currentThread->space->SaveState();
     }
 #endif
-    
+  
     oldThread->CheckOverflow();		    // check if the old thread
 					    // had an undetected stack overflow
 
@@ -112,7 +112,7 @@ Scheduler::Run (Thread *nextThread)
     // in switch.s.  You may have to think
     // a bit to figure out what happens after this, both from the point
     // of view of the thread and from the perspective of the "outside world".
-
+    
     SWITCH(oldThread, nextThread);
     
     DEBUG('t', (char *) "Now in thread \"%s\"\n", currentThread->getName());

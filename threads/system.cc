@@ -16,8 +16,8 @@ Thread *threadToBeDestroyed;  		// the thread that just finished
 Scheduler *scheduler;			// the ready list
 Interrupt *interrupt;			// interrupt status
 Statistics *stats;			// performance metrics
-Timer *timer;				// the hardware timer device,
-					// for invoking context switches
+SlicingTimer *timer;				// the hardware timer device,
+//Timer *timer;					// for invoking context switches
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -27,9 +27,21 @@ FileSystem  *fileSystem;
 SynchDisk   *synchDisk;
 #endif
 
+#ifdef CHANGED
 #ifdef USER_PROGRAM	// requires either FILESYS or FILESYS_STUB
 Machine *machine;	// user program memory and registers
 SynchConsole *sConsole;
+BitMap *memMap;
+Lock *bitLock;
+SpaceId spaceId;
+Semaphore *forkSem;
+Semaphore *joinSem;
+Semaphore *spaceIdSem;
+JoinList *joinList;
+Lock *forkExec;
+Lock *stdOut;
+Lock *atomicWrite;
+#endif
 #endif
 
 #ifdef NETWORK
@@ -137,8 +149,7 @@ Initialize(int argc, char **argv)
     stats = new(std::nothrow) Statistics();			// collect statistics
     interrupt = new(std::nothrow) Interrupt;			// start up interrupt handling
     scheduler = new(std::nothrow) Scheduler();		// initialize the ready queue
-    if (randomYield)				// start the timer (if needed)
-	timer = new(std::nothrow) Timer(TimerInterruptHandler, 0, randomYield);
+    				// start the timer (if needed)
     threadToBeDestroyed = NULL;
 
     // We didn't explicitly allocate the current thread we are running in.
@@ -151,8 +162,21 @@ Initialize(int argc, char **argv)
     CallOnUserAbort(Cleanup);			// if user hits ctl-C
     
 #ifdef USER_PROGRAM
+#ifdef CHANGED
     machine = new(std::nothrow) Machine(debugUserProg);	// this must come first
     sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
+    memMap = new(std::nothrow) BitMap(NumPhysPages);
+    bitLock = new(std::nothrow) Lock("bitLock");
+    spaceId = 1;
+    forkSem = new(std::nothrow) Semaphore("forkSem", 0);
+    joinSem = new(std::nothrow) Semaphore("joinSem", 1);
+    spaceIdSem = new(std::nothrow) Semaphore("spaceIdSem", 1);
+    joinList =  new(std::nothrow) JoinList();
+    forkExec = new(std::nothrow) Lock("forkExec");
+    stdOut = new(std::nothrow) Lock("stdOut");
+    atomicWrite = new(std::nothrow) Lock("atomicWrite");
+    timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
+#endif
 #endif
 
 #ifdef FILESYS
@@ -184,6 +208,7 @@ Cleanup()
     
 #ifdef USER_PROGRAM
     delete machine;
+    //delete memMap;
 #endif
 
 #ifdef FILESYS_NEEDED

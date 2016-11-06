@@ -60,6 +60,7 @@ extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void ElevatorTest(void);
 extern void Print(char *file), PerformanceTest(void);
 extern void StartProcess(char *file), ConsoleTest(char *in, char *out);
+extern void StartProcess(char *fileName, char *inputFile);
 extern void MailTest(int networkID);
 
 //----------------------------------------------------------------------

@@ -32,6 +32,12 @@ OpenFile::OpenFile(int sector)
     seekPosition = 0;
 }
 
+OpenFile::OpenFile(int sector, char* name){
+    hdr = new(std::nothrow) FileHeader;
+    hdr->FetchFrom(sector);
+    seekPosition = 0;
+    fileName = name;
+}
 
 //----------------------------------------------------------------------
 // OpenFile::~OpenFile
@@ -138,6 +144,7 @@ OpenFile::ReadAt(char *into, int numBytes, int position)
 
     // copy the part we want
     bcopy(&buf[position - (firstSector * SectorSize)], into, numBytes);
+    fprintf(stderr, "buf is %s\n", buf[position - (firstSector * SectorSize)]);
     delete [] buf;
     return numBytes;
 }
@@ -193,4 +200,9 @@ int
 OpenFile::Length() 
 { 
     return hdr->FileLength(); 
+}
+
+void
+OpenFile::PrintHDR(){
+    return hdr->Print();
 }

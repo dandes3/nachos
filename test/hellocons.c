@@ -1,6 +1,6 @@
 /* hellocons.c
- *  Simple program to print string on console.
- *      Invoke as:
+ *	Simple program to print string on console.
+ *	Invoke as:
  *          userprog/nachos -x test/hellocons
  *      Should produce:
  *          Hello, console.
@@ -36,4 +36,3 @@ OpenFileId file;
   Write(s, count, file);  
 
 }
-
