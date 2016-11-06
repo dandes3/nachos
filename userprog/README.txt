@@ -11,17 +11,17 @@ Compiled and modified as coursework for CSCI 444, The College of William & Mary,
 
 
 --------------------------------------------------------------------------------------------
-|                      `...```           .---.                                             |                            
-|  ohooosd-  +hssd`   /y+++/h/       -ohsoo+os+. Nooy:  sy++d-    .+s++o:       :syso+.    |                                
-|  +s    -h. +o  h.   d-    sy`    `sd/`     -h: m` /s  d: -N-  `od/`  `:s/    ym/`  .oy-  |                                
-|  +h     .h`+o  y-  :h  /  .m+    sd. -os++yy.  m: -d  d: :M-  od.       oy` -M- .ss+yy-  |                                
-|  +y  --  -ys+  h.  ho ;:/  +d:  /d- :do` `.    N+ .y++s- -N- -h: -yos+   ys .N- /m//-    |                                
-|  +s  -m+  -d/  d. `N: ::-   ds `om  sh`        mo `:---` `N- /y  y` `d.  -m  .oo-/dh-    |                                
-|  +o  -dy+  ::  d` oh  ://+. -h +-N. om`  --.   do .m//h:  m- /y  d.  m`  `N`   .sy-:ys`  |                                
-|  +y  :y ss     d  d+  s/`yh  +y -sy` +ysyo/ohy`mo  m  s+  h- .m- -s++:   /h- ss-.sd  ho  |                                
-|  +d  +o  ys   `y: m` -d` `d+  ys `oo. ```  -dy do `N  os  s-  /d.  `    :ys d--/++-  hs  |                                
-|  +m..o+   so/:o;y +--ho   -d:.:m+  :oo/:/ohd+` os/od` /y++y-   -s+:..:+s+`` oh/`   .ss`  |                                
-|  -+++/:    ---- : ::::.    /o++ss   `./++/-`   `````   ````      .-:/:-`     `:///+:.    |           
+|                      `...```           .---.                                             |
+|  ohooosd-  +hssd`   /y+++/h/       -ohsoo+os+. Nooy:  sy++d-    .+s++o:       :syso+.    |
+|  +s    -h. +o  h.   d-    sy`    `sd/`     -h: m` /s  d: -N-  `od/`  `:s/    ym/`  .oy-  |
+|  +h     .h`+o  y-  :h  /  .m+    sd. -os++yy.  m: -d  d: :M-  od.       oy` -M- .ss+yy-  |
+|  +y  --  -ys+  h.  ho ;:/  +d:  /d- :do` `.    N+ .y++s- -N- -h: -yos+   ys .N- /m//-    |
+|  +s  -m+  -d/  d. `N: ::-   ds `om  sh`        mo `:---` `N- /y  y` `d.  -m  .oo-/dh-    |
+|  +o  -dy+  ::  d` oh  ://+. -h +-N. om`  --.   do .m//h:  m- /y  d.  m`  `N`   .sy-:ys`  |
+|  +y  :y ss     d  d+  s/`yh  +y -sy` +ysyo/ohy`mo  m  s+  h- .m- -s++:   /h- ss-.sd  ho  |
+|  +d  +o  ys   `y: m` -d` `d+  ys `oo. ```  -dy do `N  os  s-  /d.  `    :ys d--/++-  hs  |
+|  +m..o+   so/:o;y +--ho   -d:.:m+  :oo/:/ohd+` os/od` /y++y-   -s+:..:+s+`` oh/`   .ss`  |
+|  -+++/:    ---- : ::::.    /o++ss   `./++/-`   `````   ````      .-:/:-`     `:///+:.    |
 --------------------------------------------------------------------------------------------
 
 
@@ -40,12 +40,22 @@ Usage
 
     All parts of the assignment have been completed and are expected to work properly. 
     
-    Basic commentary/conditions to review before testing: 
-    - we have tested all of our implementation functions with a num pages value >= 128
-    - when executing shell functions it should be noted that while the shell operates in 
+     Basic commentary/conditions to review before testing: 
+     - We have tested all of our implementation functions with a num pages value >= 128. 
+       As per the specifications, this is the only modification in the machine directory.
+
+     - When executing shell functions it should be noted that while the shell operates in 
        the userprog directory, the rest of the tests reside in test. (i.e. implement tests 
        in the shell as test/cat, test/maxfork, etc.)
-    - TODO: other commentary/pre-reqs
+
+     - We have implemented the Exec() call with args, meaning any call to Exec() will 
+       require either an intended argument passed or in its place a Null Pointer. 
+
+     - We supply our makefile for the test subdirectory, along with all of the pre-made tests
+       we have created. If any of these tests are to be run, our makefile will have to be 
+       used, not the originally supplied default makefile. 
+
+     - TODO: other commentary/pre-reqs
 
 
 
@@ -54,12 +64,27 @@ Commentary
 ----------
    (1) On syscalls and exception handling:
        - Defence here
+       -- Our implentation of SyncConsole is based off of the supplied SyncDisk class, and
+          has two main functions. In GetChar, it surrounds all code with a lock to eliminate 
+          any chance of non-atomicity, and first Ps a semaphore to get at the console->getChar() 
+          function. The V for this semaphore is called externally after the function has
+          completed its last console call, and fills the pointer that was passed in to it. The synch in this function comes from the P, which prevents the calling function from
+          pulling more than one character from the console at a time, making reading atomic. 
+          PutChar is similar, it surrounds its internal call with locks to assure atomicity, 
+          then implements the console-PutChar() function to write the character to the console.
+          It then Ps on a semaphore, which assures the function will only write once and then
+          sleep until it is released externally. 
 
    (2) On multiprogramming with time slicing:
        - Defence here
 
    (3) On Exec call with arguments:
        - Defence here
+       -- The implementation of cat and cp are straightforward. Both of the functions will
+           utilize the previously implemented Open() call to attempt to open their respective
+           files, and if the file does not will either create it or fail with a minimal
+           error message when appropriate. They both include and utilize the supplied 
+           prints() function from the test files to write messages to the ConsoleOutput. 
 
    (4) On child process file descriptor inheritance:
        - Defence here
