@@ -6,7 +6,7 @@
 Compiled and modified as coursework for CSCI 444, The College of William & Mary, Fall 2016.
 
 -------------------------------------------------------------------------------------------
------This code is provided as is and has been created strictly for educational purposes----
+---- This code is provided as is and has been created strictly for educational purposes ---
 -------------------------------------------------------------------------------------------
 
 
