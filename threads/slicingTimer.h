@@ -1,3 +1,4 @@
+#ifdef CHANGED
 #ifndef SLTIMER_H
 #define SLTIMER_H
 
@@ -23,4 +24,5 @@ class SlicingTimer {
 
 };
 
+#endif
 #endif // TIMER_H

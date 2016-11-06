@@ -106,7 +106,7 @@ ExceptionHandler(ExceptionType which)
 
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
-    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, str,argAddr;
+    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, argAddr;
     OpenFileId fileId;
     OpenFile* readFile, *writeFile;
     Thread* newThread;
@@ -451,7 +451,7 @@ void CopyThread(int garbage){
      
     currentThread -> space -> RestoreState(); //Puts page table into machine
     
-    currenThread -> RestoreState(); //Put thread registers into the machine
+    currentThread -> RestoreUserState(); //Put thread registers into the machine
 
     machine -> Run();
 }
@@ -515,7 +515,7 @@ void KillThread(int exitVal){
     AddrSpace* space = currentThread -> space;
 
     for (int i = 0; i < space -> numPages; i ++){
-        bitLock -> Acquire()
+        bitLock -> Acquire();
         memMap -> Clear(space -> pageTable[i].physicalPage); //Release each page back to the bitmap
         bitLock -> Release();
     }
@@ -543,7 +543,7 @@ void KillThread(int exitVal){
  */
 void CopyExecArgs(char** execArgs, int argAddr){
     
-    int str, argc, physAddr, *seg;
+    int str, argc, physAddr;
     
     if (argAddr != 0){
         physAddr = ConvertAddr(argAddr);

@@ -27,6 +27,7 @@ FileSystem  *fileSystem;
 SynchDisk   *synchDisk;
 #endif
 
+#ifdef CHANGED
 #ifdef USER_PROGRAM	// requires either FILESYS or FILESYS_STUB
 Machine *machine;	// user program memory and registers
 SynchConsole *sConsole;
@@ -39,8 +40,8 @@ Semaphore *spaceIdSem;
 JoinList *joinList;
 Lock *forkExec;
 Lock *stdOut;
-Lock *MEGALOCK;
 Lock *atomicWrite;
+#endif
 #endif
 
 #ifdef NETWORK
@@ -149,8 +150,6 @@ Initialize(int argc, char **argv)
     interrupt = new(std::nothrow) Interrupt;			// start up interrupt handling
     scheduler = new(std::nothrow) Scheduler();		// initialize the ready queue
     				// start the timer (if needed)
-    timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
-    //timer = new(std::nothrow) Timer(TimerInterruptHandler, 0, false);
     threadToBeDestroyed = NULL;
 
     // We didn't explicitly allocate the current thread we are running in.
@@ -163,6 +162,7 @@ Initialize(int argc, char **argv)
     CallOnUserAbort(Cleanup);			// if user hits ctl-C
     
 #ifdef USER_PROGRAM
+#ifdef CHANGED
     machine = new(std::nothrow) Machine(debugUserProg);	// this must come first
     sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
     memMap = new(std::nothrow) BitMap(NumPhysPages);
@@ -175,8 +175,8 @@ Initialize(int argc, char **argv)
     forkExec = new(std::nothrow) Lock("forkExec");
     stdOut = new(std::nothrow) Lock("stdOut");
     atomicWrite = new(std::nothrow) Lock("atomicWrite");
-    
-    MEGALOCK = new(std::nothrow) Lock("MEGALOCK");
+    timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
+#endif
 #endif
 
 #ifdef FILESYS

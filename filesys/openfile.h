@@ -32,7 +32,9 @@ class FileHeader;
 					// See definitions listed under #else
 class OpenFile {
   public:
-    OpenFile(int f) { file = f; currentOffset = 0; links = 1; linkLock = new (std::nothrow) Lock("linkLock"); offsetLock = new (std::nothrow) Lock("offsetLock"); }	// open the file
+#ifdef CHANGED
+    OpenFile(int f) { file = f; currentOffset = 0; links = 1; linkLock = new (std::nothrow) Lock("linkLock"); offsetLock = new (std::nothrow) Lock("offsetLock"); }	//Links are to ensure that parent and children cannot interfere with one another's access
+#endif
     ~OpenFile() { Close(file); }			// close the file
 
     int ReadAt(char *into, int numBytes, int position) { 
@@ -57,11 +59,13 @@ class OpenFile {
 
     int Length() { Lseek(file, 0, 2); return Tell(file); }
     void PrintHDR();
+#ifdef CHANGED
     int links;
     Lock* linkLock;
     Lock* offsetLock;
     int file;
     char *fileName;
+#endif
   private:
     int currentOffset;
 };

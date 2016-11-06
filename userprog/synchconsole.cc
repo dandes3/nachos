@@ -1,6 +1,6 @@
 #include "synchconsole.h"
 
-
+#ifdef CHANGED
 void SynchConsole::ReadAvail() //Release the Read Semaphore
 {
     readSem->V();
@@ -22,8 +22,8 @@ SynchConsole::SynchConsole(char* fileReader, char* fileWriter) //Initializes usa
     console = new Console(fileReader, fileWriter, (VoidFunctionPtr) SConsoleReadAvail, (VoidFunctionPtr) SConsoleWriteAvail, (int)this); //Build new console, "this" is a passed location identifier
                                                                               // readDummy and writeDummy passed as void pointers passed as
                                                                               // requirements for console creation 
-    readLock = new Lock("Reader lock for Console Synch");
-    writeLock = new Semaphore("Writer lock for Console Synch", 1);
+    readLock = new Lock("Reader lock for Console Synch"); //Likely overkill, ensure atomicity of writes and reads
+    writeLock = new Lock("Writer lock for Console Synch");
     readSem = new Semaphore("Reader semaphore for Console Synch", 0);
     writeSem = new Semaphore("Writer semaphore for Console Synch", 0);
 }
@@ -51,13 +51,14 @@ void SynchConsole::GetChar(char* cp) //Lock the readlock and hang Read Semaphore
 
 void SynchConsole::PutChar(char c) //Lock the writelock and push character, hang Write Semaphore and release lock
 {
-    writeLock->P();
+    writeLock->Acquire();
     console->PutChar(c);
     writeSem -> P();
-    //printf("Exiting putchar\n");
-    writeLock->V();
+    writeLock->Release();
 }
 
 void SynchConsole::setConsole(char *fileIn, char *fileOut){
     console = new Console(fileIn, fileOut, (VoidFunctionPtr) SConsoleReadAvail, (VoidFunctionPtr) SConsoleWriteAvail, (int)this);
 }
+
+#endif

@@ -1,11 +1,16 @@
 #ifndef JOINLIST_H
 #define JOINLIST_H
 
+#ifdef CHANGED
 #include "copyright.h"
 #include "synch.h"
 #include "syscall.h"
 #include "thread.h"
 
+/* Struct that makes up each node in the join list. The parent and
+ * childId fields are used to identify the node such that the permission
+ * semaphore and exitval fields can be used appropriately.
+ */
 typedef struct  JoinNode{
     Thread *parent;
     SpaceId childId;
@@ -29,4 +34,5 @@ class JoinList{
         void print();        
     
 };
+#endif
 #endif
