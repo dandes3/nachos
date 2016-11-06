@@ -68,7 +68,8 @@ Commentary
           has two main functions. In GetChar, it surrounds all code with a lock to eliminate 
           any chance of non-atomicity, and first Ps a semaphore to get at the console->getChar() 
           function. The V for this semaphore is called externally after the function has
-          completed its last console call, and fills the pointer that was passed in to it. The synch in this function comes from the P, which prevents the calling function from
+          completed its last console call, and fills the pointer that was passed in to it.
+          The synch in this function comes from the P, which prevents the calling function from
           pulling more than one character from the console at a time, making reading atomic. 
           PutChar is similar, it surrounds its internal call with locks to assure atomicity, 
           then implements the console-PutChar() function to write the character to the console.
