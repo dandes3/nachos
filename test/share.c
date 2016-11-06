@@ -36,8 +36,10 @@ main()
     args[0] = "sharekid";
     args[1] = (char *) 0;
 
-    Exec("sharekid", args);
+    Exec("test/sharekid", args);
+    prints("should not get here\n", ConsoleOutput);
     Halt();
+
   }
 
   /* The parent process continues here */
