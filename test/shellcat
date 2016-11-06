@@ -1,0 +1,4 @@
+test/cat a.out 
+test/cat a.out > b.out
+test/cathalt b.out
+
