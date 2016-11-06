@@ -214,7 +214,6 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Write:
-            forkExec -> Acquire();
             DEBUG('p', "Write entered\n");
             //printf("Write entered by %s\n", currentThread -> getName());
             //printf("At top of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
@@ -229,9 +228,11 @@ ExceptionHandler(ExceptionType which)
             ReadArg(arg, size, true);
            
 	        DEBUG('p', "After ReadArg\n");
- 
+
+            
             writeFile = currentThread -> space -> readWrite(fileId); //OpenFile object corresponding to file descriptor
             fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
+
 
             if (fileType  == 1){ //stdout
                stdOut -> Acquire();
@@ -242,9 +243,13 @@ ExceptionHandler(ExceptionType which)
             } 
 
             else if (writeFile != NULL && fileType != 0) {//File descriptor was valid and not stdin
+                atomicWrite -> Acquire();
+                
                 writeFile -> offsetLock -> Acquire();
                 writeFile -> Write(arg, size);
                 writeFile -> offsetLock -> Release();
+                
+                atomicWrite -> Release();
             }
             
             
@@ -253,7 +258,7 @@ ExceptionHandler(ExceptionType which)
           //  currentThread -> space -> RestoreState();
      //       printf("At bottom of write, PrevPC: %d, PC: %d, NextPC: %d\n", machine -> ReadRegister(PrevPCReg), machine -> ReadRegister(PCReg), machine -> ReadRegister(NextPCReg));
        //     printf("%s's personal PC %d\n", currentThread -> getName(), currentThread -> userRegisters[PCReg]);
-           forkExec -> Release();
+         //  forkExec -> Release();
             break;
             
         case SC_Fork:
@@ -268,9 +273,9 @@ ExceptionHandler(ExceptionType which)
            
             spaceIdSem -> V();
             //MEGALOCK -> Acquire();
-            // bzero(childName, 1024);
-           // snprintf(childName, 1024, "child%d", cid);
-            newThread = new Thread("fork"); //Find a way to get childId into child thread addrSpace
+             bzero(childName, 1024);
+            snprintf(childName, 1024, "child%d", cid);
+            newThread = new Thread(childName); //Find a way to get childId into child thread addrSpace
             newThread -> space = new (std::nothrow) AddrSpace(currentThread -> space);
             //MEGALOCK -> Release();
             
@@ -354,9 +359,9 @@ ExceptionHandler(ExceptionType which)
             ReadArg(arg, 127, false); 
             
            // MEGALOCK -> Acquire();
-           // bzero(childName, 1024);
-          //  snprintf(childName, 1024, "%s exec", currentThread -> name);
-            newThread = new(std::nothrow) Thread("exec");
+            bzero(childName, 1024);
+           snprintf(childName, 1024, "%s exec", currentThread -> name);
+            newThread = new(std::nothrow) Thread(childName);
           //  MEGALOCK -> Release();
             
             //printf("name created\n");
@@ -668,7 +673,7 @@ void killThread(int exitVal){
         }
     }
     
-    //fprintf(stderr, "Exiting killThread\n");
+    fprintf(stderr, "Exiting killThread\n");
     forkExec -> Release();
     currentThread -> Finish();    
 }

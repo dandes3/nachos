@@ -4,19 +4,19 @@ int main(){
     char *fileName = "atomicFile";
     int joinval;
     SpaceId kid;
-    int fdChild, fdParent;
+    int childFd, parentFd;
     int i,j;
     if ((kid = Fork()) == 0){ /*Child*/
-        fdChild = Open(fileName);
+        childFd = Open(fileName);
         for (i = 0; i < 3; i++){
-            Write("CCCCC", 5, fdChild);
+            Write("CCCCC", 5, childFd);
         }
         Exit(5);
     }
     else{ /*Parent*/
-        fdParent = Open(fileName);
         for (j = 0; j < 7; j++){
-            Write("PPPPPPPPP", 9, fdParent);
+	    parentFd = Open(fileName);
+            Write("PPPPPPPPP", 9, parentFd);
         }
         Exit(9);
     }

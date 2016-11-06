@@ -27,11 +27,11 @@ main()
     printd(joinval, ConsoleOutput);
     prints("\n", ConsoleOutput);
     /*Exit(14);*/
-    /*Halt();*/
+    Halt();
   /* not reached */
   } else {
     prints("KID running, about to Exit()\n", ConsoleOutput);
-    /*Exit(17);*/
+    Exit(17);
   }
 }
 
