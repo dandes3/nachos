@@ -1,6 +1,6 @@
 #include "syscall.h"
 
-#ifdef CHANGED
+
 int
 main()
 {
@@ -8,7 +8,7 @@ main()
     OpenFileId input = ConsoleInput;
     OpenFileId output = ConsoleOutput;
     char prompt[2], ch, buffer[60];
-    int i, altout;
+    int i;
     int script = 0;
     int j;
 
@@ -23,20 +23,28 @@ main()
 
         i = 0;
         
+
         do {
+        
             j = Read(&buffer[i], 1, input);
             
             if (j == 0)
                 Halt();
             
+            
+            /*if ((int) buffer[i] == -1){
+                Halt();
+            }*/
         } while( buffer[i++] != '\n');
         
 
         buffer[--i] = '\0';
       
         if (buffer[0] == '#'){
-            script = 1; /*Used to determine if we are running a shell script*/
-            goto Label; /*Don't tell any other professors or potential employers*/
+            script = 1;
+            /*printd(script, temp);
+            prints("\n", temp);*/
+            goto Label;
         }
         
         if( i > 0 ) {
@@ -49,37 +57,37 @@ main()
                 char *executable = 0;
         
                 
-                while ( buffer[size] != '\0'){ /*Replace all spaces with null bytes, making each arg "its own string" within the buffer*/
+                while ( buffer[size] != '\0'){
                     if (buffer[size] == ' ')
                         buffer[size] = '\0';
                     size ++;
                 }
       
                 while (i < size){
-                    if (buffer[i] != '\0'){/*We have reached a character*/
-                        if (executable == 0) /*First string is the executable name*/
+                    if (buffer[i] != '\0'){
+                        if (executable == 0)
                             executable = &buffer[i];
                         
-                        args[argc] = &buffer[i]; /*First string is also the first argument, and subsequent args are the following arguments*/
+                        args[argc] = &buffer[i];
                         argc ++;
                         
-                        while (buffer[i] != '\0') /*Proceed until we reach the next character*/
+                        while (buffer[i] != '\0')
                             i++;
                     }  
                     else
                         i++;  
                 }
 
-                argc --; /*We overcount by 1*/
-                args[argc + 1] = (char *) 0; /*Convention, arg array is terminated by null ptr */
+                argc --;
+                args[argc + 1] = (char *) 0;  
+                
 
-                if ((*(args[argc - 1]) == '>') && (*(args[argc - 1] + 1) == '\0')){  /*Output redirection*/
+                if ((*(args[argc - 1]) == '>') && (*(args[argc - 1] + 1) == '\0')){ 
                     int fd;
                     
-                    if (script) /*When a shell script is run, its stdout is closed to prevent extraneous output. It is reopened to make the dup work.*/
+                    if (script)
                         Open("/dev/ttyout");
                 
-                    /*Opens file, creates it if it doesn't exist*/
                     if ((fd = Open(args[argc])) == -1){
                         Create(args[argc]);
                         if ((fd = Open(args[argc])) == -1){
@@ -87,7 +95,6 @@ main()
                             Exit(-1);
                         }
                     }                     
-
                     Close(1);
                     Dup(fd);
                     Close(fd);
@@ -95,16 +102,15 @@ main()
                 } 
                 
 
-                if (script) /*Reopens stdout so it can be used by the script executable*/
+                if (script)
                     Open("/dev/ttyout");
                 
                     
                 Exec(executable, (char**) args);
                 Close(1);
-
-                altout = Open("/dev/ttyout"); /*Ensures stdout is open for a script/redirected output as well*/            
-                prints("Error, executable does not exist\n", altout);
-                Close(altout);
+                Open("/dev/ttyout");
+                
+                prints("Error, executable does not exist\n", ConsoleOutput);
                 Exit(-1);
         }
 
@@ -145,4 +151,4 @@ OpenFileId file;
     Write(&c,1,file);
 }
 
-#endif
+

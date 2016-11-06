@@ -1,5 +1,6 @@
 /* hellofile.c
- *      Simple program to put string in a newly Created file
+ *
+ *	Simple program to put string in a newly Created file
  *	named hello.out.
  *
  *      Invoke as:
@@ -90,5 +91,4 @@ OpenFileId file;
   }
   Write(buffer,pos,file);
 }
-
 

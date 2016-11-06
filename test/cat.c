@@ -1,7 +1,6 @@
-#ifdef CHANGED
-/*
- *      cat.c 
- *      Implement the cat system call just like in Linux
+/* 
+ *	cat.c
+ *	Implement the cat system call just like in Linux
  *
  */ 
  
@@ -53,4 +52,4 @@ OpenFileId file;
   Write(s, count, file);  
 
 }
-#endif
+

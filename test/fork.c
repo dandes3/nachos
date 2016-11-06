@@ -12,8 +12,7 @@ main()
 
   SpaceId kid;
   int joinval;
-  int openFile = Open("forktest.out");
-  int k = 5;
+
   prints("PARENT exists\n", ConsoleOutput);
   kid = Fork();
   if (kid != 0) {
@@ -26,7 +25,7 @@ main()
     prints("PARENT off Join with value of ", ConsoleOutput);
     printd(joinval, ConsoleOutput);
     prints("\n", ConsoleOutput);
-    /*Exit(14);*/
+
     Halt();
   /* not reached */
   } else {

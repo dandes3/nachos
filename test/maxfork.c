@@ -14,17 +14,12 @@ main()
 
   SpaceId kid[NUMKIDS];
   int i, j, joinval, tmp;
-  char *args[3];
-
-  args[0] = "argument1";
-  args[1] = "argument2";
-  args[2] = (char *)0;
 
   print("PARENT exists\n");
 
   for (i=0; i<NUMKIDS; i++) {
     if ((kid[i] = Fork()) == 0) {
-      Exec("test/kid", args);
+      Exec("test/kid", (char *)0);
     } else {
       print("Kid ");
       printd(i, ConsoleOutput);
@@ -50,6 +45,7 @@ main()
     print("     kid["); printd(i, ConsoleOutput); print("]=");
         printd(kid[i], ConsoleOutput); print("\n");
   }
+
   Halt();
 
   /* not reached */

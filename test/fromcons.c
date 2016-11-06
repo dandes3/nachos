@@ -1,4 +1,6 @@
-/*imple program to read characters from the
+/* fromcons.c
+ *
+ *	Simple program to read characters from the
  *      console and echo them. Stop when a Q is read.
  *      Assumes uniprogrammed system.
  *	
@@ -18,7 +20,7 @@ main()
 {
   int count=0;
   char c;
- 
+
   while (1) {
     Read(&c, 1, ConsoleInput);
     if ( c == 'Q' ) {

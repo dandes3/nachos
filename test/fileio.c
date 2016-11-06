@@ -108,4 +108,3 @@ OpenFileId file;
   }
   Write(buffer,pos,file);
 }
-
