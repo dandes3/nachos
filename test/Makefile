@@ -34,8 +34,7 @@ CPP = /usr/bin/cpp -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -g -G 0 -c $(INCDIR) -DCHANGED -nostartfiles
 
-all: halt shell matmult sort hellocons fromcons hellofile fileio forktest fork cat cp grandchildren parentchild kid seqchild deepfork deepkid1 deepkid2 maxfork argkid argtest argseqchild sharekid share duptest dupkid atomicwrite argkidhalt
-
+all: halt shell matmult sort hellocons fromcons hellofile fileio forktest fork cat cp grandchildren parentchild kid seqchild deepfork deepkid1 deepkid2 maxfork argkid argtest argseqchild sharekid share duptest dupkid atomicwrite forkexit argkidhalt cathalt matmulthalt
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -213,8 +212,27 @@ atomicwrite: atomicwrite.o start.o
 	$(LD) $(LDFLAGS) start.o atomicwrite.o -o atomicwrite.coff
 	../bin/coff2noff atomicwrite.coff atomicwrite
 
+forkexit.c: forkexit.c
+	$(CC) $(CFLAGS) -c forkexit.c
+forkexit: forkexit.o start.o
+	$(LD) $(LDFLAGS) start.o forkexit.o -o forkexit.coff
+	../bin/coff2noff forkexit.coff forkexit
+
 argkidhalt.c: argkidhalt.c
 	$(CC) $(CFLAGS) -c argkidhalt.c
-argkidhalt.c: argkidhalt.o start.o
+argkidhalt: argkidhalt.o start.o
 	$(LD) $(LDFLAGS) start.o argkidhalt.o -o argkidhalt.coff
 	../bin/coff2noff argkidhalt.coff argkidhalt
+
+cathalt.c: cathalt.c
+	$(CC) $(CFLAGS) -c cathalt.c
+cathalt: cathalt.o start.o
+	$(LD) $(LDFLAGS) start.o cathalt.o -o cathalt.coff
+	../bin/coff2noff cathalt.coff cathalt
+
+matmulthalt.c: matmulthalt.c
+	$(CC) $(CFLAGS) -c matmulthalt.c
+matmulthalt: matmulthalt.o start.o
+	$(LD) $(LDFLAGS) start.o matmulthalt.o -o matmulthalt.coff
+	../bin/coff2noff matmulthalt.coff matmulthalt
+

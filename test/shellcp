@@ -1,0 +1,6 @@
+test/cp a.out c.out
+test/cat c.out
+test/cp a.out doesNotExist.out
+test/cathalt doesNotExist.out
+
+
