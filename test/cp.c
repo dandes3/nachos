@@ -1,3 +1,4 @@
+#ifdef CHANGED
 /* 
  *	cp.c
  *	Implement the cp system call just like in Linux
@@ -66,3 +67,4 @@ OpenFileId file;
   Write(s, count, file);  
 
 }
+#endif
