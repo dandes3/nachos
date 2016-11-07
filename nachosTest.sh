@@ -405,3 +405,12 @@ echo "*****Finished sort****"
 echo ""
 
 echo "**** All tests finished *****"
+echo "******* Cleaning up *********"
+
+rm -f a.out
+rm -f b.out
+rm -f c.out
+rm -f doesNotExist.out
+rm -f fileio.out
+rm -f hello.out
+

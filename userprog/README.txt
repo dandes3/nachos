@@ -55,6 +55,10 @@ Usage
        we have created. If any of these tests are to be run, our makefile will have to be 
        used, not the originally supplied default makefile. 
 
+     - We have included a bash test script that runs all tests required by the specifications,
+       and we feel demonstrates effectively that all parts of the assignment are tested working. 
+       Check it out. 
+
      - TODO: other commentary/pre-reqs
 
 
@@ -63,7 +67,35 @@ Usage
 Commentary
 ----------
    (1) On syscalls and exception handling:
-       - Defense here
+       - General notes about exception.cc: 
+         We use the ConvertAddr function to constantly and consistantly convert accepted virtual
+         addresses to physical addresses. We pull arguments from user memory with ReadArg into 
+         the kernel, and then call ConvertAddr to translate the Virtual Address that is passed 
+         as an argument. The implemented IncrementPc() function pushes the program counter
+         forward at the end of every syscall, except those end abnormally (such as exec and
+         exit). We made the design decision to handle as much of the syscall related actions
+         inside the AddrSpace class as we logically could. This was, we felt, the most 
+         straightforward locatino for these actions to be handled, and allowed us to increase
+         orginization and cleaniliness of our codebase.
+
+         Syscalls:
+         - Create:
+           Pulls the filename into the kernel, and uses the embedded fileSystem create function
+           to create the file in linux filesystem. In practice and implementation, this does not 
+           affect the NachOS thread address space in any way. 
+         - Open:
+           Pulls the filename into memory, and delegates the management of its file storage
+           vector to the AddrSpace class. The AddrSpace fileOpen method creates a new object
+           and stores it in the current thread's file vector. In the implementation of Open, it
+           will catch if the user opens "/dev/ttyin" and create a new link to ConsoleIn, and 
+           if "/dev/ttyout" is opened, will open a new link to ConsoleOut. These are relatively
+           small implementations, but important to functionality of the Open call. 
+         - Close:
+           Simply delegates file vector management to the AddrSpace class again, and will remove
+           the OpenFile object at the given OpenFileId (which corresponds to an index in the
+           the vector array). If close decrements the number of links to the object to 0, it
+           will delete the OpenFile object. This is further explained in the OpenFile section. 
+
        -- Our implentation of SyncConsole is based off of the supplied SyncDisk class, and
           has two main functions. In GetChar, it surrounds all code with a lock to eliminate 
           any chance of non-atomicity, and first Ps a semaphore to get at the 
