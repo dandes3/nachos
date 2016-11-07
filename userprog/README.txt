@@ -220,24 +220,26 @@ Commentary
          increments the number of links to the OpenFile object. 
 
    (5) On the shell and #SCRIPT:
-       - The shell reads initially will read a line from stdin. If this line has no arguments, we 
-         exec with char* 0 for the second argument. If there are arguments in the line, we parse 
+       - (5) On the shell and #SCRIPT:
+       - The shell initially will read a line from stdin. If this line has no arguments, we 
+         exec with (char*) 0 for the second argument. If there are arguments in the line, we parse 
          the string to put the arguments in a char* array. This array is assumed to be under 128. 
          The program then execs the filename with the argument as a char**. If the file does not 
          exist, we print a minimal error message. When the executed file exits, the shell will continue
          to run and wait for a new command. If the line that was input to stdin begins with #, then 
-         the line is ignored. If the shell detects >, then we close stdout, dup the new fd on the rhs 
-         of >, and close that fd as well to redirect the shell output to file corresponding to the fd.
-         For #SCRIPT, we manipulate in addrspace. noff.magic is the first line of the file, so we test
-         what noff.magic (in hex) was when the first line in a file is #script, and store this value 
-         as #define SCRIPT We modified the opening of files as to allow open files to remember their 
-         own name. And when noff. magic is the SCRIPT value, we call a modified version of 
-         userprog/protest::startprocess and pass to it test/shell (the name of the executable) 
-         and the name of the script. Inside startprocess, we do fileopen (scriptname) to get the 
-         openfileid, and then close(0), dup (openfileid) and close (openfileid) in order to get 
-         the shell's input to become the script file. The rest of the code for start process remains 
-         the same so we can run test/shell as normal. 
-
+         the line is ignored. If the shell detects >, then we close stdout, dup the new fd on the right
+         hand side of >, and close that fd as well to redirect the shell output to file corresponding
+         to the fd. For script files, the first line must start with #SCRIPT. We handle this in 
+         Addrspace. The value of noff.magic is the first line of any file, so we test
+         what noff.magic (in hex) was when the first line in a file is #SCRIPT, and store this value 
+         as #define SCRIPT. We modified the opening of files as to allow open files to remember their 
+         own name. And when noff.magic is the SCRIPT constant, we call a modified version of 
+         StartProcess in userprog/progtest and pass to it test/shell (the name of the executable) 
+         and the name of the script. Inside StartProcess, we do FileOpen (scriptname) to get the 
+         openfileid, and then Close(0), Dup (openfileid) and Close (openfileid) in order to get 
+         the shell's input to become the script file. The rest of the code for StartProcess remains 
+         the same so we can run test/shell as normal.
+         
    (6) On AddrSpace changes:
        - We made several major changes to addrspace, they include: A failed flag; if fails to allocate
          memory or open the executable, marks failed as true and returns. Checks to see if executable is
