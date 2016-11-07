@@ -61,6 +61,9 @@ Usage
        and we feel demonstrates effectively that all parts of the assignment are tested working. 
        Check it out. 
 
+     - After running the test script, you will need to do another make to git a working build. 
+       We automated some clean ups of binaries into the test for ease of committing to our repo. 
+
      - Any #SCRIPT file to be executed must follow lines with a newline character. It just does.
 
 
@@ -265,5 +268,5 @@ Commentary
 
 
 
-          
+
   
