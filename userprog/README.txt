@@ -59,6 +59,9 @@ Usage
      - We have included a bash test script that runs all tests required by the specifications,
        and we feel demonstrates effectively that all parts of the assignment are tested working. 
        Check it out. 
+       
+     - It should be noted exec must be called from within a process. (i.e., you cannot run exec 
+       from the line you run nachos- userprog/nachos -x test/argkid arg1 is invalid)
 
      - Any #SCRIPT file to be executed must follow lines with a newline character. It just does.
 
@@ -162,7 +165,7 @@ Commentary
            It will then store a pointer to the itself and the spaceId of the child in the child's 
            addrspace. When the parent then joins, it searches though for a node such that the parent
            pointer is equal to itself, and the childId is the argument that was passed to join. It
-           then Ps on the perission semaphore. When the child makes exit, it finds the node that
+           then Ps on the permission semaphore. When the child makes exit, it finds the node that
            contains a pointer to its parent and its own spaceId (the same node as described before). 
            It then updates the exit value and Vs on the semaphore. The parent is then woken up and
            retrieves the exit value, then deletes the node in the list. 
@@ -194,7 +197,7 @@ Commentary
 
    (3) On Exec call with arguments:
        - To exec with arguments, we execute the exec call, and when it has created the new thread it
-         will then pull the arguments into kernel memory using teh CopyExecArgs function. The
+         will then pull the arguments into kernel memory using the CopyExecArgs function. The
          exec-ing thread will then fork the new thread to execThread with a pointer to the buffer
          containing the exec arguments in kernel memory. In the execThread method, the new thread
          will then restore its page table and registers like in the normal exec, but will then
