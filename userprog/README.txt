@@ -267,6 +267,7 @@ Commentary
           write concurrently, which could cause issues with the currency pointer. 
 
 
-
-
-  
+  --------------------------------------------------------------------------------------------------------
+  | We have been able to arrive at and agree on a mutually agreeable distribution of labor, and have all
+  | put work in to this project on what we consider a fair level.
+  --------------------------------------------------------------------------------------------------------
