@@ -51,7 +51,7 @@ Usage
        in the shell as test/cat, test/maxfork, etc.)
 
      - We have implemented the Exec() call with args, meaning any call to Exec() will 
-       require either an intended argument passed or in its place a Null Pointer. 
+       require either arguments passed in an array of char*s, or in its place a Null Pointer. 
 
      - We supply our makefile for the test subdirectory, along with all of the pre-made tests
        we have created. If any of these tests are to be run, our makefile will have to be 
