@@ -73,11 +73,11 @@ Commentary
          addresses to physical addresses. We pull arguments from user memory with ReadArg into 
          the kernel, and then call ConvertAddr to translate the Virtual Address that is passed 
          as an argument. The implemented IncrementPc() function pushes the program counter
-         forward at the end of every syscall, except those end abnormally (such as exec and
-         exit). We made the design decision to handle as much of the syscall related actions
-         inside the AddrSpace class as we logically could. This was, we felt, the most 
-         straightforward locatino for these actions to be handled, and allowed us to increase
-         orginization and cleaniliness of our codebase.
+         forward at the end of every syscall, except those that end abnormally (such as exec 
+         and exit). We made the design decision to handle as much of the syscall related 
+         actions inside the AddrSpace class as we logically could. This was, we felt, the most 
+         straightforward locatin for these actions to be handled, and allowed us to increase
+         orginization and cleanliness of our codebase.
 
          Syscalls:
          - Create:
@@ -103,13 +103,13 @@ Commentary
            another file. This behavior also means it will return a -1 if there is no file present
            at the given OpenFileId. If we are reading from the console in, it uses the SynchConsole
            call (explained later). If the read is from a file, we obtain the offSetLock associated
-           with the giben openFile and read the designated number of bytes utilizing the Read() 
+           with the given openFile and read the designated number of bytes utilizing the Read() 
            OpenFile method. When this method is in use, it is designed to keep track of the pointer
            for current read automatically. 
          - Write:
            Write is implemented in an essential opposite of read. It pushes the string to be written
            in to the Kernel by implementing the ReadArg, and obtains the OpenFile object using
-           readWrite- similarly to read. It will then check the object using the isConsoelFile method
+           readWrite- similarly to read. It will then check the object using the isConsoleFile method
            as well. If we are then writing to the Console Out, we implement the respective 
            SynchConsole method. If we are writing to a file, it implements our atomicWrite method
            lock and writes out, which assures that writing directly to a file for an expected amount
