@@ -240,7 +240,7 @@ Commentary
 
    (6) On AddrSpace changes:
        - We made several major changes to addrspace, they include: A failed flag; if fails to allocate
-         memory of open the executable, marks failed as true and returns. Checks to see if executable is
+         memory or open the executable, marks failed as true and returns. Checks to see if executable is
          a script. If this is the case, it will bypass most of the normal addrspace instructions and start
          a shell process with redirected input. When filling the page table, we now use the bitmap to find
          physical pages to map to virtual pages, rather that a one to one conversion. We now put the noff 
@@ -248,9 +248,9 @@ Commentary
          exec as well as the initialization of the main thread. Creates a big file vector of size 20 and
          initializes it to NULL. 
          We also have added a new constructor that takes an addrspace pointer as an argument, and copies 
-         that addrspace to the new addrspace. It copues the file vector exactly, and increments the list
+         that addrspace to the new addrspace. It copies the file vector exactly, and increments the list
          links for each file. It creates the page table as in the first constructor, with the same virtual
-         pages as a oarent, but different physical. This follows the semantics of the failed flag. It also
+         pages as a parent, but different physical. This follows the semantics of the failed flag. It also
          copies physical memory from parents' physical pages to it's own physical pages, and is used in
          fork. The file vector in addrspace controls most of the instructions regarding opening and
          manipulating files through the syscalls. 
