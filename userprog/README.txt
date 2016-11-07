@@ -46,9 +46,8 @@ Usage
        the same results that we intended. As per the specifications, this is the only 
        modification to the machine directory.
 
-     - When executing shell functions it should be noted that while the shell operates in 
-       the userprog directory, the rest of the tests reside in test. (i.e. implement tests 
-       in the shell as test/cat, test/maxfork, etc.)
+     - When executing shell functions it should be noted that the shell operates in 
+       the test directory (i.e. implement tests in the shell as test/cat, test/maxfork, etc.)
 
      - We have implemented the Exec() call with args, meaning any call to Exec() will 
        require either arguments passed in an array of char*s, or in its place a Null Pointer. 
@@ -61,8 +60,9 @@ Usage
        and we feel demonstrates effectively that all parts of the assignment are tested working. 
        Check it out. 
 
-     - After running the test script, you will need to do another make to git a working build. 
-       We automated some clean ups of binaries into the test for ease of committing to our repo. 
+     - If you run the test script, you will need to do another make in the parent directory 
+       afterwards to get a working build. We automated some clean ups of binaries into the test 
+       for ease of committing to our repo.
 
      - Any #SCRIPT file to be executed must follow lines with a newline character. It just does.
 
