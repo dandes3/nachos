@@ -46,8 +46,8 @@ Usage
        the same results that we intended. As per the specifications, this is the only 
        modification to the machine directory.
 
-     - When executing shell functions it should be noted that the shell operates in 
-       the test directory (i.e. implement tests in the shell as test/cat, test/maxfork, etc.)
+     - Assuming userprog/nachos is invoked from the parent, executables should be passed
+       in the form test/maxfork.
 
      - We have implemented the Exec() call with args, meaning any call to Exec() will 
        require either arguments passed in an array of char*s, or in its place a Null Pointer. 
