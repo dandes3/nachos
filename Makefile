@@ -7,10 +7,10 @@ MAKE = make
 all: 
 #	cd threads; $(MAKE) depend
 #	cd threads; $(MAKE) nachos
-	cd userprog; $(MAKE) depend 
-	cd userprog; $(MAKE) nachos 
-#	cd vm; $(MAKE) depend
-#	cd vm; $(MAKE) nachos 
+#	cd userprog; $(MAKE) depend 
+#	cd userprog; $(MAKE) nachos 
+	cd vm; $(MAKE) depend
+	cd vm; $(MAKE) nachos 
 #	cd filesys; $(MAKE) depend
 #	cd filesys; $(MAKE) nachos 
 #	cd network; $(MAKE) depend
@@ -18,5 +18,6 @@ all:
 	cd bin; make all
 	cd test; make all
 
+# don't delete executables in "test" in case there is no cross-compiler
 clean:
 	rm -f */{core,nachos,DISK,*.o,swtch.s} test/{*.coff} bin/{coff2flat,coff2noff,disassemble}
