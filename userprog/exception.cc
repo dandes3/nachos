@@ -458,7 +458,7 @@ void faultPage(){
     }
     
     currentThread -> space -> pageTable[faultPage].valid = true;   
-    currentThread -> space -> pageTable[faultPage].physicalPage = faultPage;
+    currentThread -> space -> pageTable[faultPage].physicalPage = newLocation;
     currentThread -> space -> RestoreState();
     
 }
