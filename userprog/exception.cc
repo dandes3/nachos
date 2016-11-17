@@ -395,10 +395,12 @@ ExceptionHandler(ExceptionType which)
     
 #ifdef CHANGED
     case NoException:
+        
         break;
         
     case ReadOnlyException:
         fprintf(stderr, "ReadOnly\n");
+        KillThread(2);
           break;
         
     case BusErrorException:
@@ -406,9 +408,9 @@ ExceptionHandler(ExceptionType which)
           break;
 					    // invalid physical address
     case AddressErrorException: // Unaligned reference or one that
-
+ 
           fprintf(stderr, "AddressError\n");
-
+KillThread(2);
           break;
 					    // was beyond the end of the
 					    // address space
@@ -416,8 +418,9 @@ ExceptionHandler(ExceptionType which)
         fprintf(stderr, "overflow\n");// Integer overflow in add or sub.
           break;
     case IllegalInstrException:
+        
         fprintf(stderr, "IllegalInstr\n");// Unimplemented or reserved instr.
-
+KillThread(2);
 		break;
     case NumExceptionTypes:
         fprintf(stderr, "NumExceptionTypes\n");
@@ -455,6 +458,7 @@ void faultPage(){
     }
     
     currentThread -> space -> pageTable[faultPage].valid = true;   
+    currentThread -> space -> pageTable[faultPage].physicalPage = faultPage;
     currentThread -> space -> RestoreState();
     
 }
