@@ -38,6 +38,7 @@ extern Statistics *stats;			// performance metrics
 #ifdef USER_PROGRAM
 #include "machine.h"
 #include "synchconsole.h"
+#include "synchdisk.h"
 
 extern SlicingTimer *timer;     //Timer that forces interrupts every 100 ticks
 extern SpaceId spaceId;         //Process id for new processes
@@ -50,10 +51,11 @@ extern SynchConsole* sConsole;  //Console class to unify I/O operations
 extern BitMap *memMap;          //global memory map
 extern BitMap *diskMap;         //Global disk sectors map
 extern Lock *bitLock;           //Synchronizes access to the memMap
-extern Lock *diskBitLock        //Synchronizes access to the diskMap
+extern Lock *diskBitLock;        //Synchronizes access to the diskMap
 extern Lock *forkExec;          //Synchronizes access to the Fork and Exec syscalls
 extern Lock *stdOut;            //Synchronizes writes to the console
 extern Lock *atomicWrite;       //Synchronizes writes to files
+extern SynchDisk *megaDisk;      //I think the name explains it all
 #endif
 #endif
 

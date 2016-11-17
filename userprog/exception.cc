@@ -98,6 +98,8 @@ int ConvertAddr (int virtualAddress);
 void KillThread(int exitVal);
 void ExecThread(int garbage);
 void CopyExecArgs(char** execArgs, int argAddr);
+int pageToRemove();
+void faultPage();
 
 void
 ExceptionHandler(ExceptionType which)
@@ -379,12 +381,14 @@ ExceptionHandler(ExceptionType which)
         default:
             printf("Undefined SYSCALL %d\n", type);
             ASSERT(false);
-    }
+        }
+        
+        break;
     
 
     case PageFaultException:
-        //Assuming one process with enough pages
         
+        faultPage();
         
         break;
 
@@ -392,10 +396,67 @@ ExceptionHandler(ExceptionType which)
 #ifdef CHANGED
     case NoException:
         break;
+        
+    case ReadOnlyException:
+        fprintf(stderr, "ReadOnly\n");
+          break;
+        
+    case BusErrorException:
+        fprintf(stderr, "BusError\n");// Translation resulted in an 
+          break;
+					    // invalid physical address
+    case AddressErrorException: // Unaligned reference or one that
 
-    default:
-        KillThread(2); //Exception, exit and bring down process
+          fprintf(stderr, "AddressError\n");
+
+          break;
+					    // was beyond the end of the
+					    // address space
+    case OverflowException:
+        fprintf(stderr, "overflow\n");// Integer overflow in add or sub.
+          break;
+    case IllegalInstrException:
+        fprintf(stderr, "IllegalInstr\n");// Unimplemented or reserved instr.
+
+		break;
+    case NumExceptionTypes:
+        fprintf(stderr, "NumExceptionTypes\n");
+        break;
+
+    
+
+    //default:
+        
+       // KillThread(2); //Exception, exit and bring down process
     }  
+    
+    
+    DEBUG('a', "Leaving exception handler\n");
+}
+
+void faultPage(){
+    //Assuming one process with enough pages in physical memory
+    int faultPage, faultSector, newLocation;
+    char* newPage = new char[128];
+    
+    faultPage = machine -> ReadRegister(BadVAddrReg) / PageSize;
+    faultSector = currentThread -> space -> diskSectors[faultPage];
+    DEBUG('v', "Fault addr: %d, fault page: %d\n", machine -> ReadRegister(BadVAddrReg), faultPage); 
+    
+    bitLock -> Acquire();
+    newLocation = memMap -> Find();
+    bitLock -> Release();
+    
+    megaDisk -> ReadSector(faultSector, newPage);
+    
+    for (int i = 0; i < PageSize; i++){
+        //DEBUG('v', "newLocation: %d, i: %d\n", newLocation, i);
+        machine -> mainMemory[newLocation * PageSize +  i] = newPage[i];
+    }
+    
+    currentThread -> space -> pageTable[faultPage].valid = true;   
+    currentThread -> space -> RestoreState();
+    
 }
 
 int pageToRemove(){

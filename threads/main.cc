@@ -173,7 +173,8 @@ main(int argc, char **argv)
         }
 #endif // NETWORK
     }
-
+    
+    DEBUG('v', "Finising in main\n");
     currentThread->Finish();	// NOTE: if the procedure "main" 
 				// returns, then the program "nachos"
 				// will exit (as any other normal program

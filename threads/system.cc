@@ -43,6 +43,7 @@ JoinList *joinList;
 Lock *forkExec;
 Lock *stdOut;
 Lock *atomicWrite;
+SynchDisk *megaDisk;
 #endif
 #endif
 
@@ -180,6 +181,7 @@ Initialize(int argc, char **argv)
     stdOut = new(std::nothrow) Lock("stdOut");
     atomicWrite = new(std::nothrow) Lock("atomicWrite");
     timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
+    megaDisk = new(std::nothrow) SynchDisk("megaDisk");
 #endif
 #endif
 

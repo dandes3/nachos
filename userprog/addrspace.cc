@@ -130,31 +130,86 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	   pageTable[i].use = false;
 	   pageTable[i].dirty = false;
 	   pageTable[i].readOnly = false; 
+       
+       DEBUG('v', "VP %d goes to sector %d\n", i, diskSectors[i]);
     }
 #endif    
 
 // then, copy in the code and data segments into memory byte by byte, converting to physical memory for each byte
       
-      int bytesCopied = 0;
-      char* dataBuf = new char[128];      
-      
-      if (noffH.code.size > 0) {
+    int virtualPage, virtualOffset;
+    int executableSize = noffH.code.size + noffH.initData.size;
+    executableSize +=  128 - (executableSize % 128);
+    char** dataBufs = new char*[executableSize / 128];
+    
+    for (int i =0; i < executableSize / 128; i++)
+        dataBufs[i] = new char[128];
+    
+    for (int i = 0; i < executableSize / 128; i ++)
+        bzero(dataBufs[i], 128);
+    
+    
+    if (noffH.code.size > 0) {
 
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
         
-        for (int j = 0; j < noffH.code.size; j ++) 
-            executable->ReadAt(codeBuf, , noffH.code.inFileAddr + j); 
+        for (int i = 0; i < noffH.code.size; i ++){
+            virtualPage = (noffH.code.virtualAddr + i) / 128;
+            virtualOffset = (noffH.code.virtualAddr + i) % 128;
+            executable->ReadAt(&dataBufs[virtualPage][virtualOffset], 1, noffH.code.inFileAddr + i); 
+        }
+    }
+    
+   if (noffH.initData.size > 0) {
+
+        DEBUG('a', "Initializing initData segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
+        
+        for (int i = 0; i < noffH.initData.size; i ++){
+            virtualPage = (noffH.initData.virtualAddr + i) / 128;
+            virtualOffset = (noffH.initData.virtualAddr + i) % 128;
+            executable->ReadAt(&dataBufs[virtualPage][virtualOffset], 1, noffH.initData.inFileAddr + i); 
+        }
+    }
+    
+    for (int i = 0; i < executableSize / 128; i++)
+        megaDisk -> WriteSector(diskSectors[i], dataBufs[i]);
+    
+    
+    DEBUG('v', "code size: %d, initdata size: %d, uninitData size %d, stack size %d\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size, UserStackSize);
+    DEBUG('v', "%d pages of code put on disk\n", executableSize / 128);
+      
+      /*
+    //Big ASSumption: code and init data are contiguous and start at VA 0 ****
+    int executableSize = noffH.code.size + noffH.initData.size;
+    executableSize +=  128 - (executableSize % 128);
+    char* dataBuf = new char[executableSize];      
+    bzero(dataBuf, executableSize);
+    
+    if (noffH.code.size > 0) {
+
+        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
+        
+        executable->ReadAt(dataBuf, noffH.code.size, noffH.code.inFileAddr); 
     }
        
     if (noffH.initData.size > 0) {
         
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
         
-        for (int j = 0; j < noffH.initData.size; j ++)
-            executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.initData.virtualAddr + j)]), 1, noffH.initData.inFileAddr + j);
-        
+        executable->ReadAt(dataBuf, noffH.initData.size, noffH.initData.inFileAddr);    
     }
     
+    int start = 0;
+    int virtualPage = 0; //Big ASSumption: code and init data are contiguous and start at VA 0 ****
+    while (start < executableSize){
+        megaDisk -> WriteSector(diskSectors[virtualPage], &dataBuf[start]);
+        start += 128;
+        virtualPage ++;
+    }  
+    
+    DEBUG('v', "code size: %d, initdata size: %d, uninitData size %d, stack size %d\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size, UserStackSize);
+    DEBUG('v', "%d pages of code put on disk\n", virtualPage);
+    */
     for (int j = 0; j < 20; j++) //Init fileVector to all NULL
         fileVector[j] = NULL;
 
