@@ -36,8 +36,7 @@ LD = g++
 AS = as
 
 PROGRAM = nachos
-
-THREAD_H =../threads/copyright.h\
+EAD_H =../threads/copyright.h\
 	../threads/list.h\
 	../threads/scheduler.h\
 	../threads/synch.h \
@@ -48,7 +47,10 @@ THREAD_H =../threads/copyright.h\
 	../machine/interrupt.h\
 	../machine/sysdep.h\
 	../machine/stats.h\
-	../machine/timer.h
+        ../threads/elevatormanager.h\
+	../machine/timer.h\
+	../threads/joinlist.h\
+	../threads/slicingTimer.h
 
 THREAD_C =../threads/main.cc\
 	../threads/list.cc\
@@ -62,12 +64,16 @@ THREAD_C =../threads/main.cc\
 	../machine/interrupt.cc\
 	../machine/sysdep.cc\
 	../machine/stats.cc\
-	../machine/timer.cc
+        ../threads/elevatormanager.cc\
+	../machine/timer.cc\
+	../threads/joinlist.cc\
+	../threads/slicingTimer.cc
 
 THREAD_S = ../threads/switch.s
 
 THREAD_O =main.o list.o scheduler.o synch.o synchlist.o system.o thread.o \
-	utility.o threadtest.o interrupt.o stats.o sysdep.o timer.o
+	utility.o threadtest.o interrupt.o stats.o sysdep.o timer.o elevatormanager.o\
+	joinlist.o slicingTimer.o
 
 USERPROG_H = ../userprog/addrspace.h\
 	../userprog/bitmap.h\
@@ -76,7 +82,9 @@ USERPROG_H = ../userprog/addrspace.h\
 	../machine/console.h\
 	../machine/machine.h\
 	../machine/mipssim.h\
-	../machine/translate.h
+	../machine/translate.h\
+	../userprog/synchconsole.h\
+        ../userprog/syscall.h
 
 USERPROG_C = ../userprog/addrspace.cc\
 	../userprog/bitmap.cc\
@@ -85,28 +93,33 @@ USERPROG_C = ../userprog/addrspace.cc\
 	../machine/console.cc\
 	../machine/machine.cc\
 	../machine/mipssim.cc\
-	../machine/translate.cc
+	../machine/translate.cc\
+	../userprog/synchconsole.cc
 
 USERPROG_O = addrspace.o bitmap.o exception.o progtest.o console.o machine.o \
-	mipssim.o translate.o
+	mipssim.o translate.o synchconsole.o
 
 VM_H = ../filesys/synchdisk.h \
-	../machine/disk.h
+        ../machine/disk.h
 VM_C = ../filesys/synchdisk.cc \
-	../machine/disk.cc
+        ../machine/disk.cc
 VM_O = synchdisk.o disk.o
 
 FILESYS_H =../filesys/directory.h \
 	../filesys/filehdr.h\
 	../filesys/filesys.h \
-	../filesys/openfile.h
+	../filesys/openfile.h\
+	../filesys/synchdisk.h\
+	../machine/disk.h
 FILESYS_C =../filesys/directory.cc\
 	../filesys/filehdr.cc\
 	../filesys/filesys.cc\
 	../filesys/fstest.cc\
-	../filesys/openfile.cc
-
-FILESYS_O =directory.o filehdr.o filesys.o fstest.o openfile.o
+	../filesys/openfile.cc\
+	../filesys/synchdisk.cc\
+	../machine/disk.cc
+FILESYS_O =directory.o filehdr.o filesys.o fstest.o openfile.o synchdisk.o\
+	disk.o
 
 NETWORK_H = ../network/post.h ../machine/network.h
 NETWORK_C = ../network/nettest.cc ../network/post.cc ../machine/network.cc
