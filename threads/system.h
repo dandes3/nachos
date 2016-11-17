@@ -39,6 +39,7 @@ extern Statistics *stats;			// performance metrics
 #include "machine.h"
 #include "synchconsole.h"
 #include "synchdisk.h"
+#include "faultdata.h"
 
 extern SlicingTimer *timer;     //Timer that forces interrupts every 100 ticks
 extern SpaceId spaceId;         //Process id for new processes
@@ -56,6 +57,7 @@ extern Lock *forkExec;          //Synchronizes access to the Fork and Exec sysca
 extern Lock *stdOut;            //Synchronizes writes to the console
 extern Lock *atomicWrite;       //Synchronizes writes to files
 extern SynchDisk *megaDisk;      //I think the name explains it all
+extern FaultData **faultInfo;
 #endif
 #endif
 

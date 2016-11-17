@@ -63,7 +63,7 @@ main.o: ../threads/main.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 list.o: ../threads/list.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/list.h ../threads/utility.h \
  ../machine/sysdep.h ../threads/copyright.h /usr/include/stdlib.h \
@@ -118,7 +118,7 @@ scheduler.o: ../threads/scheduler.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 synch.o: ../threads/synch.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/synch.h ../threads/list.h \
  ../threads/utility.h ../machine/sysdep.h ../threads/copyright.h \
@@ -152,7 +152,7 @@ synch.o: ../threads/synch.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 synchlist.o: ../threads/synchlist.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/synchlist.h ../threads/list.h \
  ../threads/utility.h ../machine/sysdep.h ../threads/copyright.h \
@@ -212,7 +212,7 @@ system.o: ../threads/system.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 thread.o: ../threads/thread.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/thread.h ../threads/utility.h \
  ../machine/sysdep.h ../threads/copyright.h /usr/include/stdlib.h \
@@ -247,7 +247,7 @@ thread.o: ../threads/thread.cc /usr/include/stdc-predef.h \
  ../threads/slicingTimer.h ../machine/timer.h ../userprog/bitmap.h \
  ../filesys/openfile.h ../userprog/syscall.h ../threads/joinlist.h \
  ../userprog/synchconsole.h ../machine/console.h ../filesys/synchdisk.h \
- ../machine/disk.h /usr/include/c++/4.8/iostream \
+ ../machine/disk.h ../userprog/faultdata.h /usr/include/c++/4.8/iostream \
  /usr/include/c++/4.8/ostream /usr/include/c++/4.8/ios \
  /usr/include/c++/4.8/iosfwd /usr/include/c++/4.8/bits/stringfwd.h \
  /usr/include/c++/4.8/bits/memoryfwd.h \
@@ -352,8 +352,8 @@ threadtest.o: ../threads/threadtest.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h /usr/include/c++/4.8/vector \
- /usr/include/c++/4.8/bits/stl_algobase.h \
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h \
+ /usr/include/c++/4.8/vector /usr/include/c++/4.8/bits/stl_algobase.h \
  /usr/include/c++/4.8/bits/functexcept.h \
  /usr/include/c++/4.8/bits/exception_defines.h \
  /usr/include/c++/4.8/bits/cpp_type_traits.h \
@@ -410,7 +410,7 @@ interrupt.o: ../machine/interrupt.cc /usr/include/stdc-predef.h \
  ../threads/slicingTimer.h ../machine/timer.h ../userprog/bitmap.h \
  ../filesys/openfile.h ../userprog/syscall.h ../threads/joinlist.h \
  ../userprog/synchconsole.h ../machine/console.h ../filesys/synchdisk.h \
- ../machine/disk.h
+ ../machine/disk.h ../userprog/faultdata.h
 sysdep.o: ../machine/sysdep.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h /usr/include/unistd.h /usr/include/features.h \
  /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h \
@@ -463,7 +463,8 @@ sysdep.o: ../machine/sysdep.cc /usr/include/stdc-predef.h \
  ../machine/interrupt.h ../machine/stats.h ../threads/slicingTimer.h \
  ../machine/timer.h ../userprog/bitmap.h ../filesys/openfile.h \
  ../userprog/syscall.h ../threads/joinlist.h ../userprog/synchconsole.h \
- ../machine/console.h ../filesys/synchdisk.h ../machine/disk.h
+ ../machine/console.h ../filesys/synchdisk.h ../machine/disk.h \
+ ../userprog/faultdata.h
 stats.o: ../machine/stats.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/utility.h ../threads/copyright.h \
  ../machine/sysdep.h /usr/include/stdlib.h /usr/include/features.h \
@@ -545,7 +546,7 @@ timer.o: ../machine/timer.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 joinlist.o: ../threads/joinlist.cc /usr/include/stdc-predef.h \
  ../threads/joinlist.h ../threads/copyright.h ../threads/synch.h \
  ../threads/list.h ../threads/utility.h ../machine/sysdep.h \
@@ -610,7 +611,7 @@ slicingTimer.o: ../threads/slicingTimer.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../machine/timer.h ../userprog/bitmap.h \
  ../filesys/openfile.h ../userprog/syscall.h ../threads/joinlist.h \
  ../userprog/synchconsole.h ../machine/console.h ../filesys/synchdisk.h \
- ../machine/disk.h
+ ../machine/disk.h ../userprog/faultdata.h
 addrspace.o: ../userprog/addrspace.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/system.h ../threads/copyright.h \
  ../threads/utility.h ../machine/sysdep.h /usr/include/stdlib.h \
@@ -644,8 +645,8 @@ addrspace.o: ../userprog/addrspace.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h ../userprog/addrspace.h \
- ../bin/noff.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h \
+ ../userprog/addrspace.h ../bin/noff.h
 bitmap.o: ../userprog/bitmap.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../userprog/bitmap.h ../threads/utility.h \
  ../threads/copyright.h ../machine/sysdep.h /usr/include/stdlib.h \
@@ -679,7 +680,8 @@ bitmap.o: ../userprog/bitmap.cc /usr/include/stdc-predef.h \
  ../machine/interrupt.h ../threads/list.h ../machine/stats.h \
  ../threads/slicingTimer.h ../machine/timer.h ../userprog/bitmap.h \
  ../userprog/syscall.h ../threads/joinlist.h ../userprog/synchconsole.h \
- ../machine/console.h ../filesys/synchdisk.h ../machine/disk.h
+ ../machine/console.h ../filesys/synchdisk.h ../machine/disk.h \
+ ../userprog/faultdata.h
 exception.o: ../userprog/exception.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/system.h ../threads/copyright.h \
  ../threads/utility.h ../machine/sysdep.h /usr/include/stdlib.h \
@@ -713,7 +715,8 @@ exception.o: ../userprog/exception.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h ../userprog/syscall.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h \
+ ../userprog/syscall.h
 progtest.o: ../userprog/progtest.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../threads/system.h ../threads/copyright.h \
  ../threads/utility.h ../machine/sysdep.h /usr/include/stdlib.h \
@@ -747,7 +750,8 @@ progtest.o: ../userprog/progtest.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h ../userprog/addrspace.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h \
+ ../userprog/addrspace.h
 console.o: ../machine/console.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../machine/console.h ../threads/utility.h \
  ../threads/copyright.h ../machine/sysdep.h /usr/include/stdlib.h \
@@ -782,7 +786,7 @@ console.o: ../machine/console.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 machine.o: ../machine/machine.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../machine/machine.h ../threads/utility.h \
  ../threads/copyright.h ../machine/sysdep.h /usr/include/stdlib.h \
@@ -817,7 +821,7 @@ machine.o: ../machine/machine.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 mipssim.o: ../machine/mipssim.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../machine/machine.h ../threads/utility.h \
  ../threads/copyright.h ../machine/sysdep.h /usr/include/stdlib.h \
@@ -852,7 +856,7 @@ mipssim.o: ../machine/mipssim.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 translate.o: ../machine/translate.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../machine/machine.h ../threads/utility.h \
  ../threads/copyright.h ../machine/sysdep.h /usr/include/stdlib.h \
@@ -887,7 +891,7 @@ translate.o: ../machine/translate.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 synchconsole.o: ../userprog/synchconsole.cc /usr/include/stdc-predef.h \
  ../userprog/synchconsole.h ../machine/console.h ../threads/copyright.h \
  ../threads/utility.h ../threads/copyright.h ../machine/sysdep.h \
@@ -975,7 +979,7 @@ disk.o: ../machine/disk.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../threads/slicingTimer.h ../machine/timer.h \
  ../userprog/bitmap.h ../filesys/openfile.h ../userprog/syscall.h \
  ../threads/joinlist.h ../userprog/synchconsole.h ../machine/console.h \
- ../filesys/synchdisk.h ../machine/disk.h
+ ../filesys/synchdisk.h ../machine/disk.h ../userprog/faultdata.h
 # DEPENDENCIES MUST END AT END OF FILE
 # IF YOU PUT STUFF HERE IT WILL GO AWAY
 # see make depend above

@@ -44,6 +44,7 @@ Lock *forkExec;
 Lock *stdOut;
 Lock *atomicWrite;
 SynchDisk *megaDisk;
+FaultData **faultInfo;
 #endif
 #endif
 
@@ -182,6 +183,7 @@ Initialize(int argc, char **argv)
     atomicWrite = new(std::nothrow) Lock("atomicWrite");
     timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
     megaDisk = new(std::nothrow) SynchDisk("megaDisk");
+    faultInfo = new(std::nothrow) FaultData*[NumPhysPages];
 #endif
 #endif
 

@@ -438,38 +438,71 @@ KillThread(2);
 }
 
 void faultPage(){
-    //Assuming one process with enough pages in physical memory
-    int faultPage, faultSector, newLocation;
+    //Assuming one process without enough pages in physical memory
+    int faultPage, faultSector, newLocation, victim;
     char* newPage = new char[128];
+    FaultData* newData = new FaultData;
+    
+    victim = pageToRemove();
+    
+    if (victim == -1){
+        bitLock -> Acquire();
+        newLocation = memMap -> Find();
+        bitLock -> Release();
+    }
+    
+    else{
+        Thread* poorThread = faultInfo[victim] -> owner;
+        int oldVirtualAddr = faultInfo[victim] -> virtualAddr;
+        int newSector;
+        char* pageToBeRemoved = new char[128];
+        poorThread -> space -> pageTable[oldVirtualAddr].valid = false;
+        
+        diskBitLock -> Acquire();
+        newSector = diskMap -> Find();
+        diskBitLock -> Release();
+        
+        poorThread -> space -> diskSectors[oldVirtualAddr] = newSector;
+        
+        megaDisk -> WriteSector(newSector, &machine -> mainMemory[victim * PageSize]);
+   
+    }
+    
+    newData -> owner = currentThread;
+    newData -> virtualAddr = faultPage;
+    newData -> locked = false;
+    
+    faultInfo[newLocation] = newData;
     
     faultPage = machine -> ReadRegister(BadVAddrReg) / PageSize;
     faultSector = currentThread -> space -> diskSectors[faultPage];
     DEBUG('v', "Fault addr: %d, fault page: %d\n", machine -> ReadRegister(BadVAddrReg), faultPage); 
     
-    bitLock -> Acquire();
-    newLocation = memMap -> Find();
-    bitLock -> Release();
+    
     
     megaDisk -> ReadSector(faultSector, newPage);
     
     for (int i = 0; i < PageSize; i++){
-        //DEBUG('v', "newLocation: %d, i: %d\n", newLocation, i);
         machine -> mainMemory[newLocation * PageSize +  i] = newPage[i];
     }
     
     currentThread -> space -> pageTable[faultPage].valid = true;   
     currentThread -> space -> pageTable[faultPage].physicalPage = newLocation;
-    currentThread -> space -> RestoreState();
+    
     
 }
 
 int pageToRemove(){
     int victim = Random() % NumPhysPages;
-   
+    
     bitLock -> Acquire();
-    if (memMap -> NumClear() == 0)
-        return -1;
+    int numClear  = memMap -> NumClear();
     bitLock -> Release();
+    
+    DEBUG('v', "Num clear is: %d\n", memMap -> NumClear());
+    if (numClear != 0)
+        return -1;
+    
         
     return victim;
 }
