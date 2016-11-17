@@ -117,34 +117,32 @@ AddrSpace::AddrSpace(OpenFile *executable)
     pageTable = new(std::nothrow) TranslationEntry[numPages];
     
     for (i = 0; i < numPages; i++) {
-	   pageTable[i].virtualPage = i;
 	   
-	   bitLock -> Acquire();
+       pageTable[i].virtualPage = i;
+	   
+       diskBitLock -> Acquire();
        
-	   if ((pageTable[i].physicalPage = memMap -> Find()) == -1){ //Grab physical page using bitmap
-           failed = true; //If no pages are left, cannot create addrspace
-           return;
-       }
-       bzero(machine -> mainMemory + pageTable[i].physicalPage * PageSize, PageSize); //Zero out memory for safety
+       diskSectors[i] = diskMap -> Find();
        
-       bitLock -> Release();
+       diskBitLock -> Release();
     
-	   pageTable[i].valid = true;
+	   pageTable[i].valid = false;
 	   pageTable[i].use = false;
 	   pageTable[i].dirty = false;
-	   pageTable[i].readOnly = false;  // if the code segment was entirely on 
-					// a separate page, we could set its 
-					// pages to be read-only
+	   pageTable[i].readOnly = false; 
     }
 #endif    
 
 // then, copy in the code and data segments into memory byte by byte, converting to physical memory for each byte
+      
+      int bytesCopied = 0;
+      
       if (noffH.code.size > 0) {
 
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
         
         for (int j = 0; j < noffH.code.size; j ++) 
-            executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.code.virtualAddr + j)]), 1, noffH.code.inFileAddr + j); 
+            executable->ReadAt(codeBuf, , noffH.code.inFileAddr + j); 
     }
        
     if (noffH.initData.size > 0) {

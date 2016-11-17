@@ -381,11 +381,13 @@ ExceptionHandler(ExceptionType which)
             ASSERT(false);
     }
     
-#ifdef USE_TLB
+
     case PageFaultException:
-    HandleTLBFault(machine->ReadRegister(BadVAddrReg));
-    break;
-#endif
+        //Assuming one process with enough pages
+        
+        
+        break;
+
     
 #ifdef CHANGED
     case NoException:
@@ -396,6 +398,16 @@ ExceptionHandler(ExceptionType which)
     }  
 }
 
+int pageToRemove(){
+    int victim = Random() % NumPhysPages;
+   
+    bitLock -> Acquire();
+    if (memMap -> NumClear() == 0)
+        return -1;
+    bitLock -> Release();
+        
+    return victim;
+}
 /*
 * Pulls "size" number of characters from register 4, and puts them into
 * the local buffer "result".

@@ -32,7 +32,9 @@ SynchDisk   *synchDisk;
 Machine *machine;	// user program memory and registers
 SynchConsole *sConsole;
 BitMap *memMap;
+BitMap *diskMap;
 Lock *bitLock;
+Lock *diskBitLock;
 SpaceId spaceId;
 Semaphore *forkSem;
 Semaphore *joinSem;
@@ -166,6 +168,8 @@ Initialize(int argc, char **argv)
     machine = new(std::nothrow) Machine(debugUserProg);	// this must come first
     sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
     memMap = new(std::nothrow) BitMap(NumPhysPages);
+    diskMap = new(std::nothrow) BitMap(SectorsPerTrack * NumTracks);
+    diskBitLock = new(std::nothrow) Lock("diskBitLock");
     bitLock = new(std::nothrow) Lock("bitLock");
     spaceId = 1;
     forkSem = new(std::nothrow) Semaphore("forkSem", 0);

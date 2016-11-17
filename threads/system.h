@@ -48,7 +48,9 @@ extern Semaphore *forkSem;      //Prevents a parent from executing before its ch
 extern Machine* machine;	//user program memory and registers
 extern SynchConsole* sConsole;  //Console class to unify I/O operations
 extern BitMap *memMap;          //global memory map
+extern BitMap *diskMap;         //Global disk sectors map
 extern Lock *bitLock;           //Synchronizes access to the memMap
+extern Lock *diskBitLock        //Synchronizes access to the diskMap
 extern Lock *forkExec;          //Synchronizes access to the Fork and Exec syscalls
 extern Lock *stdOut;            //Synchronizes writes to the console
 extern Lock *atomicWrite;       //Synchronizes writes to files
