@@ -26,17 +26,37 @@ Compiled and modified as coursework for CSCI 444, The College of William & Mary,
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ HAIKU ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ It was just our luck ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ This project was "trivial" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ We stopped giving fucks ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ """""""""""""""""""" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ """""""""""""""""""""""""" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ """"""""""""""""""""""" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Haiku Drafts: 
+--------------
+
+There is no god here  
+Virtual memory sucks
+Everything is broke 
+
+
+God is dead, help us
+Concurrency is a joke
+Please give us an A
+
+
+Our code is a mess
+We did our absolute best
+And we pass most tests
+
+
 
 
 Usage
 -----
     This project includes a makefile. In the parent directory, do a %make, this will 
     compile and prepare the full Nachos OS and included programs for execution. 
-    In the >userprog directory, there will now be a nachos executable.
+    In the >vm directory, there will now be a nachos executable.
 
     **All parts of the assignment have been completed and are expected to work properly.**
     
@@ -71,6 +91,9 @@ Usage
 
 Commentary
 ----------
+    (1) On implementing virtual memory. 
+        - General notes about implementation:
+
    
 
 
