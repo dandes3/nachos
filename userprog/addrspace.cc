@@ -136,6 +136,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 // then, copy in the code and data segments into memory byte by byte, converting to physical memory for each byte
       
       int bytesCopied = 0;
+      char* dataBuf = new char[128];      
       
       if (noffH.code.size > 0) {
 
