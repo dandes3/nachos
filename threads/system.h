@@ -56,8 +56,10 @@ extern Lock *diskBitLock;        //Synchronizes access to the diskMap
 extern Lock *forkExec;          //Synchronizes access to the Fork and Exec syscalls
 extern Lock *stdOut;            //Synchronizes writes to the console
 extern Lock *atomicWrite;       //Synchronizes writes to files
+extern Lock *vmInfoLock;
 extern SynchDisk *megaDisk;      //I think the name explains it all
 extern FaultData **faultInfo;
+
 #endif
 #endif
 

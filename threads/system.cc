@@ -43,6 +43,7 @@ JoinList *joinList;
 Lock *forkExec;
 Lock *stdOut;
 Lock *atomicWrite;
+Lock *vmInfoLock;
 SynchDisk *megaDisk;
 FaultData **faultInfo;
 #endif
@@ -181,6 +182,7 @@ Initialize(int argc, char **argv)
     forkExec = new(std::nothrow) Lock("forkExec");
     stdOut = new(std::nothrow) Lock("stdOut");
     atomicWrite = new(std::nothrow) Lock("atomicWrite");
+    vmInfoLock = new(std::nothrow) Lock("vmInfoLock");
     timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
     megaDisk = new(std::nothrow) SynchDisk("megaDisk");
     faultInfo = new(std::nothrow) FaultData*[NumPhysPages];
