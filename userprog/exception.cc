@@ -405,7 +405,8 @@ ExceptionHandler(ExceptionType which)
         
     case BusErrorException:
         fprintf(stderr, "BusError\n");// Translation resulted in an 
-          break;
+        KillThread(2);  
+        break;
 					    // invalid physical address
     case AddressErrorException: // Unaligned reference or one that
  
@@ -444,7 +445,7 @@ void faultPage(){
     FaultData* newData = new FaultData;
     
     victim = pageToRemove();
-    
+    DEBUG('v', "Victim is %d\n", victim); 
     if (victim == -1){
         bitLock -> Acquire();
         newLocation = memMap -> Find();
@@ -455,7 +456,7 @@ void faultPage(){
         Thread* poorThread = faultInfo[victim] -> owner;
         int oldVirtualAddr = faultInfo[victim] -> virtualAddr;
         int newSector;
-        char* pageToBeRemoved = new char[128];
+        DEBUG('v', "Virtual Page being removed: %d, poorThread: %x, currentThread: %x\n", oldVirtualAddr, poorThread, currentThread);
         poorThread -> space -> pageTable[oldVirtualAddr].valid = false;
         
         diskBitLock -> Acquire();
@@ -465,21 +466,19 @@ void faultPage(){
         poorThread -> space -> diskSectors[oldVirtualAddr] = newSector;
         
         megaDisk -> WriteSector(newSector, &machine -> mainMemory[victim * PageSize]);
-   
+        newLocation = victim;
     }
+    
+        
+    faultPage = machine -> ReadRegister(BadVAddrReg) / PageSize;
+    faultSector = currentThread -> space -> diskSectors[faultPage];
+    DEBUG('v', "Fault addr: %d, fault page: %d, going to: %d\n", machine -> ReadRegister(BadVAddrReg), faultPage, newLocation); 
     
     newData -> owner = currentThread;
     newData -> virtualAddr = faultPage;
     newData -> locked = false;
-    
     faultInfo[newLocation] = newData;
-    
-    faultPage = machine -> ReadRegister(BadVAddrReg) / PageSize;
-    faultSector = currentThread -> space -> diskSectors[faultPage];
-    DEBUG('v', "Fault addr: %d, fault page: %d\n", machine -> ReadRegister(BadVAddrReg), faultPage); 
-    
-    
-    
+
     megaDisk -> ReadSector(faultSector, newPage);
     
     for (int i = 0; i < PageSize; i++){
