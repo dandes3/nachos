@@ -1,0 +1,998 @@
+*****Passing input to shell required the input in a seperate file. I always print the input before running***
+*****Furthermore, passing input to shell doesn't allow the inner program to exit, it must halt. I tested that the program works correctly outside of this bash script, but for the purpose of this script, I made some files halt where they normally exit
+
+*****Running argseqchild
+PARENT exists
+PARENT after fork; kid pid is KID exists
+1
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+2
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+3
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+4
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+5
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+6
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+7
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+8
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+9
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+10
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 2032000, idle 69226, system 237100, user 1725674
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 775
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished argseqchild
+
+*****Running argtest*****
+PARENT exists
+PARENT after Fork/Exec; argkid pid is 1
+PARENT about to Join argkid
+Arg[0]=<argument1>
+Arg[1]=<argument2>
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 213748, idle 8490, system 30240, user 175018
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 153
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished argtest****
+
+*****Running atomicwrite*****
+Machine halting!
+
+Ticks: total 1688, idle 0, system 1390, user 298
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 0
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Printing atomicFile*****
+ABBABBCDDDDCDDDDCDDDDCDDDDABBABBABBABBCDDDDCDDDDCDDDDCDDDDCDDDDCDDDDCDDDDCDDDDCDDDDCDDDD
+*****Finished atomicwrite****
+
+*****Running deepfork******
+PARENT exists
+PARENT after fork/exec; kid pid is 1
+PARENT about to Join kid
+KID1 after exec; kid1 pid is 2
+KID1 about to Join kid2
+KID1 off Join with value of 2
+PARENT off Join with value of 1
+Machine halting!
+
+Ticks: total 2214335, idle 7600, system 230880, user 1975855
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 193
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished deepfork*****
+
+*****Running duptest*****
+Output Open returned descriptor 2
+PARENT read 20 bytes
+Data from the read was: <abcdefghijklmnopqrst>
+Duping file descriptor
+Dup returned descriptor 3
+PARENT read 1 bytes from duped fd
+Data from the read was: <u>
+KID about to read from inherited file
+KID read 1 bytes
+Data from the read was: <v>
+KID read from closed file returned -1
+PARENT off Join with value of 17
+PARENT about to read a byte from shared file
+PARENT read 1 bytes
+Data from the read was: <w>
+PARENT read from closed file returned -1
+PARENT read from dup file returned 1
+Machine halting!
+
+Ticks: total 104356, idle 53340, system 34220, user 16796
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 538
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished duptest****
+
+*****Running fileio************
+Past the Create()
+Output Open returned descriptor 2
+Input Open returned descriptor 3
+Copy loop escaped: 27 bytes copied
+Read from closed file returned -1
+Machine halting!
+
+Ticks: total 29015, idle 15400, system 7810, user 5805
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 154
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Printing fileio.input*****
+Just a
+little bit
+of data.
+*****Printing fileio.out*******
+Just a
+little bit
+of data.
+*****Finished fileio*****
+
+*****Running fork****
+PARENT exists
+KID running, about to Exit()
+PARENT after fork; kid pid is 1
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 19099, idle 10441, system 5630, user 3028
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 108
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished fork***
+
+*****Running  forktest****
+Child
+Parent
+Child
+
+Machine halting!
+
+Ticks: total 4102, idle 1662, system 1920, user 520
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 20
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished forktest****
+
+*****Running fromcons*****
+abcdq
+5 characters seen.
+Machine halting!
+
+Ticks: total 5436, idle 2500, system 1800, user 1136
+Disk I/O: reads 0, writes 0
+Console I/O: reads 7, writes 25
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished fromcons****
+
+*****Running grandchildren*****
+Great Grand PARENT after fork; kid pid is Grand PARENT after fork; grandKid pid is Great Grand KID about to Exit()
+PARENT after fork; greatGrandKid pid is 1
+23
+
+PARENT off Join with value of 1000
+Grand KID about to Exit()
+Grand PARENT off Join with value of 100
+KID about to Exit()
+Great Grand PARENT off Join with value of 10
+Machine halting!
+
+Ticks: total 56635, idle 30144, system 17030, user 9461
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 327
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished grandchildren****
+
+*****Running hellocons*****
+Hello, console.
+Machine halting!
+
+Ticks: total 2755, idle 1600, system 860, user 295
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 16
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished hellocons****
+
+*****Running hellofile*****
+Past the Create()
+Past the Open(): returned 2
+Past the Write()
+Machine halting!
+
+Ticks: total 11103, idle 6300, system 2870, user 1933
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 63
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished hellofile****
+
+*****Running matmult*****
+*****Finished matmult****
+
+*****Running maxfork*****
+PARENT exists
+Kid 0KID exists
+ created. pid=1
+Kid KID exists
+1 created. pid=2
+Kid KID exists
+2 created. pid=3
+Kid KID exists
+3 created. pid=4
+Kid KID exists
+4 created. pid=5
+Kid KID exists
+5 created. pid=6
+Kid KID exists
+6 created. pid=7
+Kid KID exists
+7 created. pid=8
+Kid KID exists
+8 created. pid=9
+Kid KID exists
+9 created. pid=10
+Kid KID exists
+10 created. pid=11
+Kid KID exists
+11 created. pid=12
+Kid KID exists
+12 created. pid=13
+Kid KID exists
+13 created. pid=14
+Kid KID exists
+14 created. pid=15
+PARENT about to Join kids
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+kid array:
+     kid[0]=1
+     kid[1]=2
+     kid[2]=3
+     kid[3]=4
+     kid[4]=5
+     kid[5]=6
+     kid[6]=7
+     kid[7]=8
+     kid[8]=9
+     kid[9]=10
+     kid[10]=11
+     kid[11]=12
+     kid[12]=13
+     kid[13]=14
+     kid[14]=15
+Machine halting!
+
+Ticks: total 3298577, idle 28800, system 395480, user 2874297
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 1258
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished maxfork****
+
+*****Running parentchild*****
+PARENT exists
+KID exists
+PARENT after fork; kid pid is 1
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 202892, idle 5600, system 24510, user 172782
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 90
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished parentchild****
+
+*****Running seqchild*****
+PARENT exists
+PARENT after fork; kid pid is KID exists
+1
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+2
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+3
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+4
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+5
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+6
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+7
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+8
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+9
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+10
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 2031950, idle 69226, system 237100, user 1725624
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 775
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished seqchild****
+
+*****Printing scripttest****
+#SCRIPT
+test/forkexit
+test/argkid    arg1      arg2 
+
+*****Running scripttest*****
+PARENT exists
+KID running, about to Exit()
+PARENT after fork; kid pid is 2
+PARENT off Join with value of 17
+Arg[0]=<test/argkid>
+Arg[1]=<arg1>
+Arg[2]=<arg2>
+Machine halting!
+
+Ticks: total 227636, idle 15181, system 33700, user 178755
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 157
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished scripttest****
+
+*****Running share*****
+Output Open returned descriptor 2
+PARENT read 20 bytes
+Data from the read was: <abcdefghijklmnopqrst>
+KID about to read from inherited file
+KID read 1 bytes
+Data from the read was: <u>
+KID read from closed file returned -1
+PARENT off Join with value of 17
+PARENT about to read a byte from shared file
+PARENT read 1 bytes
+Data from the read was: <v>
+PARENT read from closed file returned -1
+Machine halting!
+
+Ticks: total 75346, idle 38540, system 25170, user 11636
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 390
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+*****Finished share****
+
+*****Running various shell tests*************
+---Printing input to shell---
+test/argkidhalt arg1 arg2 arg3 arg4 arg5 arg1
+
+---Finished printing input---
+***Testing exec with args in shell***
+--Arg[0]=<test/argkidhalt>
+Arg[1]=<arg1>
+Arg[2]=<arg2>
+Arg[3]=<arg3>
+Arg[4]=<arg4>
+Arg[5]=<arg5>
+Arg[6]=<arg1>
+Machine halting!
+
+Ticks: total 218583, idle 11100, system 30120, user 177363
+Disk I/O: reads 0, writes 0
+Console I/O: reads 47, writes 111
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished exec with args in shell**
+---Printing input to shell---
+test/argseqchild
+
+---Finished printing input---
+***Testing argseqchild in shell***
+--PARENT exists
+KID exists
+PARENT after fork; kid pid is 2
+PARENT off Join with value of 17
+KID exists
+PARENT after fork; kid pid is 3
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+4
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+5
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+6
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+7
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+8
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+9
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+10
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+11
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 2031275, idle 64204, system 240010, user 1727061
+Disk I/O: reads 0, writes 0
+Console I/O: reads 18, writes 778
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished argseqchild in shell**
+---Printing input to shell---
+test/argtest
+
+---Finished printing input---
+***Testing argtest in shell***
+--PARENT exists
+PARENT after Fork/Exec; argkid pid is 2
+PARENT about to Join argkid
+Arg[0]=<argument1>
+Arg[1]=<argument2>
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 217239, idle 8230, system 32910, user 176099
+Disk I/O: reads 0, writes 0
+Console I/O: reads 14, writes 155
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished argtest in shell**
+---Printing input to shell---
+test/atomicwrite
+
+---Finished printing input---
+***Testing atomic write in shell***
+--Machine halting!
+
+Ticks: total 6137, idle 200, system 4270, user 1667
+Disk I/O: reads 0, writes 0
+Console I/O: reads 18, writes 2
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished atomicwrite in shell**
+---Printing input to shell---
+test/cat a.out 
+test/cat a.out > b.out
+test/cathalt b.out
+
+---Finished printing input---
+***Testing cat in shell***
+--File could not be opened or does not exist
+----File could not be opened or does not exist
+Machine halting!
+
+Ticks: total 33618, idle 9000, system 15050, user 9568
+Disk I/O: reads 0, writes 0
+Console I/O: reads 59, writes 92
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished cat in shell**
+---Printing input to shell---
+test/cp a.out c.out
+test/cat c.out
+test/cp a.out doesNotExist.out
+test/cathalt doesNotExist.out
+
+
+---Finished printing input---
+***Testing cp in shell***
+--File could not be opened or does not exist
+--File could not be opened or does not exist
+--File could not be opened or does not exist
+--File could not be opened or does not exist
+----***Finished cp in shell**
+*****Finished running various shell tests*****
+
+---Printing input to shell---
+test/deepfork
+
+---Finished printing input---
+***Testing deepfork in shell***
+--PARENT exists
+PARENT after fork/exec; kid pid is 2
+PARENT about to Join kid
+KID1 after exec; kid1 pid is 3
+KID1 about to Join kid2
+KID1 off Join with value of 2
+PARENT off Join with value of 1
+Machine halting!
+
+Ticks: total 2218228, idle 7610, system 233610, user 1977008
+Disk I/O: reads 0, writes 0
+Console I/O: reads 15, writes 195
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished deepfork in shell**
+---Printing input to shell---
+test/fileio
+
+---Finished printing input---
+***Testing fileio in shell***
+--Past the Create()
+Output Open returned descriptor 2
+Input Open returned descriptor 3
+Copy loop escaped: 27 bytes copied
+Read from closed file returned -1
+Machine halting!
+
+Ticks: total 32644, idle 15400, system 10430, user 6814
+Disk I/O: reads 0, writes 0
+Console I/O: reads 13, writes 156
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished fileio in shell**
+---Printing input to shell---
+test/fork
+
+---Finished printing input---
+***Testing fork in shell***
+--PARENT exists
+KID running, about to Exit()
+PARENT after fork; kid pid is 2
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 22524, idle 10491, system 8140, user 3893
+Disk I/O: reads 0, writes 0
+Console I/O: reads 11, writes 110
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished cat in shell**
+---Printing input to shell---
+test/forktest
+
+---Finished printing input---
+***Testing forktest in shell***
+--Child
+Parent
+Child
+
+Machine halting!
+
+Ticks: total 8138, idle 1825, system 4640, user 1673
+Disk I/O: reads 0, writes 0
+Console I/O: reads 15, writes 22
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished forktest in shell**
+---Printing input to shell---
+test/fromcons
+abcdQ
+
+---Finished printing input---
+***Testing fromcons in shell***
+--abcd
+4 characters seen.
+Machine halting!
+
+Ticks: total 9086, idle 2400, system 4430, user 2256
+Disk I/O: reads 0, writes 0
+Console I/O: reads 20, writes 26
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished fromcons in shell**
+---Printing input to shell---
+test/grandchildren
+
+---Finished printing input---
+***Testing grandchildren in shell***
+--Great Grand PARENT after fork; kid pid is Grand PARENT after fork; grandKid pid is Great Grand KID about to Exit()
+PARENT after fork; greatGrandKid pid is 2
+34
+
+PARENT off Join with value of 1000
+Grand KID about to Exit()
+Grand PARENT off Join with value of 100
+KID about to Exit()
+Great Grand PARENT off Join with value of 10
+Machine halting!
+
+Ticks: total 61268, idle 30274, system 20020, user 10974
+Disk I/O: reads 0, writes 0
+Console I/O: reads 20, writes 329
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished grandchildren in shell**
+---Printing input to shell---
+test/hellocons
+
+---Finished printing input---
+***Testing hellocons in shell***
+--Hello, console.
+Machine halting!
+
+Ticks: total 6790, idle 1640, system 3630, user 1520
+Disk I/O: reads 0, writes 0
+Console I/O: reads 16, writes 18
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished hellocons in shell**
+---Printing input to shell---
+test/hellofile
+
+---Finished printing input---
+***Testing hellofile in shell***
+--Past the Create()
+Past the Open(): returned 2
+Past the Write()
+Machine halting!
+
+Ticks: total 15108, idle 6300, system 5650, user 3158
+Disk I/O: reads 0, writes 0
+Console I/O: reads 16, writes 65
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished hellofile in shell**
+---Printing input to shell---
+test/matmulthalt
+
+---Finished printing input---
+***Testing matmult in shell***
+--Machine halting!
+
+Ticks: total 800798, idle 200, system 83600, user 716998
+Disk I/O: reads 0, writes 0
+Console I/O: reads 18, writes 2
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished matmult in shell**
+---Printing input to shell---
+test/maxfork
+
+---Finished printing input---
+***Testing maxfork in shell***
+--PARENT exists
+Kid 0KID exists
+ created. pid=2
+Kid KID exists
+1 created. pid=3
+Kid KID exists
+2 created. pid=4
+Kid KID exists
+3 created. pid=5
+Kid KID exists
+4 created. pid=6
+Kid KID exists
+5 created. pid=7
+Kid KID exists
+6 created. pid=8
+Kid KID exists
+7 created. pid=9
+Kid KID exists
+8 created. pid=10
+Kid KID exists
+9 created. pid=11
+Kid KID exists
+10 created. pid=12
+Kid KID exists
+11 created. pid=13
+Kid KID exists
+12 created. pid=14
+Kid KID exists
+13 created. pid=15
+Kid KID exists
+14 created. pid=16
+PARENT about to Join kids
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+kid array:
+     kid[0]=2
+     kid[1]=3
+     kid[2]=4
+     kid[3]=5
+     kid[4]=6
+     kid[5]=7
+     kid[6]=8
+     kid[7]=9
+     kid[8]=10
+     kid[9]=11
+     kid[10]=12
+     kid[11]=13
+     kid[12]=14
+     kid[13]=15
+     kid[14]=16
+Machine halting!
+
+Ticks: total 3302604, idle 28970, system 398220, user 2875414
+Disk I/O: reads 0, writes 0
+Console I/O: reads 14, writes 1262
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished maxfork in shell**
+---Printing input to shell---
+test/parentchild
+
+---Finished printing input---
+***Testing parentchild in shell***
+--PARENT exists
+KID exists
+PARENT after fork; kid pid is 2
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 207201, idle 5660, system 27390, user 174151
+Disk I/O: reads 0, writes 0
+Console I/O: reads 18, writes 92
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished parentchild in shell**
+---Printing input to shell---
+test/seqchild
+
+---Finished printing input---
+***Testing seqchild in shell***
+--PARENT exists
+KID exists
+PARENT after fork; kid pid is 2
+PARENT off Join with value of 17
+KID exists
+PARENT after fork; kid pid is 3
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+4
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+5
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+6
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+7
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+8
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+9
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+10
+PARENT off Join with value of 17
+PARENT after fork; kid pid is KID exists
+11
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 2030829, idle 64174, system 239860, user 1726795
+Disk I/O: reads 0, writes 0
+Console I/O: reads 15, writes 778
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished seqchild in shell**
+---Printing input to shell---
+test/share
+
+---Finished printing input---
+***Testing share in shell***
+--Output Open returned descriptor 2
+PARENT read 20 bytes
+Data from the read was: <abcdefghijklmnopqrst>
+KID about to read from inherited file
+KID read 1 bytes
+Data from the read was: <u>
+KID read from closed file returned -1
+PARENT off Join with value of 17
+PARENT about to read a byte from shared file
+PARENT read 1 bytes
+Data from the read was: <v>
+PARENT read from closed file returned -1
+Machine halting!
+
+Ticks: total 78693, idle 38390, system 27730, user 12573
+Disk I/O: reads 0, writes 0
+Console I/O: reads 12, writes 392
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished share in shell**
+---Printing input to shell---
+test/shell
+test/maxfork
+
+---Finished printing input---
+***Testing shell in shell***
+----PARENT exists
+Kid 0KID exists
+ created. pid=3
+Kid KID exists
+1 created. pid=4
+Kid KID exists
+2 created. pid=5
+Kid KID exists
+3 created. pid=6
+Kid KID exists
+4 created. pid=7
+Kid KID exists
+5 created. pid=8
+Kid KID exists
+6 created. pid=9
+Kid KID exists
+7 created. pid=10
+Kid KID exists
+8 created. pid=11
+Kid KID exists
+9 created. pid=12
+Kid KID exists
+10 created. pid=13
+Kid KID exists
+11 created. pid=14
+Kid KID exists
+12 created. pid=15
+Kid KID exists
+13 created. pid=16
+Kid KID exists
+14 created. pid=17
+PARENT about to Join kids
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+kid array:
+     kid[0]=3
+     kid[1]=4
+     kid[2]=5
+     kid[3]=6
+     kid[4]=7
+     kid[5]=8
+     kid[6]=9
+     kid[7]=10
+     kid[8]=11
+     kid[9]=12
+     kid[10]=13
+     kid[11]=14
+     kid[12]=15
+     kid[13]=16
+     kid[14]=17
+Machine halting!
+
+Ticks: total 3306337, idle 29090, system 400860, user 2876387
+Disk I/O: reads 0, writes 0
+Console I/O: reads 25, writes 1266
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
+***Finished shell in shell**
+*****Finished various shell tests****
+
+*****Running sort*****
+*****Finished sort****
+
+**** All tests finished *****
+******* Cleaning up *********
