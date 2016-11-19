@@ -99,7 +99,8 @@ void KillThread(int exitVal);
 void ExecThread(int garbage);
 void CopyExecArgs(char** execArgs, int argAddr);
 int pageToRemove();
-void faultPage();
+void faultPage(int, bool);
+void bringIntoMemory(int);
 
 void
 ExceptionHandler(ExceptionType which)
@@ -108,7 +109,7 @@ ExceptionHandler(ExceptionType which)
 
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
-    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, argAddr;
+    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, argAddr, currentPage;
     OpenFileId fileId;
     OpenFile* readFile, *writeFile;
     Thread* newThread;
@@ -117,7 +118,7 @@ ExceptionHandler(ExceptionType which)
     char childName[1024];
     JoinNode* joinNode;
 
-    
+    DEBUG('a', "Exception.cc entered\n");
     switch (which) {
     case SyscallException:
         
@@ -204,24 +205,43 @@ ExceptionHandler(ExceptionType which)
             
             //Only reached if a read is actually attempted
             machine -> WriteRegister(2, readBytes); //Write number of bytes read into return register
+            
+            currentPage = intoBuf / PageSize;
+            bringIntoMemory(intoBuf); 
+            
             for (int i = 0; i < size; i++){ //Copy local buffer into main memory at intoBuf address
-                    physIntoBuf = ConvertAddr(intoBuf);
-                    machine -> mainMemory[physIntoBuf] = readContent[i];
-                    intoBuf++;
+                if (intoBuf / PageSize != currentPage){
+                    vmInfoLock -> Acquire();
+                    faultInfo[currentThread -> space -> pageTable[(intoBuf - 1) / PageSize].physicalPage] -> locked = false;
+                    vmInfoLock -> Release();
+                    
+                    currentPage = intoBuf / PageSize;
+                    bringIntoMemory(intoBuf);
+                }
+                
+                physIntoBuf = ConvertAddr(intoBuf);
+                machine -> mainMemory[physIntoBuf] = readContent[i];
+                intoBuf++;
             }
+            
+            vmInfoLock -> Acquire();
+            faultInfo[currentThread -> space -> pageTable[intoBuf / PageSize].physicalPage] -> locked = false;
+            vmInfoLock -> Release();   
 
             IncrementPc();
             break;
             
         case SC_Write:
-            DEBUG('p', "Write entered\n");
+            DEBUG('a', "Write entered\n");
  
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
             
+            
             //Pull content to be written into local memory
             arg = new(std::nothrow) char[size];  
             ReadArg(arg, size, true);
+            
             
             writeFile = currentThread -> space -> readWrite(fileId); //OpenFile object corresponding to file descriptor
             fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
@@ -387,8 +407,8 @@ ExceptionHandler(ExceptionType which)
     
 
     case PageFaultException:
-        
-        faultPage();
+        DEBUG('v', "PageFaultException\n");
+        faultPage(machine -> ReadRegister(BadVAddrReg), false);
         
         break;
 
@@ -438,8 +458,9 @@ KillThread(2);
     DEBUG('a', "Leaving exception handler\n");
 }
 
-void faultPage(){
+void faultPage(int faultingAddr, bool lockBit){
     //Assuming one process without enough pages in physical memory
+    
     int faultPage, faultSector, newLocation, victim;
     char* newPage = new char[128];
     FaultData* newData = new FaultData;
@@ -471,6 +492,7 @@ void faultPage(){
         newSector = diskMap -> Find();
         diskBitLock -> Release();
         
+        DEBUG('v', "newSector: %d\n", newSector);
         poorThread -> space -> diskSectors[oldVirtualPage] = newSector; //LOCK THIS PER THREAD maybe??
         
         megaDisk -> WriteSector(newSector, &machine -> mainMemory[victim * PageSize]);
@@ -478,13 +500,13 @@ void faultPage(){
     }
     
         
-    faultPage = machine -> ReadRegister(BadVAddrReg) / PageSize;
+    faultPage = faultingAddr / PageSize;
     faultSector = currentThread -> space -> diskSectors[faultPage];
-    DEBUG('v', "Fault addr: %d, fault page: %d, going to: %d\n", machine -> ReadRegister(BadVAddrReg), faultPage, newLocation); 
+    DEBUG('v', "Fault addr: %d, fault page: %d, going to: %d\n", faultingAddr, faultPage, newLocation); 
     
     newData -> owner = currentThread;
     newData -> virtualPage = faultPage;
-    newData -> locked = false;
+    newData -> locked = lockBit;
     
     vmInfoLock -> Acquire();
     faultInfo[newLocation] = newData;
@@ -503,7 +525,15 @@ void faultPage(){
 }
 
 int pageToRemove(){
-    int victim = Random() % NumPhysPages;
+    int victim;
+    
+    vmInfoLock -> Acquire();
+    
+    victim = Random() % NumPhysPages;
+    while (faultInfo[victim] != NULL && faultInfo[victim] -> locked)
+        victim = Random() % NumPhysPages;
+    
+    vmInfoLock -> Release();
     
     bitLock -> Acquire();
     int numClear  = memMap -> NumClear();
@@ -516,6 +546,23 @@ int pageToRemove(){
         
     return victim;
 }
+
+void bringIntoMemory(int virtualAddr){
+    vmInfoLock -> Acquire();
+    int virtualPage = virtualAddr / PageSize;
+    
+    if (currentThread -> space -> pageTable[virtualPage].valid){
+        faultInfo[currentThread -> space -> pageTable[virtualPage].physicalPage] -> locked = true;
+        vmInfoLock -> Release();
+    }
+    
+    else{
+        DEBUG('v', "Fault from bring into memory\n");
+        vmInfoLock -> Release();
+        faultPage(virtualAddr, true);
+    }
+}
+
 /*
 * Pulls "size" number of characters from register 4, and puts them into
 * the local buffer "result".
@@ -525,7 +572,20 @@ void ReadArg(char* result, int size, bool write){ //Size refers to last index of
     int location, physAddr;
     location = machine->ReadRegister(4);
 
+    int currentPage = location / PageSize;
+    bringIntoMemory(location); 
+    
     for (int i = 0; i < size; i++){
+        
+        if (location / PageSize != currentPage){
+            vmInfoLock -> Acquire();
+            faultInfo[currentThread -> space -> pageTable[(location - 1) / PageSize].physicalPage] -> locked = false;
+            vmInfoLock -> Release();
+            
+            currentPage = location / PageSize;
+            bringIntoMemory(location);
+        }
+        
         physAddr = ConvertAddr(location);
        
         if ((result[i] = machine->mainMemory[physAddr]) == '\0')
@@ -535,6 +595,10 @@ void ReadArg(char* result, int size, bool write){ //Size refers to last index of
     
     if (!write)
        result[size] = '\0';
+    
+    vmInfoLock -> Acquire();
+    faultInfo[currentThread -> space -> pageTable[location / PageSize].physicalPage] -> locked = false;
+    vmInfoLock -> Release();         
 }
 
 /*
@@ -587,6 +651,7 @@ void ExecThread(int argsInt){
 
     currentThread -> space -> RestoreState(); //Put pageTable in machine
     currentThread -> space -> InitRegisters(); //Initialize registers as if it were a new process
+    
     
     /*
      * "argsInt" is a pointer to the exec args we pulled into kernel memory in exec. They will now be put 

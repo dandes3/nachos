@@ -130,7 +130,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 #endif    
 
 // then, copy in the code and data segments into memory byte by byte, converting to physical memory for each byte
-    /*  
+    
     int virtualPage, virtualOffset;
     int executableSize = noffH.code.size + noffH.initData.size;
     executableSize +=  128 - (executableSize % 128);
@@ -165,14 +165,15 @@ AddrSpace::AddrSpace(OpenFile *executable)
         }
     }
     
-    for (int i = 0; i < executableSize / 128; i++)
+    for (int i = 0; i < executableSize / 128; i++){
         megaDisk -> WriteSector(diskSectors[i], dataBufs[i]);
-    
+        delete dataBufs[i];
+    }
     
     DEBUG('v', "code size: %d, initdata size: %d, uninitData size %d, stack size %d\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size, UserStackSize);
     DEBUG('v', "%d pages of code put on disk\n", executableSize / 128);
-     */ 
-      
+     
+    /*
     //Big ASSumption: code and init data are contiguous and start at VA 0 ****
     int executableSize = noffH.code.size + noffH.initData.size;
     executableSize +=  128 - (executableSize % 128);
@@ -203,6 +204,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     
     DEBUG('v', "code size: %d, initdata size: %d, uninitData size %d, stack size %d\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size, UserStackSize);
     DEBUG('v', "%d pages of code put on disk\n", virtualPage);
+    */
     
     for (int j = 0; j < 20; j++) //Init fileVector to all NULL
         fileVector[j] = NULL;

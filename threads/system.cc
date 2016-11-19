@@ -186,6 +186,10 @@ Initialize(int argc, char **argv)
     timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
     megaDisk = new(std::nothrow) SynchDisk("megaDisk");
     faultInfo = new(std::nothrow) FaultData*[NumPhysPages];
+    
+    for (int i = 0; i < NumPhysPages; i++)
+        faultInfo[i] = NULL;
+    
 #endif
 #endif
 
