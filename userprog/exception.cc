@@ -444,6 +444,8 @@ void faultPage(){
     char* newPage = new char[128];
     FaultData* newData = new FaultData;
     
+    stats -> numPageFaults ++;
+    
     victim = pageToRemove();
     DEBUG('v', "Victim is %d\n", victim); 
     if (victim == -1){
@@ -453,17 +455,23 @@ void faultPage(){
     }
     
     else{
+        vmInfoLock -> Acquire();
         Thread* poorThread = faultInfo[victim] -> owner;
-        int oldVirtualAddr = faultInfo[victim] -> virtualAddr;
+        int oldVirtualPage = faultInfo[victim] -> virtualPage;
+        vmInfoLock -> Release();
+        
         int newSector;
-        DEBUG('v', "Virtual Page being removed: %d, poorThread: %x, currentThread: %x\n", oldVirtualAddr, poorThread, currentThread);
-        poorThread -> space -> pageTable[oldVirtualAddr].valid = false;
+        DEBUG('v', "Virtual Page being removed: %d, poorThread: %x, currentThread: %x\n", oldVirtualPage, poorThread, currentThread);
+        
+        vmInfoLock -> Acquire();
+        poorThread -> space -> pageTable[oldVirtualPage].valid = false;
+        vmInfoLock -> Release();
         
         diskBitLock -> Acquire();
         newSector = diskMap -> Find();
         diskBitLock -> Release();
         
-        poorThread -> space -> diskSectors[oldVirtualAddr] = newSector;
+        poorThread -> space -> diskSectors[oldVirtualPage] = newSector; //LOCK THIS PER THREAD maybe??
         
         megaDisk -> WriteSector(newSector, &machine -> mainMemory[victim * PageSize]);
         newLocation = victim;
@@ -475,20 +483,23 @@ void faultPage(){
     DEBUG('v', "Fault addr: %d, fault page: %d, going to: %d\n", machine -> ReadRegister(BadVAddrReg), faultPage, newLocation); 
     
     newData -> owner = currentThread;
-    newData -> virtualAddr = faultPage;
+    newData -> virtualPage = faultPage;
     newData -> locked = false;
+    
+    vmInfoLock -> Acquire();
     faultInfo[newLocation] = newData;
-
+    vmInfoLock -> Release();
+    
     megaDisk -> ReadSector(faultSector, newPage);
     
     for (int i = 0; i < PageSize; i++){
         machine -> mainMemory[newLocation * PageSize +  i] = newPage[i];
     }
     
+    vmInfoLock -> Acquire();
     currentThread -> space -> pageTable[faultPage].valid = true;   
     currentThread -> space -> pageTable[faultPage].physicalPage = newLocation;
-    
-    
+    vmInfoLock -> Release();
 }
 
 int pageToRemove(){
@@ -516,7 +527,7 @@ void ReadArg(char* result, int size, bool write){ //Size refers to last index of
 
     for (int i = 0; i < size; i++){
         physAddr = ConvertAddr(location);
-        //fprintf(stderr, "PhysAddr: %d, char from mem: %c\n", physAddr, machine -> mainMemory[physAddr]);
+       
         if ((result[i] = machine->mainMemory[physAddr]) == '\0')
             break;
         location++;
@@ -548,7 +559,11 @@ int ConvertAddr (int virtualAddress){
     int virtPage = virtualAddress / PageSize;
     int offset = virtualAddress % PageSize;
     
-    return ((currentThread -> space -> pageTable[virtPage].physicalPage) * PageSize) + offset;
+    vmInfoLock -> Acquire();
+    int retVal =  ((currentThread -> space -> pageTable[virtPage].physicalPage) * PageSize) + offset;
+    vmInfoLock -> Release();
+    
+    return retVal;
 }
 
 /*
@@ -624,9 +639,9 @@ void KillThread(int exitVal){
     AddrSpace* space = currentThread -> space;
 
     for (int i = 0; i < space -> numPages; i ++){
-        bitLock -> Acquire();
+        bitLock -> Acquire(); vmInfoLock -> Acquire();
         memMap -> Clear(space -> pageTable[i].physicalPage); //Release each page back to the bitmap
-        bitLock -> Release();
+        bitLock -> Release(); vmInfoLock -> Release();
     }
 
     if (exitVal != -12){ //Arbitrary value used to determine if function is called by exec. Should not do join stuff in that case.

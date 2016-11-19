@@ -10,7 +10,7 @@
  */
 typedef struct  FaultData{
     Thread* owner;
-    int virtualAddr;
+    int virtualPage;
     bool locked;
 } FaultData;
 
