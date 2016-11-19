@@ -242,34 +242,54 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
     pageTable = new(std::nothrow) TranslationEntry[numPages];
     
     for (i = 0; i < numPages; i++) {
-	   pageTable[i].virtualPage = i;
+	   
+       pageTable[i].virtualPage = i;
+	   
+       diskBitLock -> Acquire();
        
-	   bitLock -> Acquire();
+       diskSectors[i] = diskMap -> Find();
        
-	   if ((pageTable[i].physicalPage = memMap -> Find()) < 0){ //Same as in normal AddrSpace constructor
-               failed = true;
-                return;
-           }
-       bzero(machine -> mainMemory + (pageTable[i].physicalPage * PageSize), PageSize);
-       
-       bitLock -> Release();
-       
-	   pageTable[i].valid = true;
+       diskBitLock -> Release();
+    
+	   pageTable[i].valid = false;
 	   pageTable[i].use = false;
 	   pageTable[i].dirty = false;
-	   pageTable[i].readOnly = false;  // if the code segment was entirely on 
-					// a separate page, we could set its 
-					// pages to be read-only
+	   pageTable[i].readOnly = false; 
+       
+       DEBUG('v', "VP %d goes to sector %d\n", i, diskSectors[i]);
     }
  
     //Copy memory from parent's physical memory to child's physical memory
     for (i = 0; i < numPages; i++){
-        int curPhysMemAddr = pageTable[i].physicalPage * PageSize;
-        int copyPhysMemAddr = copySpace -> pageTable[i].physicalPage * PageSize;
-  
-        for (int j = 0; j < PageSize; j ++)
-            machine -> mainMemory[curPhysMemAddr + j] = machine -> mainMemory[copyPhysMemAddr + j];
+        faultLock -> Acquire();
+        vmInfoLock -> Acquire();
+                    
+        char* buf = new char[PageSize];
         
+        if (copySpace -> pageTable[i].valid){
+            int parentPhysicalPage = copySpace -> pageTable[i].physicalPage;
+            
+            faultInfo[parentPhysicalPage] -> locked = true;
+            
+            
+            for (int j = 0; j < PageSize; j++)
+                buf[j] = machine -> mainMemory[parentPhysicalPage * PageSize + j];
+            
+            faultInfo[parentPhysicalPage] -> locked = false;
+            vmInfoLock -> Release();
+            
+            megaDisk -> WriteSector(diskSectors[i], buf);
+            
+        }
+        
+        else{
+            vmInfoLock -> Release();
+            
+            megaDisk -> ReadSector(copySpace -> diskSectors[i], buf);
+            megaDisk -> WriteSector(diskSectors[i], buf);
+        }
+        
+        faultLock -> Release();
     }
     
 }

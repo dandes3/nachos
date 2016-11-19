@@ -52,11 +52,12 @@ extern SynchConsole* sConsole;  //Console class to unify I/O operations
 extern BitMap *memMap;          //global memory map
 extern BitMap *diskMap;         //Global disk sectors map
 extern Lock *bitLock;           //Synchronizes access to the memMap
-extern Lock *diskBitLock;        //Synchronizes access to the diskMap
+extern Lock *diskBitLock;       //Synchronizes access to the diskMap
 extern Lock *forkExec;          //Synchronizes access to the Fork and Exec syscalls
 extern Lock *stdOut;            //Synchronizes writes to the console
 extern Lock *atomicWrite;       //Synchronizes writes to files
 extern Lock *vmInfoLock;        //Synchronizes access to any valid bit and faultinfo
+extern Lock *faultLock;         //Synchronizes faulting behavior  
 extern SynchDisk *megaDisk;      //I think the name explains it all
 extern FaultData **faultInfo;
 

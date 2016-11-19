@@ -263,6 +263,7 @@ ExceptionHandler(ExceptionType which)
                 atomicWrite -> Release();
             }
             
+            DEBUG('a', "Write exited\n");
             
             IncrementPc();
             break;
@@ -459,7 +460,8 @@ KillThread(2);
 }
 
 void faultPage(int faultingAddr, bool lockBit){
-    //Assuming one process without enough pages in physical memory
+    //Going for gold
+    faultLock -> Acquire();
     
     int faultPage, faultSector, newLocation, victim;
     char* newPage = new char[128];
@@ -514,14 +516,21 @@ void faultPage(int faultingAddr, bool lockBit){
     
     megaDisk -> ReadSector(faultSector, newPage);
     
+    DEBUG('v', "Clearing %d in diskMap\n", faultSector);
+    diskBitLock -> Acquire();
+    diskMap -> Clear(faultSector);
+    diskBitLock -> Release();
+    
     for (int i = 0; i < PageSize; i++){
         machine -> mainMemory[newLocation * PageSize +  i] = newPage[i];
     }
     
-    vmInfoLock -> Acquire();
-    currentThread -> space -> pageTable[faultPage].valid = true;   
+    vmInfoLock -> Acquire(); 
+    currentThread -> space -> pageTable[faultPage].valid = true;  
     currentThread -> space -> pageTable[faultPage].physicalPage = newLocation;
     vmInfoLock -> Release();
+    
+    faultLock -> Release();
 }
 
 int pageToRemove(){
@@ -550,7 +559,8 @@ int pageToRemove(){
 void bringIntoMemory(int virtualAddr){
     vmInfoLock -> Acquire();
     int virtualPage = virtualAddr / PageSize;
-    
+    DEBUG('v', "Virtual addr is %d\n", virtualAddr);
+   
     if (currentThread -> space -> pageTable[virtualPage].valid){
         faultInfo[currentThread -> space -> pageTable[virtualPage].physicalPage] -> locked = true;
         vmInfoLock -> Release();
@@ -573,6 +583,7 @@ void ReadArg(char* result, int size, bool write){ //Size refers to last index of
     location = machine->ReadRegister(4);
 
     int currentPage = location / PageSize;
+    DEBUG('v', "Bring into memory from readarg\n");
     bringIntoMemory(location); 
     
     for (int i = 0; i < size; i++){
@@ -583,6 +594,7 @@ void ReadArg(char* result, int size, bool write){ //Size refers to last index of
             vmInfoLock -> Release();
             
             currentPage = location / PageSize;
+            DEBUG('v', "Bring into memory from readarg in for loop\n");
             bringIntoMemory(location);
         }
         
@@ -672,18 +684,64 @@ void ExecThread(int argsInt){
             len = strlen(args[i]) + 1; //Including null byte
             sp -= len;
             
-            for (int j = 0; j < len; j++)
+            int currentPage = sp / PageSize;
+            DEBUG('v', "Bring into mem in for loop in exec thread\n");
+            bringIntoMemory(sp);
+            
+            int location = sp;
+            for (int j = 0; j < len; j++){
+                location = sp + j;
+                
+                if (location / PageSize != currentPage){
+                    vmInfoLock -> Acquire();
+                    faultInfo[currentThread -> space -> pageTable[(location - 1) / PageSize].physicalPage] -> locked = false;
+                    vmInfoLock -> Release();
+                    
+                    currentPage = location / PageSize;
+                     DEBUG('v', "Bring into mem in double for loop in exec thread\n");
+                    bringIntoMemory(location);
+                }
+                
                 machine -> mainMemory[ConvertAddr(sp + j)] = args[i][j];   
+            }
             
             argAddrs[i] = sp; //VA of arg str
+            
+            vmInfoLock -> Acquire();
+            faultInfo[currentThread -> space -> pageTable[location / PageSize].physicalPage] -> locked = false;
+            vmInfoLock -> Release();   
         }
         
         sp = sp & ~3; //Align for ints
         
         sp -= sizeof(int) * (argc); //Move sp for each pointer to each arg str
         
-        for (int i = 0; i < argc; i ++)
+        int currentPage = sp / PageSize;
+         DEBUG('v', "Bring into mem out of first for loop in exec thread\n");
+        bringIntoMemory(sp);
+        int location = sp;
+        
+        for (int i = 0; i < argc; i ++){
+            location = sp + i*4;
+        
+            if (location / PageSize != currentPage){
+                vmInfoLock -> Acquire();
+                faultInfo[currentThread -> space -> pageTable[(location - 4) / PageSize].physicalPage] -> locked = false;
+                vmInfoLock -> Release();
+                
+                currentPage = location / PageSize;
+                DEBUG('v', "Bring into mem in second outer for loop in exec thread\n");
+                bringIntoMemory(location);
+            }
+            
             *(unsigned int *) &machine -> mainMemory[ConvertAddr(sp + i*4)] = WordToMachine((unsigned int) argAddrs[i]); //Put pointer in memory
+        }
+        
+        DEBUG('v', "Location after for: %d, physPage is %d\n", location, currentThread -> space -> pageTable[location / PageSize].physicalPage);
+        
+        vmInfoLock -> Acquire();
+        faultInfo[currentThread -> space -> pageTable[location / PageSize].physicalPage] -> locked = false;
+        vmInfoLock -> Release();   
         
         machine -> WriteRegister(4, argc); 
         machine -> WriteRegister(5, sp); //Pointer to pointers to exec args
@@ -700,13 +758,20 @@ void ExecThread(int argsInt){
  * Called when a thread exits or has execed a new process. Returns memory to the bitmap, updates joinlist and kills thread.
  */
 void KillThread(int exitVal){
-
+    
+    DEBUG('v', "In kill thread\n");
+    
     AddrSpace* space = currentThread -> space;
 
     for (int i = 0; i < space -> numPages; i ++){
-        bitLock -> Acquire(); vmInfoLock -> Acquire();
-        memMap -> Clear(space -> pageTable[i].physicalPage); //Release each page back to the bitmap
-        bitLock -> Release(); vmInfoLock -> Release();
+        bitLock -> Acquire(); 
+        vmInfoLock -> Acquire();
+        
+        if (space -> pageTable[i].valid)
+            memMap -> Clear(space -> pageTable[i].physicalPage); //Release each page back to the bitmap
+            
+        vmInfoLock -> Release();
+        bitLock -> Release();
     }
 
     if (exitVal != -12){ //Arbitrary value used to determine if function is called by exec. Should not do join stuff in that case.
@@ -738,12 +803,47 @@ void CopyExecArgs(char** execArgs, int argAddr){
         physAddr = ConvertAddr(argAddr);
 
         argc = 0;
-        while ((str = *(unsigned int *) &machine -> mainMemory[physAddr]) != 0){ //str is a VA (pointer) where the exec arg strings reside
-
+        
+        int currentPage = argAddr / PageSize;
+        DEBUG('v', "Bring into mem at top of copy exec args\n");
+        bringIntoMemory(argAddr);
+        int location;
+        
+        str = *(unsigned int *) &machine -> mainMemory[physAddr];
+        
+        while (str != 0){ //str is a VA (pointer) where the exec arg strings reside
+            DEBUG('v', "Argaddr is %d at top  of while\n", argAddr);
+            
+            location = argAddr;
+            if (location / PageSize != currentPage){
+                vmInfoLock -> Acquire();
+                faultInfo[currentThread -> space -> pageTable[(location - 4) / PageSize].physicalPage] -> locked = false;
+                vmInfoLock -> Release();
+                
+                currentPage = location / PageSize;
+                DEBUG('v', "Bring into mem at top of while in copy exec args\n");
+                bringIntoMemory(location);
+            }
+            
             int curChar = ConvertAddr((int)str); //Physical address of char pointed to by str
             int count = 0;
-                
+            
+            int currentStrPage = str / PageSize;
+            int pagesBroughtIn[128] = {-1};
+            int curPageIn = 0;
+            
+            
             while (machine -> mainMemory[curChar] != '\0'){ //Count how big the string is
+               
+                if (str / PageSize != currentStrPage){
+                    DEBUG('v', "Bring into mem with array in  copy exec args\n");
+                    bringIntoMemory(str);
+                    currentStrPage = str / PageSize;
+                    pagesBroughtIn[curPageIn] = currentStrPage;
+                    
+                    curPageIn++;
+                }
+                
                 str ++;
                 curChar = ConvertAddr((int) str);
                 count ++;
@@ -764,13 +864,24 @@ void CopyExecArgs(char** execArgs, int argAddr){
                 count ++;
             }
             
+            DEBUG('v', "Argument %d is %s\n", argc, execArgs[argc]);
+            
+            for (int i = 0; i < 128 && pagesBroughtIn[i] != -1; i ++)
+                faultInfo[currentThread -> space -> pageTable[pagesBroughtIn[i]].physicalPage] -> locked = false;
+            
             execArgs[argc][count] = '\0';
             
             argc ++;
             
             argAddr += 4; //Go to next pointer
             physAddr = ConvertAddr(argAddr);
+            
+            str = *(unsigned int *) &machine -> mainMemory[physAddr];
         }
+        
+        vmInfoLock -> Acquire();
+        faultInfo[currentThread -> space -> pageTable[location / PageSize].physicalPage] -> locked = false;
+        vmInfoLock -> Release();   
         
         execArgs[argc] = NULL; //Last arg is NULL ptr
     }
