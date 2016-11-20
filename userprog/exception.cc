@@ -813,18 +813,18 @@ void CopyExecArgs(char** execArgs, int argAddr){
         
         while (str != 0){ //str is a VA (pointer) where the exec arg strings reside
             DEBUG('v', "Argaddr is %d at top  of while\n", argAddr);
-            
+            /*
             location = argAddr;
             if (location / PageSize != currentPage){
                 vmInfoLock -> Acquire();
-                faultInfo[currentThread -> space -> pageTable[(location - 4) / PageSize].physicalPage] -> locked = false;
+                faultInfo[currentThread -> space -> pageTable[currentPage].physicalPage] -> locked = false;
                 vmInfoLock -> Release();
                 
                 currentPage = location / PageSize;
                 DEBUG('v', "Bring into mem at top of while in copy exec args\n");
                 bringIntoMemory(location);
             }
-            
+            */
             int curChar = ConvertAddr((int)str); //Physical address of char pointed to by str
             int count = 0;
             
@@ -832,6 +832,7 @@ void CopyExecArgs(char** execArgs, int argAddr){
             int pagesBroughtIn[128] = {-1};
             int curPageIn = 0;
             
+            bringIntoMemory(str);
             
             while (machine -> mainMemory[curChar] != '\0'){ //Count how big the string is
                
@@ -866,9 +867,11 @@ void CopyExecArgs(char** execArgs, int argAddr){
             
             DEBUG('v', "Argument %d is %s\n", argc, execArgs[argc]);
             
+            vmInfoLock -> Acquire(); 
             for (int i = 0; i < 128 && pagesBroughtIn[i] != -1; i ++)
                 faultInfo[currentThread -> space -> pageTable[pagesBroughtIn[i]].physicalPage] -> locked = false;
-            
+            vmInfoLock -> Release();
+
             execArgs[argc][count] = '\0';
             
             argc ++;
@@ -876,10 +879,22 @@ void CopyExecArgs(char** execArgs, int argAddr){
             argAddr += 4; //Go to next pointer
             physAddr = ConvertAddr(argAddr);
             
+            location = argAddr;
+            if (location / PageSize != currentPage){
+                vmInfoLock -> Acquire();
+                faultInfo[currentThread -> space -> pageTable[currentPage].physicalPage] -> locked = false;
+                vmInfoLock -> Release();
+
+                currentPage = location / PageSize;
+                DEBUG('v', "Bring into mem at top of while in copy exec args\n");
+                bringIntoMemory(location);
+            }
+
             str = *(unsigned int *) &machine -> mainMemory[physAddr];
         }
-        
-        vmInfoLock -> Acquire();
+       
+        DEBUG('v', "Location is %d at bottom of loop in copy exec args\n", location);
+        DEBUG('v', "Physical page for this location is %d\n",currentThread -> space -> pageTable[location / PageSize].physicalPage);
         faultInfo[currentThread -> space -> pageTable[location / PageSize].physicalPage] -> locked = false;
         vmInfoLock -> Release();   
         
