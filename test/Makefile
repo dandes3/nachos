@@ -34,7 +34,7 @@ CPP = /usr/bin/cpp -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -g -G 0 -c $(INCDIR) -DCHANGED -nostartfiles
 
-all: halt shell matmult sort hellocons fromcons hellofile fileio forktest fork cat cp grandchildren parentchild kid seqchild deepfork deepkid1 deepkid2 maxfork argkid argtest argseqchild sharekid share duptest dupkid atomicwrite forkexit argkidhalt cathalt matmulthalt
+all: halt shell matmult sort hellocons fromcons hellofile fileio forktest fork cat cp grandchildren parentchild kid seqchild deepfork deepkid1 deepkid2 maxfork argkid argtest argseqchild sharekid share duptest dupkid atomicwrite forkexit argkidhalt cathalt matmulthalt vmtorture
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -235,4 +235,10 @@ matmulthalt.c: matmulthalt.c
 matmulthalt: matmulthalt.o start.o
 	$(LD) $(LDFLAGS) start.o matmulthalt.o -o matmulthalt.coff
 	../bin/coff2noff matmulthalt.coff matmulthalt
+
+vmtorture.c: vmtorture.c
+	$(CC) $(CFLAGS) -c vmtorture.c
+vmtorture: vmtorture.o start.o
+	$(LD) $(LDFLAGS) start.o vmtorture.o -o vmtorture.coff
+	../bin/coff2noff vmtorture.coff vmtorture
 
