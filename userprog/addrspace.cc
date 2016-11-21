@@ -25,7 +25,7 @@
 #ifdef CHANGED
 
 #define SCRIPT 0x52435323 //Used to identify a shell script being brought into execution
-#define CHECK 0x4655434b
+#define CHECK 0x4b435546
 extern void StartProcess(char *filename, char *inputName);
 //----------------------------------------------------------------------
 // SwapHeader
@@ -90,10 +90,13 @@ AddrSpace::AddrSpace(OpenFile *executable)
         return;
     }
     
+    DEBUG('c', "Noffmagic is %x\n", noffH.noffMagic);
     if (noffH.noffMagic == CHECK){
+        DEBUG('c', "Checkpoint detected\n");
         char temp[128];
         
         executable -> Read(temp, 11); //This reads past the cookie
+        
         
         checkpoint = true;
         char strNumPages [128];
@@ -181,7 +184,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
            
         char pageContents [128];
         
-        bzero(pageContents, 128)
+        bzero(pageContents, 128);
         
         for(int i = 0; i < numPages; i++){
            executable -> Read(pageContents, 128);

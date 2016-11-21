@@ -66,7 +66,7 @@ class OpenFile {
     int file;
     char *fileName;
 #endif
-  private:
+
     int currentOffset;
 };
 

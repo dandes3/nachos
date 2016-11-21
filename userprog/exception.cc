@@ -101,6 +101,7 @@ void CopyExecArgs(char** execArgs, int argAddr);
 int pageToRemove();
 void faultPage(int, bool);
 void bringIntoMemory(int);
+void CheckPointThread(int garbage);
 
 void
 ExceptionHandler(ExceptionType which)
@@ -109,9 +110,9 @@ ExceptionHandler(ExceptionType which)
 
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
-    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, argAddr, currentPage, checkLen, regLen;
+    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, argAddr, currentPage, checkLen;
     OpenFileId fileId;
-    OpenFile* readFile, *writeFile, *execFile;
+    OpenFile* readFile, *writeFile, *execFile, *checkFile;
     Thread* newThread;
  
     char* arg, *readContent, stdinChar, **execArgs, *checkValue, *regValue;
@@ -246,8 +247,10 @@ ExceptionHandler(ExceptionType which)
             writeFile = currentThread -> space -> readWrite(fileId); //OpenFile object corresponding to file descriptor
             fileType = currentThread -> space -> isConsoleFile(writeFile); //Int describing if OpenFile object is stdin, stdout or neither
 
-
+            DEBUG('a', "File type: %d\n", fileType);
+            
             if (fileType  == 1){ //stdout
+               DEBUG('a', "Writing to stdout\n");
                stdOut -> Acquire(); //Atomic writes to console
                 for (int i = 0; i < size; i++)
                     sConsole -> PutChar(arg[i]); //Put each char using SynchConsole
@@ -370,8 +373,6 @@ ExceptionHandler(ExceptionType which)
             //Update the newly execed thread so that it can exit and join as if it were the thread execing it
             newThread -> space -> parentThreadPtr = currentThread -> space -> parentThreadPtr;
             newThread -> space -> mySpaceId = currentThread -> space -> mySpaceId;
-            newThread -> space -> stdIn = currentThread -> space -> stdIn;
-            newThread -> space -> stdOut = currentThread -> space -> stdOut;
             newThread -> space -> fileName = arg;
             
             if (!newThread -> space -> checkpoint){
@@ -383,18 +384,26 @@ ExceptionHandler(ExceptionType which)
                 //Copy parent's file vector
                 for (int i = 0; i < 20; i++)
                     newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
-            
+                
+                newThread -> space -> stdIn = currentThread -> space -> stdIn;
+                newThread -> space -> stdOut = currentThread -> space -> stdOut;
+                
                 newThread -> Fork(ExecThread, (int) execArgs); //Forked child will complete exec prep in ExecThread
             }
             
+            
+            
             else{
+                DEBUG('c', "Current offset %d\n", execFile -> currentOffset);
                 regValue = new (std::nothrow) char[128];
-                for (i = 0; i < NumTotalRegs; i ++){
+                for (int i = 0; i < NumTotalRegs; i ++){
                     bzero(regValue, 128);
                     
-                    for(int curPos = 0; ; curPos++{
-                        regValue[curPos] = execFile -> Read(&regValue[curPos], 1);
+                    for(int curPos = 0; ; curPos++){
+                        DEBUG('c', "curPos is %d\n", curPos);
+                        execFile -> Read(&regValue[curPos], 1);
                         
+                        DEBUG('c', "curPos is %d and val is %c\n", curPos, regValue[curPos]);
                         if (regValue[curPos] == ':'){
                             regValue[curPos] = '\n';
                             break;
@@ -406,7 +415,7 @@ ExceptionHandler(ExceptionType which)
                 
                 newThread -> userRegisters[2] = 12;
 
-                
+                newThread -> Fork(CheckPointThread, 0);
             }
             
             forkExec -> Release();
@@ -426,7 +435,7 @@ ExceptionHandler(ExceptionType which)
             
         case SC_CheckPoint:
             machine -> WriteRegister(2, 0);
-            
+            IncrementPc();
             currentThread -> SaveUserState(); //About 90% on this
             
             arg = new(std::nothrow) char[128];
@@ -434,7 +443,7 @@ ExceptionHandler(ExceptionType which)
             
             ReadArg(arg, 127, false);
             
-            if(!fileSystem -> Create(arg)){
+            if(!fileSystem -> Create(arg,-1)){
                 machine -> WriteRegister(2, -1);
                 break;
             }
@@ -445,20 +454,21 @@ ExceptionHandler(ExceptionType which)
             checkFile -> Write("FUCKNACHOS\n", 11);
             
             //Write num pages
-            checkLen = snprintf(checkValue, "%d\n", currentThread -> space -> numPages);
+            checkLen = snprintf(checkValue, 128, "%d\n", currentThread -> space -> numPages);
             checkFile -> Write(checkValue, checkLen);
             
             bzero(checkValue, 128);
             
             //Write mem contents
-            for (i = 0; i < currentThread -> space -> numPages; i++){
-                
+            for (int i = 0; i < currentThread -> space -> numPages; i++){
+                DEBUG('c', "Number of pages in checkpointing thread %d\n", currentThread -> space -> numPages);
                 vmInfoLock -> Acquire();
                             
                 
                 if (currentThread -> space -> pageTable[i].valid){
                     int parentPhysicalPage = currentThread -> space -> pageTable[i].physicalPage;
                     
+                   
                     faultInfo[parentPhysicalPage] -> locked = true;
                     
                     
@@ -476,9 +486,10 @@ ExceptionHandler(ExceptionType which)
                     megaDisk -> ReadSector(currentThread -> space -> diskSectors[i], checkValue);
                     faultLock -> Release();
                     
-                    checkFile -> Write(checkValue, 128);
+                    
                 }
                 
+                checkFile -> Write(checkValue, 128);
                 checkFile -> Write(":", 1);
                 bzero(checkValue, 128);
             }
@@ -487,15 +498,13 @@ ExceptionHandler(ExceptionType which)
             
             //Write registers
             for(int i = 0; i < NumTotalRegs; i ++){
-                checkLen = snprintf(checkValue, "%d:", currentThread -> userRegisters[i]);
+                checkLen = snprintf(checkValue, 128, "%d:", currentThread -> userRegisters[i]);
                 
                 checkFile -> Write(checkValue, checkLen);
                 bzero(checkValue, 128);
             }
             
-            
-
-            
+            break;
 
             //Exit and join stuff ignored
             
@@ -1013,6 +1022,15 @@ void CopyExecArgs(char** execArgs, int argAddr){
     
     else
         execArgs[0] = NULL; //No arguments       
+}
+
+void CheckPointThread(int garbage){
+    DEBUG('c', "IN CHECKPOINT THREAD\n");
+    currentThread -> space -> RestoreState();
+    currentThread -> RestoreUserState();
+    
+    machine -> Run();
+    
 }
 
 #endif

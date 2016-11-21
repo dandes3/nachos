@@ -19,7 +19,7 @@ all:
 	cd test; make all
 	cd test1; make all
 	cd test2; make all
-#	cd test3; make all
+	cd test3; make all
 
 # don't delete executables in "test" in case there is no cross-compiler
 clean:
