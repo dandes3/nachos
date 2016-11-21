@@ -538,9 +538,11 @@ int pageToRemove(){
     
     vmInfoLock -> Acquire();
     
+    
     victim = Random() % NumPhysPages;
     while (faultInfo[victim] != NULL && faultInfo[victim] -> locked)
         victim = Random() % NumPhysPages;
+
     
     vmInfoLock -> Release();
     
@@ -635,6 +637,7 @@ int ConvertAddr (int virtualAddress){
     int virtPage = virtualAddress / PageSize;
     int offset = virtualAddress % PageSize;
     
+    DEBUG('v', "Current thread's numpages is %d, virtualAddress is %d and virtPage is %d\n", currentThread -> space -> numPages, virtualAddress, virtPage); 
     vmInfoLock -> Acquire();
     int retVal =  ((currentThread -> space -> pageTable[virtPage].physicalPage) * PageSize) + offset;
     vmInfoLock -> Release();
@@ -800,7 +803,6 @@ void CopyExecArgs(char** execArgs, int argAddr){
     int str, argc, physAddr;
     
     if (argAddr != 0){
-        physAddr = ConvertAddr(argAddr);
 
         argc = 0;
         
@@ -809,6 +811,7 @@ void CopyExecArgs(char** execArgs, int argAddr){
         bringIntoMemory(argAddr);
         int location;
         
+        physAddr = ConvertAddr(argAddr);
         str = *(unsigned int *) &machine -> mainMemory[physAddr];
         
         while (str != 0){ //str is a VA (pointer) where the exec arg strings reside
@@ -825,18 +828,22 @@ void CopyExecArgs(char** execArgs, int argAddr){
                 bringIntoMemory(location);
             }
             */
-            int curChar = ConvertAddr((int)str); //Physical address of char pointed to by str
+            
             int count = 0;
             
             int currentStrPage = str / PageSize;
             int pagesBroughtIn[128] = {-1};
-            int curPageIn = 0;
+            int curPageIn = 1;
             
             bringIntoMemory(str);
             
+            int curChar = ConvertAddr((int)str); //Physical address of char pointed to by str
+            pagesBroughtIn[0] = currentStrPage;
+            
             while (machine -> mainMemory[curChar] != '\0'){ //Count how big the string is
-               
-                if (str / PageSize != currentStrPage){
+                str ++;
+                
+               if (str / PageSize != currentStrPage){
                     DEBUG('v', "Bring into mem with array in  copy exec args\n");
                     bringIntoMemory(str);
                     currentStrPage = str / PageSize;
@@ -845,7 +852,6 @@ void CopyExecArgs(char** execArgs, int argAddr){
                     curPageIn++;
                 }
                 
-                str ++;
                 curChar = ConvertAddr((int) str);
                 count ++;
             }
@@ -859,6 +865,7 @@ void CopyExecArgs(char** execArgs, int argAddr){
             count = 0;
             
             while (machine -> mainMemory[curChar] != '\0'){ //Actually copy the str into the execArgs buffer
+                
                 execArgs[argc][count] = machine -> mainMemory[curChar];
                 str ++;
                 curChar = ConvertAddr((int) str);
@@ -877,7 +884,7 @@ void CopyExecArgs(char** execArgs, int argAddr){
             argc ++;
             
             argAddr += 4; //Go to next pointer
-            physAddr = ConvertAddr(argAddr);
+            
             
             location = argAddr;
             if (location / PageSize != currentPage){
@@ -889,12 +896,15 @@ void CopyExecArgs(char** execArgs, int argAddr){
                 DEBUG('v', "Bring into mem at top of while in copy exec args\n");
                 bringIntoMemory(location);
             }
-
+            
+            physAddr = ConvertAddr(argAddr);
             str = *(unsigned int *) &machine -> mainMemory[physAddr];
         }
        
         DEBUG('v', "Location is %d at bottom of loop in copy exec args\n", location);
         DEBUG('v', "Physical page for this location is %d\n",currentThread -> space -> pageTable[location / PageSize].physicalPage);
+        
+        vmInfoLock -> Acquire();
         faultInfo[currentThread -> space -> pageTable[location / PageSize].physicalPage] -> locked = false;
         vmInfoLock -> Release();   
         
