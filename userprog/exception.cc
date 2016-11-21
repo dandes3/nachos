@@ -109,12 +109,12 @@ ExceptionHandler(ExceptionType which)
 
 #ifdef CHANGED
     int type = machine->ReadRegister(2);
-    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, argAddr, currentPage;
+    int size, intoBuf, readBytes, fileType, physIntoBuf, cid, argAddr, currentPage, checkLen, regLen;
     OpenFileId fileId;
-    OpenFile* readFile, *writeFile;
+    OpenFile* readFile, *writeFile, *execFile;
     Thread* newThread;
  
-    char* arg, *readContent, stdinChar, **execArgs;
+    char* arg, *readContent, stdinChar, **execArgs, *checkValue, *regValue;
     char childName[1024];
     JoinNode* joinNode;
 
@@ -357,8 +357,8 @@ ExceptionHandler(ExceptionType which)
             snprintf(childName, 1024, "%s exec", currentThread -> name); //Create exec name based on name of execer
             newThread = new(std::nothrow) Thread(childName);
 
-
-            newThread -> space = new(std::nothrow) AddrSpace(fileSystem -> Open(arg)); //Construct an addrspace just as if the main thread were being initialized
+            execFile = fileSystem -> Open(arg); //Assuming the currency pointer will be moved in addrspace creation if checkpoint
+            newThread -> space = new(std::nothrow) AddrSpace(execFile); //Construct an addrspace just as if the main thread were being initialized
             
             if (newThread -> space -> failed){ //File doesn't exist, isn't an noff, not enough memory, etc.
                 machine -> WriteRegister(2, -1); //Exec failed
@@ -374,16 +374,40 @@ ExceptionHandler(ExceptionType which)
             newThread -> space -> stdOut = currentThread -> space -> stdOut;
             newThread -> space -> fileName = arg;
             
-            argAddr = machine -> ReadRegister(5); //Virtual address of exec argument array
-            execArgs = new(std::nothrow) char* [128];
+            if (!newThread -> space -> checkpoint){
+                argAddr = machine -> ReadRegister(5); //Virtual address of exec argument array
+                execArgs = new(std::nothrow) char* [128];
+                
+                CopyExecArgs(execArgs, argAddr); //Copy exec args from user memory to the kernel
+                
+                //Copy parent's file vector
+                for (int i = 0; i < 20; i++)
+                    newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
             
-            CopyExecArgs(execArgs, argAddr); //Copy exec args from user memory to the kernel
+                newThread -> Fork(ExecThread, (int) execArgs); //Forked child will complete exec prep in ExecThread
+            }
             
-            //Copy parent's file vector
-            for (int i = 0; i < 20; i++)
-                newThread -> space -> fileVector[i] = currentThread -> space -> fileVector[i];
-           
-            newThread -> Fork(ExecThread, (int) execArgs); //Forked child will complete exec prep in ExecThread
+            else{
+                regValue = new (std::nothrow) char[128];
+                for (i = 0; i < NumTotalRegs; i ++){
+                    bzero(regValue, 128);
+                    
+                    for(int curPos = 0; ; curPos++{
+                        regValue[curPos] = execFile -> Read(&regValue[curPos], 1);
+                        
+                        if (regValue[curPos] == ':'){
+                            regValue[curPos] = '\n';
+                            break;
+                        }
+                    }
+                    
+                    newThread -> userRegisters[i] = (int) strtol(regValue, NULL, 0);
+                }
+                
+                newThread -> userRegisters[2] = 12;
+
+                
+            }
             
             forkExec -> Release();
             
@@ -417,12 +441,16 @@ ExceptionHandler(ExceptionType which)
             
             checkFile = fileSystem -> Open(arg);
             
+            //Write cookie
             checkFile -> Write("FUCKNACHOS\n", 11);
             
+            //Write num pages
             checkLen = snprintf(checkValue, "%d\n", currentThread -> space -> numPages);
             checkFile -> Write(checkValue, checkLen);
             
             bzero(checkValue, 128);
+            
+            //Write mem contents
             for (i = 0; i < currentThread -> space -> numPages; i++){
                 
                 vmInfoLock -> Acquire();
@@ -455,17 +483,16 @@ ExceptionHandler(ExceptionType which)
                 bzero(checkValue, 128);
             }
             
+            checkFile -> Write("\n", 1);
             
-            for(int i = 0; i < NumTotalRegs - 1; i ++){
+            //Write registers
+            for(int i = 0; i < NumTotalRegs; i ++){
                 checkLen = snprintf(checkValue, "%d:", currentThread -> userRegisters[i]);
                 
                 checkFile -> Write(checkValue, checkLen);
                 bzero(checkValue, 128);
             }
             
-            checkLen = snprintf(checkValue, "%d\n", currentThread -> userRegisters[NumTotalRegs - 1]);
-            checkFile -> Write(checkValue, checkLen);
-            bzero(checkValue, 128);
             
 
             
