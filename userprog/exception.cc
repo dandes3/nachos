@@ -399,6 +399,79 @@ ExceptionHandler(ExceptionType which)
             IncrementPc();
             break;
 #endif            
+            
+        case SC_CheckPoint:
+            machine -> WriteRegister(2, 0);
+            
+            currentThread -> SaveUserState(); //About 90% on this
+            
+            arg = new(std::nothrow) char[128];
+            checkValue = new(std::nothrow) char[128];
+            
+            ReadArg(arg, 127, false);
+            
+            if(!fileSystem -> Create(arg)){
+                machine -> WriteRegister(2, -1);
+                break;
+            }
+            
+            checkFile = fileSystem -> Open(arg);
+            
+            checkFile -> Write("FUCKNACHOS\n", 11);
+            
+            checkLen = snprintf(checkValue, "%d\n", currentThread -> space -> numPages);
+            checkFile -> Write(checkValue, checkLen);
+            
+            bzero(checkValue, 128);
+            for (i = 0; i < currentThread -> space -> numPages; i++){
+                
+                vmInfoLock -> Acquire();
+                            
+                
+                if (currentThread -> space -> pageTable[i].valid){
+                    int parentPhysicalPage = currentThread -> space -> pageTable[i].physicalPage;
+                    
+                    faultInfo[parentPhysicalPage] -> locked = true;
+                    
+                    
+                    for (int j = 0; j < PageSize; j++)
+                        checkValue[j] = machine -> mainMemory[parentPhysicalPage * PageSize + j];
+                    
+                    faultInfo[parentPhysicalPage] -> locked = false;
+                    vmInfoLock -> Release();
+                }
+                
+                else{
+                    vmInfoLock -> Release();
+                    
+                    faultLock -> Acquire();
+                    megaDisk -> ReadSector(currentThread -> space -> diskSectors[i], checkValue);
+                    faultLock -> Release();
+                    
+                    checkFile -> Write(checkValue, 128);
+                }
+                
+                checkFile -> Write(":", 1);
+                bzero(checkValue, 128);
+            }
+            
+            
+            for(int i = 0; i < NumTotalRegs - 1; i ++){
+                checkLen = snprintf(checkValue, "%d:", currentThread -> userRegisters[i]);
+                
+                checkFile -> Write(checkValue, checkLen);
+                bzero(checkValue, 128);
+            }
+            
+            checkLen = snprintf(checkValue, "%d\n", currentThread -> userRegisters[NumTotalRegs - 1]);
+            checkFile -> Write(checkValue, checkLen);
+            bzero(checkValue, 128);
+            
+
+            
+
+            //Exit and join stuff ignored
+            
         default:
             printf("Undefined SYSCALL %d\n", type);
             ASSERT(false);

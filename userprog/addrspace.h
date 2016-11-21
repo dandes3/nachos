@@ -19,11 +19,6 @@
 
 typedef int OpenFileId;	
 
-typedef struct ChildInfo{
-    int exitVal;
-    Semaphore* joinSemaphore;
-} ChildInfo;
-
 #define UserStackSize		1024 	// increase this as necessary!
 
 class AddrSpace {
@@ -53,6 +48,7 @@ class AddrSpace {
     OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
     int mySpaceId;
     int parentThreadPtr;
+    bool checkpoint;
     bool failed;
     unsigned int numPages;		// Number of pages in the virtual 
     char* fileName;          

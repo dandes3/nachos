@@ -48,11 +48,12 @@ class FileSystem {
     FileSystem(bool) {}
 
     bool Create(char *name, int) { 
-	int fileDescriptor = OpenForWrite(name);
-
-	if (fileDescriptor == -1) return false;
-	Close(fileDescriptor); 
-	return true; 
+    	int fileDescriptor = OpenForWrite(name);
+    
+	   if (fileDescriptor == -1) return false;
+       
+	   Close(fileDescriptor); 
+	   return true; 
 	}
 
     OpenFile* Open(char *name) {

@@ -25,6 +25,7 @@
 #ifdef CHANGED
 
 #define SCRIPT 0x52435323 //Used to identify a shell script being brought into execution
+#define CHECK 0x4655434b
 extern void StartProcess(char *filename, char *inputName);
 //----------------------------------------------------------------------
 // SwapHeader
@@ -66,6 +67,7 @@ SwapHeader (NoffHeader *noffH)
 AddrSpace::AddrSpace(OpenFile *executable)
 {
     failed = false; //Flag used to tell exception.cc if an addrspace creation failed
+    checkpoint = false;
     
     stdOut = new(std::nothrow) OpenFile(1); //Cookies for ConsoleOutput and ConsoleInput
     stdIn = new(std::nothrow) OpenFile(0);
@@ -87,23 +89,37 @@ AddrSpace::AddrSpace(OpenFile *executable)
         failed = true; //Shouldn't be reached unless something bad happens
         return;
     }
-  
-    if ((noffH.noffMagic != NOFFMAGIC) && 
-		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
-    	SwapHeader(&noffH);
     
-    if (noffH.noffMagic != NOFFMAGIC){
-        failed = true;
-        return;
+    if (noffH.noffMagic == CHECK){
+        checkpoint = true;
+        char strNumPages [128];
+        int curPos = 0;
+        bzero(strNumPages, 128);
+        
+        while (strNumPages[count] !=  '\n'){
+            executable -> 
     }
-
+    
+    else{
+        if ((noffH.noffMagic != NOFFMAGIC) && 
+            (WordToHost(noffH.noffMagic) == NOFFMAGIC))
+            SwapHeader(&noffH);
+        
+        if (noffH.noffMagic != NOFFMAGIC){
+            failed = true;
+            return;
+        }
+    
+    
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size 
 			+ UserStackSize;	// we need to increase the size
 						// to leave room for the stack
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-
+    }
+    
+    
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
 #ifndef USE_TLB
@@ -116,7 +132,14 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	   
        diskBitLock -> Acquire();
        
+       
        diskSectors[i] = diskMap -> Find();
+       
+       if (diskSectors[i] == -1){
+           failed = true;
+           diskBitLock -> Release();
+           break;
+       }
        
        diskBitLock -> Release();
     
@@ -129,8 +152,22 @@ AddrSpace::AddrSpace(OpenFile *executable)
     }
 #endif    
 
+    if (failed){
+        for (int i = 0; diskSectors[i] != -1; i++){
+            diskBitLock -> Acquire();
+            diskMap -> Clear(diskSectors[i]);
+            diskBitLock -> Release();
+        }
+        
+        return;
+    }
+
 // then, copy in the code and data segments into memory byte by byte, converting to physical memory for each byte
     
+    if (checkpoint){
+           
+        
+    }
     int virtualPage, virtualOffset;
     int executableSize = noffH.code.size + noffH.initData.size;
     executableSize +=  128 - (executableSize % 128);
