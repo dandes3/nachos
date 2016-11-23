@@ -5,7 +5,7 @@ echo "*****Passing input to shell required the input in a seperate file. I alway
 echo "*****Furthermore, passing input to shell doesn't allow the inner program to exit, it must halt. I tested that the program works correctly outside of this bash script, but for the purpose of this script, I made some files halt where they normally exit"
 echo ""
 
-ext="in"
+ext="out"
 
 #sleep 5
 echo "*****Running argseqchild"
