@@ -632,7 +632,11 @@ void readOnlyFix(int exceptionAddr){
             otherOwners[curPos] = faultInfo[physicalExceptionPage] -> owners[i];
             curPos ++;
         }
+        else
+            DEBUG('v', "Current thread is an owner of the page it is read-only exceptioning on\n");
     }
+    
+    //bzero(faultInfo[physicalExceptionPage] -> owners, 5 * sizeof(Thread*));
     
     faultInfo[physicalExceptionPage] -> owners[0] = currentThread;
     faultInfo[physicalExceptionPage] -> curOwner = 1;
@@ -667,6 +671,7 @@ void readOnlyFix(int exceptionAddr){
    
 void faultPage(int faultingAddr, bool lockBit){
     //Going for gold
+    DEBUG('v', "%s is faulting on addr %d\n", currentThread -> name, faultingAddr);
     faultLock -> Acquire();
     
     int faultPage, faultSector, newLocation, victim;

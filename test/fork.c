@@ -35,6 +35,7 @@ main()
   } else {
     
     prints("KID running, about to Exit()\n", ConsoleOutput);
+    
     Exit(17);
   }
 }
