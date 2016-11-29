@@ -297,6 +297,7 @@ ExceptionHandler(ExceptionType which)
             
             //Make child owner of all parent pages in memory
             vmInfoLock -> Acquire();
+            killLock -> Acquire();
             for (int i = 0; i < NumPhysPages; i++){
                 FaultData* curData = faultInfo[i];
                 
@@ -312,6 +313,7 @@ ExceptionHandler(ExceptionType which)
                     }
                 }
             }
+            killLock -> Release();
             vmInfoLock -> Release();
             
             
@@ -607,9 +609,10 @@ void readOnlyFix(int exceptionAddr){
     
     int exceptionPage = exceptionAddr / PageSize;
 
-    if (!currentThread -> space -> pageTable[exceptionPage].readOnly)
+    if (!currentThread -> space -> pageTable[exceptionPage].readOnly){
+        readOnlyLock -> Release();
         return;
-    
+    }
     Thread* otherOwners[5];
     char copyPage[128];
     
@@ -791,8 +794,10 @@ void faultPage(int faultingAddr, bool lockBit){
     }
     
     vmInfoLock -> Acquire(); 
-    currentThread -> space -> pageTable[faultPage].valid = true;  
-    currentThread -> space -> pageTable[faultPage].physicalPage = newLocation;
+    for (int i = 0; i < faultInfo[newLocation] -> curOwner; i++){
+        faultInfo[newLocation] -> owners[i] -> space -> pageTable[faultPage].valid = true;  
+        faultInfo[newLocation] -> owners[i] -> space -> pageTable[faultPage].physicalPage = newLocation;
+    }
     vmInfoLock -> Release();
     
     faultLock -> Release();

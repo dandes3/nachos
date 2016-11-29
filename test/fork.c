@@ -18,7 +18,10 @@ main()
   
   kid = Fork();
   if (kid != 0) {
-      
+    
+    int testVal = 65;
+    
+    printd(testVal, ConsoleOutput);
     prints("PARENT after fork; kid pid is ", ConsoleOutput);
     printd((int)kid, ConsoleOutput);
     prints("\n", ConsoleOutput);
@@ -33,9 +36,9 @@ main()
     Halt();
   /* not reached */
   } else {
-    
+     printd((int)kid, ConsoleOutput);
     prints("KID running, about to Exit()\n", ConsoleOutput);
-    
+   
     Exit(17);
   }
 }
