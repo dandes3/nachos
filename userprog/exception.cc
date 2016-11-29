@@ -102,6 +102,7 @@ int pageToRemove();
 void faultPage(int, bool);
 void bringIntoMemory(int);
 void CheckPointThread(int garbage);
+void readOnlyFix(int exceptionAddr);
 
 void
 ExceptionHandler(ExceptionType which)
@@ -522,16 +523,17 @@ ExceptionHandler(ExceptionType which)
         
         break;
 
+    case ReadOnlyException:
+        readOnlyFix(machine -> ReadRegister(BadVAddrReg));
+        break;
+          
     
 #ifdef CHANGED
     case NoException:
         
         break;
         
-    case ReadOnlyException:
-        fprintf(stderr, "ReadOnly\n");
-        KillThread(2);
-          break;
+
         
     case BusErrorException:
         fprintf(stderr, "BusError\n");// Translation resulted in an 
@@ -568,6 +570,55 @@ KillThread(2);
     DEBUG('a', "Leaving exception handler\n");
 }
 
+void readOnlyFix(int exceptionAddr){
+    //ASSUMING PAGE IS ALREADY IN MEMORY
+    
+    int exceptionPage = exceptionAddr / PageSize;
+
+    Thread* otherOwners[5];
+    char copyPage[128];
+    
+    vmInfoLock -> Acquire();
+    int physicalExceptionPage = currentThread -> space -> pageTable[exceptionPage].physicalPage;
+    
+    ASSERT(currentThread -> space -> pageTable[exceptionPage].valid);
+    
+    currentThread -> space -> pageTable[exceptionPage].readOnly = false;
+    
+    int curOwner = faultInfo[exceptionPage] -> curOwner;
+    int curPos = 0;
+    
+    for (int i = 0; i < curOwner; i ++){
+        if (faultInfo[exceptionPage] -> owners[i] != currentThread){
+            otherOwners[curPos] = faultInfo[exceptionPage] -> owners[i];
+            curPos ++;
+        }
+    }
+    
+    faultInfo[exceptionPage] -> owners[0] = currentThread;
+    faultInfo[exceptionPage] -> curOwner = 1;
+    
+    vmInfoLock -> Release();
+    
+    for (int i = 0; i < PageSize; i ++)
+        copyPage[i] = machine -> mainMemory[physicalExceptionPage * PageSize + i];
+    
+    for (int i = 0; i < curPos; i ++){
+        diskBitLock -> Acquire();
+        int newSector = diskMap -> Find();
+        diskBitLock -> Release();
+        
+        megaDisk -> WriteSector(newSector, copyPage);
+        
+        vmInfoLock -> Acquire();
+        otherOwners[i] -> space -> pageTable[exceptionPage].valid = false;
+        otherOwners[i] -> space -> pageTable[exceptionPage].readOnly = false;
+        vmInfoLock -> Release();
+        
+        otherOwners[i] -> space -> diskSectors[exceptionPage] = newSector;
+    }
+}
+   
 void faultPage(int faultingAddr, bool lockBit){
     //Going for gold
     faultLock -> Acquire();
