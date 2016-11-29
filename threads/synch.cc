@@ -119,8 +119,10 @@ Lock::~Lock() {
 void Lock::Acquire() {
     IntStatus oldLevel = interrupt->SetLevel(IntOff); //Atomic actions
 
+    
     while (!status) { //Mesa semantics
     	queue->Append((void*)currentThread);
+        DEBUG('s', "%s is sleeping on lock %s\n", currentThread -> name, name);
     	currentThread->Sleep();
     }
 
@@ -128,6 +130,8 @@ void Lock::Acquire() {
 
     lockHolder = currentThread;
 
+    DEBUG('s', "%s has acquired lock %s\n", currentThread -> name, name);
+    
     (void)interrupt->SetLevel(oldLevel);
 }
 
@@ -143,7 +147,7 @@ void Lock::Release() {
     	scheduler->ReadyToRun(thread); //Put on ready list, Mesa semantics
 
     status = true; //Lock free
-
+    DEBUG('s', "%s has released lock %s\n", currentThread -> name, name);
     (void)interrupt->SetLevel(oldLevel);
 }
 

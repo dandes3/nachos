@@ -150,6 +150,10 @@ Thread::Finish ()
     DEBUG('t', "Finishing thread \"%s\"\n", getName());
     
     threadToBeDestroyed = currentThread;
+    
+    vmInfoLock -> Release();
+    killLock -> Release();
+    
     Sleep();					// invokes SWITCH
     // not reached
 }

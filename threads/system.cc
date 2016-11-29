@@ -45,6 +45,9 @@ Lock *stdOut;
 Lock *atomicWrite;
 Lock *vmInfoLock;
 Lock *faultLock;
+Lock *diskSectorsLock;
+Lock *killLock;
+Lock *readOnlyLock;
 SynchDisk *megaDisk;
 FaultData **faultInfo;
 #endif
@@ -185,6 +188,9 @@ Initialize(int argc, char **argv)
     atomicWrite = new(std::nothrow) Lock("atomicWrite");
     vmInfoLock = new(std::nothrow) Lock("vmInfoLock");
     faultLock = new(std::nothrow) Lock("faultLock");
+    diskSectorsLock = new(std::nothrow) Lock("diskSectorsLock");
+    killLock = new(std::nothrow) Lock("killLock");
+    readOnlyLock = new(std::nothrow) Lock("readOnlyLock");
     timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
     megaDisk = new(std::nothrow) SynchDisk("megaDisk");
     faultInfo = new(std::nothrow) FaultData*[NumPhysPages];

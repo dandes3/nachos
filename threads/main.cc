@@ -175,6 +175,8 @@ main(int argc, char **argv)
     }
     
     DEBUG('v', "Finising in main\n");
+    killLock -> Acquire(); //Pay no attention to the man behind the curtain
+    vmInfoLock -> Acquire(); 
     currentThread->Finish();	// NOTE: if the procedure "main" 
 				// returns, then the program "nachos"
 				// will exit (as any other normal program

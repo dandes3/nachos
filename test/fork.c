@@ -13,14 +13,18 @@ main()
   SpaceId kid;
   int joinval;
 
+ 
   prints("PARENT exists\n", ConsoleOutput);
+  
   kid = Fork();
   if (kid != 0) {
+      
     prints("PARENT after fork; kid pid is ", ConsoleOutput);
     printd((int)kid, ConsoleOutput);
     prints("\n", ConsoleOutput);
     
     joinval = Join(kid);
+    
     
     prints("PARENT off Join with value of ", ConsoleOutput);
     printd(joinval, ConsoleOutput);
@@ -29,6 +33,7 @@ main()
     Halt();
   /* not reached */
   } else {
+    
     prints("KID running, about to Exit()\n", ConsoleOutput);
     Exit(17);
   }

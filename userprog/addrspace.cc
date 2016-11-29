@@ -150,8 +150,9 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	   
        diskBitLock -> Acquire();
        
-       
+       diskSectorsLock -> Acquire();
        diskSectors[i] = diskMap -> Find();
+       diskSectorsLock -> Release();
        
        if (diskSectors[i] == -1){
            failed = true;
@@ -192,7 +193,12 @@ AddrSpace::AddrSpace(OpenFile *executable)
            executable -> Read(pageContents, 128);
            
            faultLock -> Acquire();
-           megaDisk -> WriteSector(diskSectors[i], pageContents);
+           
+           diskSectorsLock -> Acquire();
+           int sector = diskSectors[i];
+           diskSectorsLock -> Release();
+           
+           megaDisk -> WriteSector(sector, pageContents);
            faultLock -> Release();
            
            executable -> Read(pageContents, 1);
@@ -237,7 +243,11 @@ AddrSpace::AddrSpace(OpenFile *executable)
         }
         
         for (int i = 0; i < executableSize / 128; i++){
-            megaDisk -> WriteSector(diskSectors[i], dataBufs[i]);
+            diskSectorsLock -> Acquire();
+            int sector = diskSectors[i];
+            diskSectorsLock -> Release();
+            
+            megaDisk -> WriteSector(sector, dataBufs[i]);
             delete dataBufs[i];
         }
         
@@ -309,6 +319,14 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
         }
     }
     
+    //Copying disksectors (COW specific)
+    
+    diskSectorsLock -> Acquire();
+    for (i = 0; i < 2048; i++)
+        diskSectors[i] = copySpace -> diskSectors[i];
+    diskSectorsLock -> Release();
+    
+
     numPages = copySpace -> numPages;
     
     pageTable = new(std::nothrow) TranslationEntry[numPages];
@@ -317,20 +335,26 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
 	   
        pageTable[i].virtualPage = i;
 	   
+       /*
        diskBitLock -> Acquire();
        
        diskSectors[i] = diskMap -> Find();
        
        diskBitLock -> Release();
-    
-	   pageTable[i].valid = false;
+    */
+	   pageTable[i].valid = copySpace -> pageTable[i].valid;
+       pageTable[i].physicalPage = copySpace -> pageTable[i].physicalPage;
 	   pageTable[i].use = false;
 	   pageTable[i].dirty = false;
-	   pageTable[i].readOnly = false; 
+	   pageTable[i].readOnly = true; 
+       
+       //Mark parents pages as readOnly as well
+       copySpace -> pageTable[i].readOnly = true;
        
        DEBUG('v', "VP %d goes to sector %d\n", i, diskSectors[i]);
     }
- 
+
+ /*
     //Copy memory from parent's physical memory to child's physical memory
     for (i = 0; i < numPages; i++){
         faultLock -> Acquire();
@@ -363,7 +387,7 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
         
         faultLock -> Release();
     }
-    
+    */
 }
 
 //----------------------------------------------------------------------

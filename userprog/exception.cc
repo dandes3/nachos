@@ -273,6 +273,8 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Fork:
+            DEBUG('a', "Fork entered\n");
+            
             forkExec -> Acquire(); //Exec and Fork are mutually exclusive
             
             spaceIdSem -> P();
@@ -293,7 +295,29 @@ ExceptionHandler(ExceptionType which)
                 break;
             }
             
+            //Make child owner of all parent pages in memory
+            vmInfoLock -> Acquire();
+            for (int i = 0; i < NumPhysPages; i++){
+                FaultData* curData = faultInfo[i];
+                
+               // DEBUG('v', "curData -> curOnwer is %x\n", curData -> curOwner);
+                
+                if (faultInfo[i] != NULL){
+                    for (int j = 0; j < curData -> curOwner; j++){
+                        if (curData -> owners[j] == currentThread){
+                            curData -> owners[curData -> curOwner] = newThread;
+                            curData -> curOwner++;
+                            break;
+                        }
+                    }
+                }
+            }
+            vmInfoLock -> Release();
+            
+            
             newThread -> space -> parentThreadPtr = (int) currentThread; //Used in join to find correct node in joinList
+            currentThread -> space -> childThreadPtr = (int) newThread;
+            
             newThread -> space -> mySpaceId = cid; //See above comment
             
             joinSem -> P();
@@ -484,7 +508,11 @@ ExceptionHandler(ExceptionType which)
                     vmInfoLock -> Release();
                     
                     faultLock -> Acquire();
-                    megaDisk -> ReadSector(currentThread -> space -> diskSectors[i], checkValue);
+                    diskSectorsLock -> Acquire();
+                    int sector = currentThread -> space -> diskSectors[i];
+                    diskSectorsLock -> Release();
+                    megaDisk -> ReadSector(sector, checkValue);
+                    
                     faultLock -> Release();
                     
                     
@@ -571,10 +599,17 @@ KillThread(2);
 }
 
 void readOnlyFix(int exceptionAddr){
+    readOnlyLock -> Acquire();
+    
     //ASSUMING PAGE IS ALREADY IN MEMORY
+ 
+    DEBUG('v', "%s tried to write a read only page at addr %d############\n", currentThread -> name, exceptionAddr);
     
     int exceptionPage = exceptionAddr / PageSize;
 
+    if (!currentThread -> space -> pageTable[exceptionPage].readOnly)
+        return;
+    
     Thread* otherOwners[5];
     char copyPage[128];
     
@@ -585,18 +620,22 @@ void readOnlyFix(int exceptionAddr){
     
     currentThread -> space -> pageTable[exceptionPage].readOnly = false;
     
-    int curOwner = faultInfo[exceptionPage] -> curOwner;
+    int curOwner = faultInfo[physicalExceptionPage] -> curOwner;
     int curPos = 0;
+    vmInfoLock -> Release();
     
+    killLock -> Acquire();
+    
+    vmInfoLock -> Acquire();
     for (int i = 0; i < curOwner; i ++){
-        if (faultInfo[exceptionPage] -> owners[i] != currentThread){
-            otherOwners[curPos] = faultInfo[exceptionPage] -> owners[i];
+        if (faultInfo[physicalExceptionPage] -> owners[i] != currentThread){
+            otherOwners[curPos] = faultInfo[physicalExceptionPage] -> owners[i];
             curPos ++;
         }
     }
     
-    faultInfo[exceptionPage] -> owners[0] = currentThread;
-    faultInfo[exceptionPage] -> curOwner = 1;
+    faultInfo[physicalExceptionPage] -> owners[0] = currentThread;
+    faultInfo[physicalExceptionPage] -> curOwner = 1;
     
     vmInfoLock -> Release();
     
@@ -604,6 +643,8 @@ void readOnlyFix(int exceptionAddr){
         copyPage[i] = machine -> mainMemory[physicalExceptionPage * PageSize + i];
     
     for (int i = 0; i < curPos; i ++){
+        DEBUG('v', "i is %d, otherOwners[i] is %s\n", i, otherOwners[i] -> name);
+        
         diskBitLock -> Acquire();
         int newSector = diskMap -> Find();
         diskBitLock -> Release();
@@ -615,8 +656,13 @@ void readOnlyFix(int exceptionAddr){
         otherOwners[i] -> space -> pageTable[exceptionPage].readOnly = false;
         vmInfoLock -> Release();
         
+        diskSectorsLock -> Acquire();
         otherOwners[i] -> space -> diskSectors[exceptionPage] = newSector;
+        diskSectorsLock -> Release();
     }
+    killLock -> Release();
+    
+    readOnlyLock -> Release();
 }
    
 void faultPage(int faultingAddr, bool lockBit){
@@ -650,6 +696,7 @@ void faultPage(int faultingAddr, bool lockBit){
         newSector = diskMap -> Find();
         diskBitLock -> Release();
         
+        killLock -> Acquire();
         for (int i = 0; i < numOwners; i++){
             vmInfoLock -> Acquire();
             poorThread = faultInfo[victim] -> owners[i];
@@ -663,8 +710,11 @@ void faultPage(int faultingAddr, bool lockBit){
             poorThread -> space -> pageTable[oldVirtualPage].valid = false;
             vmInfoLock -> Release();
         
+            diskSectorsLock -> Acquire();
             poorThread -> space -> diskSectors[oldVirtualPage] = newSector; //LOCK THIS PER THREAD maybe??
+            diskSectorsLock -> Release();
         }
+        killLock -> Release();
         
         DEBUG('v', "newSector: %d\n", newSector);
 
@@ -675,16 +725,22 @@ void faultPage(int faultingAddr, bool lockBit){
     
         
     faultPage = faultingAddr / PageSize;
+    
+    diskSectorsLock -> Acquire();
     faultSector = currentThread -> space -> diskSectors[faultPage];
+    diskSectorsLock -> Release();
+    
     DEBUG('v', "Fault addr: %d, fault page: %d, going to: %d\n", faultingAddr, faultPage, newLocation); 
     
     if (currentThread -> space -> pageTable[faultPage].readOnly){
+        killLock -> Acquire();
+        
         int curOwner = 1;
         newData -> owners[0] = currentThread;
         
         Thread* curThreadPtr = (Thread*) currentThread -> space -> parentThreadPtr;
         
-        while (curThreadPtr != NULL){
+        while (curThreadPtr != NULL && curThreadPtr != threadToBeDestroyed){
             newData -> owners[curOwner] = curThreadPtr;
             curOwner ++;
             curThreadPtr = (Thread*) curThreadPtr -> space -> parentThreadPtr;
@@ -692,14 +748,17 @@ void faultPage(int faultingAddr, bool lockBit){
         
         curThreadPtr = (Thread*)  currentThread -> space -> childThreadPtr;
         
-        while (curThreadPtr != NULL){
+        while (curThreadPtr != NULL && curThreadPtr != threadToBeDestroyed){
             newData -> owners[curOwner] = curThreadPtr;
             curOwner ++;
+            DEBUG('v', "curThreadPtr is %x\n", curThreadPtr);
+            
             curThreadPtr = (Thread*) curThreadPtr -> space -> childThreadPtr;
         }
         
         newData -> curOwner =  curOwner;
         
+        killLock -> Release();
     }
     
     else{
@@ -973,7 +1032,17 @@ void KillThread(int exitVal){
         
         if (space -> pageTable[i].valid)
             memMap -> Clear(space -> pageTable[i].physicalPage); //Release each page back to the bitmap
+        
+        else{
+            diskBitLock -> Acquire();
+            diskSectorsLock -> Acquire();
             
+            diskMap -> Clear(space -> diskSectors[i]);
+            
+            diskSectorsLock -> Release();
+            diskBitLock -> Release();
+        }
+        
         vmInfoLock -> Release();
         bitLock -> Release();
     }
@@ -993,7 +1062,38 @@ void KillThread(int exitVal){
         //joinList -> print();
     }
   
+    killLock -> Acquire();
+    
+    vmInfoLock -> Acquire();
+    for (int i = 0; i < NumPhysPages; i++){
+        if (faultInfo[i] == NULL)
+            continue;
+        
+        FaultData* curData = faultInfo[i];
+        int curCurOwner = curData -> curOwner;
+        int count = 0;
+        
+        for (int j = 0; j < curCurOwner; j++){
+            if (curData -> owners[j] != currentThread){
+                curData -> owners[count] = curData -> owners[j];
+                count++;
+            }
+        }
+        
+        curData -> curOwner = count;
+        
+        if (count == 1)
+            curData -> owners[0] -> space -> pageTable[curData -> virtualPage].readOnly = false;
+    }
+    
+    if (currentThread -> space -> parentThreadPtr != 0)
+        ((Thread*)(currentThread -> space -> parentThreadPtr)) -> space -> childThreadPtr = 0;
+    
+    if (currentThread -> space -> childThreadPtr != 0)
+        ((Thread*)(currentThread -> space -> childThreadPtr)) -> space -> parentThreadPtr = 0;
+    
     currentThread -> Finish(); //Kill thread
+
 }
 
 /*
