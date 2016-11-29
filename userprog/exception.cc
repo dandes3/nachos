@@ -615,7 +615,7 @@ void faultPage(int faultingAddr, bool lockBit){
     faultSector = currentThread -> space -> diskSectors[faultPage];
     DEBUG('v', "Fault addr: %d, fault page: %d, going to: %d\n", faultingAddr, faultPage, newLocation); 
     
-    newData -> owner = currentThread;
+    //newData -> owner = currentThread;
     newData -> virtualPage = faultPage;
     newData -> locked = lockBit;
     
