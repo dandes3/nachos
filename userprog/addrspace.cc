@@ -68,6 +68,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
 {
     failed = false; //Flag used to tell exception.cc if an addrspace creation failed
     checkpoint = false;
+    parentThreadPtr = NULL;
+    childThreadPtr = NULL;
     
     stdOut = new(std::nothrow) OpenFile(1); //Cookies for ConsoleOutput and ConsoleInput
     stdIn = new(std::nothrow) OpenFile(0);

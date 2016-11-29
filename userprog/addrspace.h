@@ -48,6 +48,7 @@ class AddrSpace {
     OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
     int mySpaceId;
     int parentThreadPtr;
+    int childThreadPtr;
     bool checkpoint;
     bool failed;
     unsigned int numPages;		// Number of pages in the virtual 

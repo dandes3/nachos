@@ -587,24 +587,36 @@ void faultPage(int faultingAddr, bool lockBit){
     }
     
     else{
-        vmInfoLock -> Acquire();
-        Thread* poorThread = faultInfo[victim] -> owner;
-        int oldVirtualPage = faultInfo[victim] -> virtualPage;
-        vmInfoLock -> Release();
-        
+        Thread* poorThread;
+        int oldVirtualPage;
         int newSector;
-        DEBUG('v', "Virtual Page being removed: %d, poorThread: %x, currentThread: %x\n", oldVirtualPage, poorThread, currentThread);
         
         vmInfoLock -> Acquire();
-        poorThread -> space -> pageTable[oldVirtualPage].valid = false;
+        int numOwners = faultInfo[victim] -> curOwner;
         vmInfoLock -> Release();
         
         diskBitLock -> Acquire();
         newSector = diskMap -> Find();
         diskBitLock -> Release();
         
+        for (int i = 0; i < numOwners; i++){
+            vmInfoLock -> Acquire();
+            poorThread = faultInfo[victim] -> owners[i];
+            oldVirtualPage = faultInfo[victim] -> virtualPage;
+      
+        
+     
+            DEBUG('v', "Virtual Page being removed: %d, poorThread: %x, currentThread: %x\n", oldVirtualPage, poorThread, currentThread);
+        
+
+            poorThread -> space -> pageTable[oldVirtualPage].valid = false;
+            vmInfoLock -> Release();
+        
+            poorThread -> space -> diskSectors[oldVirtualPage] = newSector; //LOCK THIS PER THREAD maybe??
+        }
+        
         DEBUG('v', "newSector: %d\n", newSector);
-        poorThread -> space -> diskSectors[oldVirtualPage] = newSector; //LOCK THIS PER THREAD maybe??
+
         
         megaDisk -> WriteSector(newSector, &machine -> mainMemory[victim * PageSize]);
         newLocation = victim;
@@ -615,7 +627,35 @@ void faultPage(int faultingAddr, bool lockBit){
     faultSector = currentThread -> space -> diskSectors[faultPage];
     DEBUG('v', "Fault addr: %d, fault page: %d, going to: %d\n", faultingAddr, faultPage, newLocation); 
     
-    //newData -> owner = currentThread;
+    if (currentThread -> space -> pageTable[faultPage].readOnly){
+        int curOwner = 1;
+        newData -> owners[0] = currentThread;
+        
+        Thread* curThreadPtr = (Thread*) currentThread -> space -> parentThreadPtr;
+        
+        while (curThreadPtr != NULL){
+            newData -> owners[curOwner] = curThreadPtr;
+            curOwner ++;
+            curThreadPtr = (Thread*) curThreadPtr -> space -> parentThreadPtr;
+        }
+        
+        curThreadPtr = (Thread*)  currentThread -> space -> childThreadPtr;
+        
+        while (curThreadPtr != NULL){
+            newData -> owners[curOwner] = curThreadPtr;
+            curOwner ++;
+            curThreadPtr = (Thread*) curThreadPtr -> space -> childThreadPtr;
+        }
+        
+        newData -> curOwner =  curOwner;
+        
+    }
+    
+    else{
+        newData -> owners[0] = currentThread;
+        newData -> curOwner = 1;
+    }
+    
     newData -> virtualPage = faultPage;
     newData -> locked = lockBit;
     
@@ -626,6 +666,7 @@ void faultPage(int faultingAddr, bool lockBit){
     megaDisk -> ReadSector(faultSector, newPage);
     
     DEBUG('v', "Clearing %d in diskMap\n", faultSector);
+    
     diskBitLock -> Acquire();
     diskMap -> Clear(faultSector);
     diskBitLock -> Release();

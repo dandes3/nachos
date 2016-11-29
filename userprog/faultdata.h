@@ -9,7 +9,7 @@
  * when moving pages to and from RAM to implement virtual memory.
  */
 typedef struct  FaultData{
-    Thread* owner[5];
+    Thread* owners[5];
     int curOwner;
     int virtualPage;
     bool locked;
