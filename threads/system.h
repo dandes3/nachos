@@ -60,7 +60,7 @@ extern Lock *vmInfoLock;        //Synchronizes access to any valid bit and fault
 extern Lock *faultLock;         //Synchronizes faulting behavior  
 extern SynchDisk *megaDisk;      //I think the name explains it all
 extern FaultData **faultInfo;
-
+extern int clockPos;
 #endif
 #endif
 

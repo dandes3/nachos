@@ -47,6 +47,7 @@ Lock *vmInfoLock;
 Lock *faultLock;
 SynchDisk *megaDisk;
 FaultData **faultInfo;
+int clockPos;
 #endif
 #endif
 
@@ -188,7 +189,7 @@ Initialize(int argc, char **argv)
     timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
     megaDisk = new(std::nothrow) SynchDisk("megaDisk");
     faultInfo = new(std::nothrow) FaultData*[NumPhysPages];
-    
+    clockPos = 0;
     for (int i = 0; i < NumPhysPages; i++)
         faultInfo[i] = NULL;
     
