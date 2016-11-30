@@ -816,6 +816,15 @@ void faultPage(int faultingAddr, bool lockBit){
 int pageToRemove(){
     int victim;
     
+    bitLock -> Acquire();
+    int numClear  = memMap -> NumClear();
+    bitLock -> Release();
+    
+    DEBUG('v', "Num clear is: %d\n", memMap -> NumClear());
+    if (numClear != 0)
+        return -1;
+    
+    /*
     vmInfoLock -> Acquire();
     
     
@@ -825,15 +834,42 @@ int pageToRemove(){
 
     
     vmInfoLock -> Release();
+    */
     
-    bitLock -> Acquire();
-    int numClear  = memMap -> NumClear();
-    bitLock -> Release();
+    //LRU Clock approx
     
-    DEBUG('v', "Num clear is: %d\n", memMap -> NumClear());
-    if (numClear != 0)
-        return -1;
+    vmInfoLock -> Acquire();
     
+    FaultData* curData = faultInfo[clockPos];
+    victim = -1;
+    
+    while (victim == -1){
+
+        int curVirtPage = curData -> virtualPage;
+        int maxUseBit = 0;
+        
+        for (int i = 0; i < curData -> curOwner; i ++){
+            if (curData -> owners[i] -> space -> pageTable[curVirtPage].use)
+                maxUseBit = 1;
+        }
+        
+        if (maxUseBit){
+            for (int i = 0; i < curData -> curOwner; i ++)
+                curData -> owners[i] -> space -> pageTable[curVirtPage].use = 0;
+        }
+        
+        else{
+            if (!curData -> locked){
+                victim = clockPos;
+                break;
+            }
+        }
+        
+        clockPos = (clockPos + 1) % NumPhysPages;
+        curData = faultInfo[clockPos];
+    }
+    
+    vmInfoLock -> Release();
         
     return victim;
 }

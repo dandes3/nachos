@@ -1,4 +1,3 @@
-#SCRIPT
-test/forkexit
-test/argkid    arg1      arg2 
+#SCRIPT 
+test/cat test/shell.c
 

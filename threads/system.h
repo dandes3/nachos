@@ -60,9 +60,10 @@ extern Lock *vmInfoLock;        //Synchronizes access to any valid bit and fault
 extern Lock *faultLock;         //Synchronizes faulting behavior  
 extern Lock *diskSectorsLock;   //Synchronizes access to any thread's diskSectors
 extern Lock *killLock;          //Synchronizes with read-only stuff and killing a thread
-extern Lock *readOnlyLock;       //Synchronizes access to read only fix functions
+extern Lock *readOnlyLock;      //Synchronizes access to read only fix functions
 extern SynchDisk *megaDisk;     //I think the name explains it all
 extern FaultData **faultInfo;   //Keeps track of necessary info for pages in memory with respect to a pageFault
+extern int clockPos;
 
 
 #endif
