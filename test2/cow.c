@@ -19,7 +19,7 @@ int vector[VECSIZE];                        /* 25 pages of data */
 int
 main()
 {
-  int i, j, dummy;
+  register int i, j, dummy;
   SpaceId cowkid;
 
   prints("Starting COW\n", ConsoleOutput);
