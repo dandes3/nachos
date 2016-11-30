@@ -15,6 +15,8 @@ main()
 
  
   prints("PARENT exists\n", ConsoleOutput);
+  joinval = 4;
+  printd(joinval, ConsoleOutput);
   
   kid = Fork();
   if (kid != 0) {

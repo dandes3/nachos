@@ -318,6 +318,7 @@ ExceptionHandler(ExceptionType which)
             
             
             newThread -> space -> parentThreadPtr = (int) currentThread; //Used in join to find correct node in joinList
+            newThread -> space -> childThreadPtr = 0;
             currentThread -> space -> childThreadPtr = (int) newThread;
             
             newThread -> space -> mySpaceId = cid; //See above comment
@@ -677,9 +678,17 @@ void faultPage(int faultingAddr, bool lockBit){
     DEBUG('v', "%s is faulting on addr %d\n", currentThread -> name, faultingAddr);
     faultLock -> Acquire();
     
+   
     int faultPage, faultSector, newLocation, victim;
     char* newPage = new char[128];
     FaultData* newData = new FaultData;
+   
+    faultPage = faultingAddr / PageSize;
+    
+    if (currentThread -> space -> pageTable[faultPage].valid){
+        faultLock -> Release();
+        return;
+    }
     
     stats -> numPageFaults ++;
     
@@ -732,13 +741,13 @@ void faultPage(int faultingAddr, bool lockBit){
     }
     
         
-    faultPage = faultingAddr / PageSize;
+
     
     diskSectorsLock -> Acquire();
     faultSector = currentThread -> space -> diskSectors[faultPage];
     diskSectorsLock -> Release();
     
-    DEBUG('v', "Fault addr: %d, fault page: %d, going to: %d\n", faultingAddr, faultPage, newLocation); 
+    DEBUG('v', "Fault addr: %d, fault page: %d, coming from sector %d going to: %d\n", faultingAddr, faultPage, faultSector, newLocation); 
     
     if (currentThread -> space -> pageTable[faultPage].readOnly){
         killLock -> Acquire();
@@ -759,7 +768,7 @@ void faultPage(int faultingAddr, bool lockBit){
         while (curThreadPtr != NULL && curThreadPtr != threadToBeDestroyed){
             newData -> owners[curOwner] = curThreadPtr;
             curOwner ++;
-            DEBUG('v', "curThreadPtr is %x\n", curThreadPtr);
+            
             
             curThreadPtr = (Thread*) curThreadPtr -> space -> childThreadPtr;
         }
@@ -795,6 +804,7 @@ void faultPage(int faultingAddr, bool lockBit){
     
     vmInfoLock -> Acquire(); 
     for (int i = 0; i < faultInfo[newLocation] -> curOwner; i++){
+        DEBUG('v', "owner who's page table is being updated: %s\n", faultInfo[newLocation] -> owners[i] -> name);
         faultInfo[newLocation] -> owners[i] -> space -> pageTable[faultPage].valid = true;  
         faultInfo[newLocation] -> owners[i] -> space -> pageTable[faultPage].physicalPage = newLocation;
     }
@@ -907,7 +917,7 @@ int ConvertAddr (int virtualAddress){
     int virtPage = virtualAddress / PageSize;
     int offset = virtualAddress % PageSize;
     
-    DEBUG('v', "Current thread's numpages is %d, virtualAddress is %d and virtPage is %d\n", currentThread -> space -> numPages, virtualAddress, virtPage); 
+    //DEBUG('v', "Current thread's numpages is %d, virtualAddress is %d and virtPage is %d\n", currentThread -> space -> numPages, virtualAddress, virtPage); 
     vmInfoLock -> Acquire();
     int retVal =  ((currentThread -> space -> pageTable[virtPage].physicalPage) * PageSize) + offset;
     vmInfoLock -> Release();
@@ -1040,17 +1050,19 @@ void KillThread(int exitVal){
         bitLock -> Acquire(); 
         vmInfoLock -> Acquire();
         
-        if (space -> pageTable[i].valid)
-            memMap -> Clear(space -> pageTable[i].physicalPage); //Release each page back to the bitmap
-        
-        else{
-            diskBitLock -> Acquire();
-            diskSectorsLock -> Acquire();
+        if (!space -> pageTable[i].readOnly){
+            if (space -> pageTable[i].valid)
+                memMap -> Clear(space -> pageTable[i].physicalPage); //Release each page back to the bitmap
             
-            diskMap -> Clear(space -> diskSectors[i]);
-            
-            diskSectorsLock -> Release();
-            diskBitLock -> Release();
+            else{
+                diskBitLock -> Acquire();
+                diskSectorsLock -> Acquire();
+                
+                diskMap -> Clear(space -> diskSectors[i]);
+                
+                diskSectorsLock -> Release();
+                diskBitLock -> Release();
+            }
         }
         
         vmInfoLock -> Release();

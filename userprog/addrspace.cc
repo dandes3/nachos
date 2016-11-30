@@ -351,7 +351,7 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
        //Mark parents pages as readOnly as well
        copySpace -> pageTable[i].readOnly = true;
        
-       DEBUG('v', "VP %d goes to sector %d\n", i, diskSectors[i]);
+      // DEBUG('v', "VP %d goes to sector %d\n", i, diskSectors[i]);
     }
 
  /*

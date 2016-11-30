@@ -19,27 +19,33 @@ int vector[VECSIZE];                        /* 25 pages of data */
 int
 main()
 {
-  register int i, j, dummy;
+  int i, j, dummy;
   SpaceId cowkid;
 
   prints("Starting COW\n", ConsoleOutput);
 
+  
   for (i = 0; i < VECSIZE; i++) vector[i] = i;
 
   prints("Initialization complete in parent\n", ConsoleOutput);
 
   if ((cowkid = Fork()) == 0) {
 
-    /* Here is the code of the child process. */
-
+      
+    /*Here is the code of the child process. */
+    prints("Child running\n", ConsoleOutput);
     for (j = 0; j < LOOPS; j++)
       for (i = 0; i < VECSIZE; i++)
         dummy = vector[i];
 
     /* Exit value semi-randomly picked. */
     
+    prints("Child past loops\n", ConsoleOutput);
+    
     Exit(vector[17]);
   }
+  
+  prints("Parent past fork\n", ConsoleOutput);
 
   i = Join(cowkid);
 
