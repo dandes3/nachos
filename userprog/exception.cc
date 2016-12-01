@@ -981,7 +981,7 @@ void CopyExecArgs(char** execArgs, int argAddr){
                 count ++;
             }
             
-            DEBUG('v', "Argument %d is %s\n", argc, execArgs[argc]);
+            
             
             vmInfoLock -> Acquire(); 
             for (int i = 0; i < 128 && pagesBroughtIn[i] != -1; i ++)
@@ -989,7 +989,7 @@ void CopyExecArgs(char** execArgs, int argAddr){
             vmInfoLock -> Release();
 
             execArgs[argc][count] = '\0';
-            
+            DEBUG('v', "Argument %d is %s\n", argc, execArgs[argc]);
             argc ++;
             
             argAddr += 4; //Go to next pointer
