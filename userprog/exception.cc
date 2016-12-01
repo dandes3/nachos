@@ -378,6 +378,7 @@ ExceptionHandler(ExceptionType which)
             if (!newThread -> space -> checkpoint){
                 argAddr = machine -> ReadRegister(5); //Virtual address of exec argument array
                 execArgs = new(std::nothrow) char* [128];
+                DEBUG('v', "Argaddr straight from register is %d\n", argAddr);
                 
                 CopyExecArgs(execArgs, argAddr); //Copy exec args from user memory to the kernel
                 
@@ -578,6 +579,7 @@ void faultPage(int faultingAddr, bool lockBit){
     
     stats -> numPageFaults ++;
     
+    //vmInfoLock -> Acquire();
     victim = pageToRemove();
     DEBUG('v', "Victim is %d\n", victim); 
     if (victim == -1){
@@ -590,12 +592,10 @@ void faultPage(int faultingAddr, bool lockBit){
         vmInfoLock -> Acquire();
         Thread* poorThread = faultInfo[victim] -> owner;
         int oldVirtualPage = faultInfo[victim] -> virtualPage;
-        vmInfoLock -> Release();
-        
+
         int newSector;
         DEBUG('v', "Virtual Page being removed: %d, poorThread: %x, currentThread: %x\n", oldVirtualPage, poorThread, currentThread);
         
-        vmInfoLock -> Acquire();
         poorThread -> space -> pageTable[oldVirtualPage].valid = false;
         vmInfoLock -> Release();
         
@@ -644,9 +644,36 @@ void faultPage(int faultingAddr, bool lockBit){
 
 int pageToRemove(){
     int victim;
+    int numNull = 0;
+    /*
+    vmInfoLock -> Acquire();
+    //LRU Clock approx
+    FaultData* curData = faultInfo[clockPos];
+    victim = -1;
     
-    
+    while (victim == -1 && numNull < NumPhysPages){
+        if (curData != NULL){
+            int curVirtPage = curData -> virtualPage;
+        
+            DEBUG('v', "Virtpage to check in page to remove is %d and clockPos is %d\n", curVirtPage, clockPos);
+            
+            if (curData -> owner -> space -> pageTable[curVirtPage].use)
+                curData -> owner -> space -> pageTable[curVirtPage].use = 0;
+            
+            else{
+                if (!curData -> locked)
+                    victim = clockPos;
+            }
+        }
+        else
+            numNull ++;
+            clockPos = (clockPos + 1) % NumPhysPages;
+            curData = faultInfo[clockPos];
        
+    }
+    
+    vmInfoLock -> Release();
+    */
    
     vmInfoLock -> Acquire();
    
@@ -658,48 +685,23 @@ int pageToRemove(){
       
     vmInfoLock -> Release();
     
+   
     bitLock -> Acquire();
     int numClear  = memMap -> NumClear();
     bitLock -> Release();
     
+   
     DEBUG('v', "Num clear is: %d\n", memMap -> NumClear());
     if (numClear != 0){
        
         return -1;
     }
-/*
-    vmInfoLock -> Acquire();
+
     
-    //LRU Clock approx
-    FaultData* curData = faultInfo[clockPos];
-    victim = -1;
+    //vmInfoLock -> Acquire();
+
     
-    while (victim == -1){
-        if (curData != NULL){
-            int curVirtPage = curData -> virtualPage;
-        
-            DEBUG('v', "Virtpage to check in page to remove is %d\n", curVirtPage = curData -> virtualPage);
-            
-            if (curData -> owner -> space -> pageTable[curVirtPage].use)
-                curData -> owner -> space -> pageTable[curVirtPage].use = 0;
-            
-            else{
-                if (!curData -> locked)
-                    victim = clockPos;
-            }
-        }     
-            clockPos = (clockPos + 1) % NumPhysPages;
-            curData = faultInfo[clockPos];
-       
-    }
     
-   
-    
- 
-    
-vmInfoLock -> Release();
-    
-    */
         
     return victim;
 }
@@ -813,7 +815,7 @@ void ExecThread(int argsInt){
     currentThread -> space -> RestoreState(); //Put pageTable in machine
     currentThread -> space -> InitRegisters(); //Initialize registers as if it were a new process
     
-    
+    argsInt = 0; //DON'T FORGET THIS IS HERE, REMOVE LINE TO MAKE ARGS WORK###################################################################333
     /*
      * "argsInt" is a pointer to the exec args we pulled into kernel memory in exec. They will now be put 
      * back into memory for the execed process as arguments to main.
@@ -945,9 +947,10 @@ void KillThread(int exitVal){
  * Copies exec arguments from user memory into kernel buffer execArgs from VA argAddr.
  */
 void CopyExecArgs(char** execArgs, int argAddr){
-    
+
     int str, argc, physAddr;
     
+    DEBUG('v', "Argaddr is %d at top  of CopyExecArgs\n", argAddr);
     if (argAddr != 0){
 
         argc = 0;
@@ -959,7 +962,8 @@ void CopyExecArgs(char** execArgs, int argAddr){
         
         physAddr = ConvertAddr(argAddr);
         str = *(unsigned int *) &machine -> mainMemory[physAddr];
-        
+        DEBUG('v', "Str before while is %d and physAddr is %d\n", str, physAddr);
+        DEBUG('v', "Owner of physAddr page is %x and curThread is %x\n", faultInfo[physAddr /PageSize] -> owner, currentThread);
         while (str != 0){ //str is a VA (pointer) where the exec arg strings reside
             DEBUG('v', "Argaddr is %d at top  of while\n", argAddr);
             /*
@@ -1002,8 +1006,10 @@ void CopyExecArgs(char** execArgs, int argAddr){
                 count ++;
             }
             
-            if (argc < 128) //Args over 128 get truncated
-                execArgs[argc] = new(std::nothrow) char[count + 1]; //Allocate space for argument
+            if (argc >= 128)//Args over 128 get truncated
+                break;
+               
+            execArgs[argc] = new(std::nothrow) char[count + 1]; //Allocate space for argument
             
             
             str = str - count; //First char 
@@ -1058,7 +1064,8 @@ void CopyExecArgs(char** execArgs, int argAddr){
     }
     
     else
-        execArgs[0] = NULL; //No arguments       
+        execArgs[0] = NULL; //No arguments  
+        
 }
 
 void CheckPointThread(int garbage){

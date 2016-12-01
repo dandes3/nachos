@@ -17,11 +17,13 @@ main()
   char *args[2];
 
   print("PARENT exists\n");
-  args[0] = "kid";
+ args[0] = "kid";
   args[1] = (char *)0;
 
   for (i=0; i<NUMKIDS; i++) {
     if ((kid[i] = Fork()) == 0) {
+     /* printd((int) args, ConsoleOutput);
+           prints("\n", ConsoleOutput);*/
       Exec("kid", args);
     } else {
       print("Kid ");
