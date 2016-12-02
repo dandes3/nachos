@@ -1,0 +1,13 @@
+PARENT exists
+PARENT after fork; kid pid is 1
+KID exists
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 2461588, idle 553224, system 205680, user 1702684
+Disk I/O: reads 36, writes 35
+Console I/O: reads 0, writes 90
+Paging: faults 24
+Network I/O: packets received 0, sent 0
+
+Cleaning up...

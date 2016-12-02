@@ -7,6 +7,16 @@
 #     takes in 0 - 4 arguments
 
 
+kate \
+filesys/*.cc filesys/*.h \
+machine/*.cc machine/*.h \
+#test/*.c test/start.s \
+#test1/*.c \
+#test2/*.c \
+#test3/*.c \
+threads/*.cc threads/*.h \
+userprog/*.cc userprog/*.h 2>/dev/null &
+
 case $1 in
 0)
 kate test/*.c
@@ -77,12 +87,4 @@ kate test3/*.c
 esac
 
 
-kate \
-filesys/*.cc filesys/*.h \
-machine/*.cc machine/*.h \
-#test/*.c test/start.s \
-#test1/*.c \
-#test2/*.c \
-#test3/*.c \
-threads/*.cc threads/*.h \
-userprog/*.cc userprog/*.h 2>/dev/null &
+

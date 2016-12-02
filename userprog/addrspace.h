@@ -16,7 +16,6 @@
 #include "copyright.h"
 #include "filesys.h"
 
-
 typedef int OpenFileId;	
 
 #define UserStackSize		1024 	// increase this as necessary!
@@ -54,6 +53,7 @@ class AddrSpace {
     char* fileName;          
     int diskSectors [2048];
 #endif
+    
 #ifndef USE_TLB
     TranslationEntry *pageTable;	// Assume linear page table translation
 #endif					// for now!

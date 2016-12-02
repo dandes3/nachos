@@ -97,7 +97,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
         
         executable -> Read(temp, 11); //This reads past the cookie
         
-        
         checkpoint = true;
         char strNumPages [128];
         int curPos = 0;
@@ -111,8 +110,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
         }
         
         strNumPages[curPos] = '\0';
-        
-        
         numPages = strtol(strNumPages, NULL, 0);
     }
     
@@ -147,16 +144,12 @@ AddrSpace::AddrSpace(OpenFile *executable)
        pageTable[i].virtualPage = i;
 	   
        diskBitLock -> Acquire();
-       
-       
        diskSectors[i] = diskMap -> Find();
-       
        if (diskSectors[i] == -1){
            failed = true;
            diskBitLock -> Release();
            break;
        }
-       
        diskBitLock -> Release();
     
 	   pageTable[i].valid = false;
@@ -181,7 +174,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
 // then, copy in the code and data segments into memory byte by byte, converting to physical memory for each byte
     
     if (checkpoint){
-           
         char pageContents [128];
         
         bzero(pageContents, 128);
@@ -196,7 +188,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
            executable -> Read(pageContents, 1);
            bzero(pageContents, 128);
         }
-        
     }
     
     else{
@@ -211,9 +202,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
         for (int i = 0; i < executableSize / 128; i ++)
             bzero(dataBufs[i], 128);
         
-        
         if (noffH.code.size > 0) {
-
             DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
             
             for (int i = 0; i < noffH.code.size; i ++){
@@ -224,7 +213,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
         }
         
         if (noffH.initData.size > 0) {
-
             DEBUG('a', "Initializing initData segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
             
             for (int i = 0; i < noffH.initData.size; i ++){
@@ -242,38 +230,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
         DEBUG('v', "code size: %d, initdata size: %d, uninitData size %d, stack size %d\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size, UserStackSize);
         DEBUG('v', "%d pages of code put on disk\n", executableSize / 128);
         
-        /*
-        //Big ASSumption: code and init data are contiguous and start at VA 0 ****
-        int executableSize = noffH.code.size + noffH.initData.size;
-        executableSize +=  128 - (executableSize % 128);
-        char* dataBuf = new char[executableSize];      
-        bzero(dataBuf, executableSize);
-        
-        if (noffH.code.size > 0) {
-
-            DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
-            
-            executable->ReadAt(dataBuf, noffH.code.size, noffH.code.inFileAddr); 
-        }
-        
-        if (noffH.initData.size > 0) {
-            
-            DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
-            
-            executable->ReadAt(dataBuf, noffH.initData.size, noffH.initData.inFileAddr);    
-        }
-        
-        int start = 0;
-        int virtualPage = 0; //Big ASSumption: code and init data are contiguous and start at VA 0 ****
-        while (start < executableSize){
-            megaDisk -> WriteSector(diskSectors[virtualPage], &dataBuf[start]);
-            start += 128;
-            virtualPage ++;
-        }  
-        
-        DEBUG('v', "code size: %d, initdata size: %d, uninitData size %d, stack size %d\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size, UserStackSize);
-        DEBUG('v', "%d pages of code put on disk\n", virtualPage);
-        */
     }
     
     for (int j = 0; j < 20; j++) //Init fileVector to all NULL
@@ -341,7 +297,6 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
             
             faultInfo[parentPhysicalPage] -> locked = true;
             
-            
             for (int j = 0; j < PageSize; j++)
                 buf[j] = machine -> mainMemory[parentPhysicalPage * PageSize + j];
             
@@ -374,10 +329,6 @@ AddrSpace::~AddrSpace()
 #ifndef USE_TLB
    delete pageTable;
 #endif
-   /*
-   for (int i = 0; i < 20; i++)
-      delete fileVector[i];
-   */
 }
 
 //----------------------------------------------------------------------
@@ -441,8 +392,6 @@ void AddrSpace::RestoreState()
 #endif
 }
 
-
-
 //----------------------------------------------------------------------
 // AddrSpace::fileOpen
 //      Opens a file by name given in parameter fileName. Puts resulting
@@ -497,7 +446,7 @@ void AddrSpace::fileClose(OpenFileId fileId){
     
     if (fileVector[fileId] != stdIn && fileVector[fileId] != stdOut && fileVector[fileId] -> links == 0) //Only delete the OpenFile object if it has 0 links to it.                                                                                                      
         delete fileVector[fileId];                                                                       //Deleting OpenFile object closes file in linux file system.
-                                                                                                         //Since the stdIn and stdOut doesn't correspond to actaul files, this would cause errors.
+                                                                                        //Since the stdIn and stdOut doesn't correspond to actaul files, this would cause errors.
     fileVector[fileId] -> linkLock -> Release();
     
     fileVector[fileId] = NULL; //Free up space in file vector

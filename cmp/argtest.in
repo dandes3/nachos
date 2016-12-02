@@ -1,0 +1,15 @@
+PARENT exists
+PARENT after fork/exec; argkid pid is 1
+PARENT about to Join argkid
+Arg[0]=<argument1>
+Arg[1]=<argument2>
+PARENT off Join with value of 17
+Machine halting!
+
+Ticks: total 2700339, idle 782171, system 213660, user 1704508
+Disk I/O: reads 45, writes 43
+Console I/O: reads 0, writes 153
+Paging: faults 32
+Network I/O: packets received 0, sent 0
+
+Cleaning up...
