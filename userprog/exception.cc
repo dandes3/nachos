@@ -233,7 +233,7 @@ ExceptionHandler(ExceptionType which)
             break;
             
         case SC_Write:
-            DEBUG('a', "Write entered\n");
+            DEBUG('w', "Write entered\n");
  
             size = machine -> ReadRegister(5); //Number of bytes to be written
             fileId = machine->ReadRegister(6); //File descriptor of file to be written
@@ -636,6 +636,7 @@ void faultPage(int faultingAddr, bool lockBit){
     
     vmInfoLock -> Acquire(); 
     currentThread -> space -> pageTable[faultPage].valid = true;  
+    currentThread -> space -> pageTable[faultPage].use = true;
     currentThread -> space -> pageTable[faultPage].physicalPage = newLocation;
     vmInfoLock -> Release();
     
@@ -645,17 +646,22 @@ void faultPage(int faultingAddr, bool lockBit){
 int pageToRemove(){
     int victim;
     int numNull = 0;
-    /*
+    
+    
+    bitLock -> Acquire();
+    int numClear  = memMap -> NumClear();
+    bitLock -> Release();
+    
     vmInfoLock -> Acquire();
     //LRU Clock approx
     FaultData* curData = faultInfo[clockPos];
     victim = -1;
     
-    while (victim == -1 && numNull < NumPhysPages){
+    while (victim == -1 && numNull < NumPhysPages && numClear == 0){
         if (curData != NULL){
             int curVirtPage = curData -> virtualPage;
         
-            DEBUG('v', "Virtpage to check in page to remove is %d and clockPos is %d\n", curVirtPage, clockPos);
+            DEBUG('v', "Virtpage to check in page to remove is %d, owner is %s and clockPos is %d\n", curVirtPage, curData -> owner -> name, clockPos);
             
             if (curData -> owner -> space -> pageTable[curVirtPage].use)
                 curData -> owner -> space -> pageTable[curVirtPage].use = 0;
@@ -663,18 +669,21 @@ int pageToRemove(){
             else{
                 if (!curData -> locked)
                     victim = clockPos;
+                    
             }
         }
         else
             numNull ++;
-            clockPos = (clockPos + 1) % NumPhysPages;
-            curData = faultInfo[clockPos];
+        
+        clockPos = (clockPos + 1) % NumPhysPages;
+        curData = faultInfo[clockPos];
        
     }
     
     vmInfoLock -> Release();
-    */
-   
+
+    
+   /*
     vmInfoLock -> Acquire();
    
    
@@ -684,11 +693,9 @@ int pageToRemove(){
 
       
     vmInfoLock -> Release();
-    
+    */
    
-    bitLock -> Acquire();
-    int numClear  = memMap -> NumClear();
-    bitLock -> Release();
+   
     
    
     DEBUG('v', "Num clear is: %d\n", memMap -> NumClear());
@@ -697,7 +704,7 @@ int pageToRemove(){
         return -1;
     }
 
-    
+  
     //vmInfoLock -> Acquire();
 
     
@@ -815,7 +822,7 @@ void ExecThread(int argsInt){
     currentThread -> space -> RestoreState(); //Put pageTable in machine
     currentThread -> space -> InitRegisters(); //Initialize registers as if it were a new process
     
-    argsInt = 0; //DON'T FORGET THIS IS HERE, REMOVE LINE TO MAKE ARGS WORK###################################################################333
+    //argsInt = 0; //DON'T FORGET THIS IS HERE, REMOVE LINE TO MAKE ARGS WORK###################################################################333
     /*
      * "argsInt" is a pointer to the exec args we pulled into kernel memory in exec. They will now be put 
      * back into memory for the execed process as arguments to main.
@@ -918,9 +925,16 @@ void KillThread(int exitVal){
         bitLock -> Acquire(); 
         vmInfoLock -> Acquire();
         
-        if (space -> pageTable[i].valid)
+        if (space -> pageTable[i].valid){
             memMap -> Clear(space -> pageTable[i].physicalPage); //Release each page back to the bitmap
-            
+            faultInfo[space -> pageTable[i].physicalPage] = NULL;
+        }
+        else{
+            diskBitLock -> Acquire();
+            diskMap -> Clear(space -> diskSectors[i]);
+            diskBitLock -> Release();
+        }
+        
         vmInfoLock -> Release();
         bitLock -> Release();
     }
@@ -1024,7 +1038,7 @@ void CopyExecArgs(char** execArgs, int argAddr){
                 count ++;
             }
             
-            DEBUG('v', "Argument %d is %s\n", argc, execArgs[argc]);
+           
             
             vmInfoLock -> Acquire(); 
             for (int i = 0; i < 128 && pagesBroughtIn[i] != -1; i ++)
@@ -1032,7 +1046,8 @@ void CopyExecArgs(char** execArgs, int argAddr){
             vmInfoLock -> Release();
 
             execArgs[argc][count] = '\0';
-            
+             DEBUG('v', "Argument %d is %s\n", argc, execArgs[argc]);
+             
             argc ++;
             
             argAddr += 4; //Go to next pointer

@@ -21,7 +21,7 @@ main()
   args[0] = "qmatmult";
   args[1] = (char *)0;
   if ((qmatmult = Fork()) == 0) { 
-    Exec("qmatmult", (char*) 0);
+    Exec("qmatmult", args);
     prints("Could not Exec qmatmult\n");
     Halt();
   }
@@ -33,7 +33,7 @@ main()
   args[0] = "qsort";
   args[1] = (char *)0;  
   if ((qsort = Fork()) == 0) { 
-    Exec("qsort", (char*) 0);
+    Exec("qsort", args);
     prints("Could not Exec qsort\n");
     Halt();
   }
@@ -46,7 +46,7 @@ main()
   args[1] = "A";
   args[2] = (char *)0;
   if ((Akid = Fork()) == 0) {
-    Exec("Xkid", (char*) 0);
+    Exec("Xkid", args);
     prints("Could not Exec Akid\n");
     Halt();
   }
@@ -56,7 +56,7 @@ main()
   args[1] = "B";
   args[2] = (char *)0;
   if ((Bkid = Fork()) == 0) {
-    Exec("Xkid", (char*) 0);
+    Exec("Xkid", args);
     prints("Could not Exec Bkid\n");
     Halt();
   }
@@ -66,7 +66,7 @@ main()
   args[1] = "C";
   args[2] = (char *)0;
   if ((Ckid = Fork()) == 0) {
-    Exec("Xkid", (char*) 0);
+    Exec("Xkid", args);
     prints("Could not Exec Ckid\n");
     Halt();
   }
@@ -76,7 +76,7 @@ main()
   args[1] = "D";
   args[2] = (char *)0;
   if ((Dkid = Fork()) == 0) {
-    Exec("Xkid", (char*) 0);
+    Exec("Xkid", args);
     prints("Could not Exec Dkid\n");
     Halt();
   }
@@ -86,7 +86,7 @@ main()
   args[1] = "E";
   args[2] = (char *)0;
   if ((Ekid = Fork()) == 0) {
-    Exec("Xkid", (char*) 0);
+    Exec("Xkid", args);
     prints("Could not Exec Ekid\n");
     Halt();
   }

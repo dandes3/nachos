@@ -19,7 +19,7 @@ main()
 
   if ((kid = Fork()) == 0) {
     Exec("huge",args);
-    prints("Exec() failed in PARENT\n");
+    prints("Exec() failed in PARENT\n", ConsoleOutput);
     Exit(16);
   }
   
