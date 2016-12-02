@@ -131,7 +131,7 @@ bool
 Directory::Add(char *name, int newSector)
 { 
     if (FindIndex(name) != -1)
-	return false;
+        return false;
 
     for (int i = 0; i < tableSize; i++)
         if (!table[i].inUse) {
@@ -157,7 +157,7 @@ Directory::Remove(char *name)
     int i = FindIndex(name);
 
     if (i == -1)
-	return false; 		// name not in directory
+        return false; 		// name not in directory
     table[i].inUse = false;
     return true;	
 }
@@ -170,9 +170,9 @@ Directory::Remove(char *name)
 void
 Directory::List()
 {
-   for (int i = 0; i < tableSize; i++)
-	if (table[i].inUse)
-	    printf("%s\n", table[i].name);
+    for (int i = 0; i < tableSize; i++)
+        if (table[i].inUse)
+            printf("%s\n", table[i].name);
 }
 
 //----------------------------------------------------------------------
@@ -188,11 +188,11 @@ Directory::Print()
 
     printf("Directory contents:\n");
     for (int i = 0; i < tableSize; i++)
-	if (table[i].inUse) {
-	    printf("Name: %s, Sector: %d\n", table[i].name, table[i].sector);
-	    hdr->FetchFrom(table[i].sector);
-	    hdr->Print();
-	}
+        if (table[i].inUse) {
+            printf("Name: %s, Sector: %d\n", table[i].name, table[i].sector);
+            hdr->FetchFrom(table[i].sector);
+            hdr->Print();
+        }
     printf("\n");
     delete hdr;
 }

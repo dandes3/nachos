@@ -56,7 +56,6 @@ char diskname[50];
 PostOffice *postOffice;
 #endif
 
-
 // External definition, to allow us to take a pointer to this function
 extern void Cleanup();
 
