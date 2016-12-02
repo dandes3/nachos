@@ -807,6 +807,7 @@ void faultPage(int faultingAddr, bool lockBit){
         DEBUG('v', "owner who's page table is being updated: %s\n", faultInfo[newLocation] -> owners[i] -> name);
         faultInfo[newLocation] -> owners[i] -> space -> pageTable[faultPage].valid = true;  
         faultInfo[newLocation] -> owners[i] -> space -> pageTable[faultPage].physicalPage = newLocation;
+        faultInfo[newLocation] -> owners[i] -> space -> pageTable[faultPage].use = true;
     }
     vmInfoLock -> Release();
     
@@ -836,6 +837,7 @@ int pageToRemove(){
     vmInfoLock -> Release();
     */
     
+    
     //LRU Clock approx
     
     vmInfoLock -> Acquire();
@@ -859,10 +861,8 @@ int pageToRemove(){
         }
         
         else{
-            if (!curData -> locked){
-                victim = clockPos;
-                break;
-            }
+            if (!curData -> locked)
+                victim = clockPos;     
         }
         
         clockPos = (clockPos + 1) % NumPhysPages;
@@ -870,7 +870,7 @@ int pageToRemove(){
     }
     
     vmInfoLock -> Release();
-        
+     
     return victim;
 }
 
