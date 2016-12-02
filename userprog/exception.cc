@@ -506,32 +506,28 @@ ExceptionHandler(ExceptionType which)
         break;
         
     case ReadOnlyException: // Write attmepted to page marked "read-only"
-        fprintf(stderr, "ReadOnly\n");
         KillThread(2);
         break;
         
     case BusErrorException: // Translation resulted in an invalid physical address
-        fprintf(stderr, "BusError\n");
         KillThread(2);  
         break;
 					   
     case AddressErrorException: // Unaligned reference or one that
                                 // was eyond the end of the address space
-        fprintf(stderr, "AddressError\n");
         KillThread(2);
         break;
 					    
     case OverflowException: // Integer overflow in add or sub.
-        fprintf(stderr, "overflow\n");
+
         break;
         
     case IllegalInstrException: // Unimplemented or reserved instr.
-        fprintf(stderr, "IllegalInstr\n");
         KillThread(2);
 		break;
         
     case NumExceptionTypes:
-        fprintf(stderr, "NumExceptionTypes\n");
+
         break;
     }  
     
