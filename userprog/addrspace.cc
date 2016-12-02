@@ -138,7 +138,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 #ifndef USE_TLB
 // first, set up the translation 
     pageTable = new(std::nothrow) TranslationEntry[numPages];
-    
+    diskSectors = new(std::nothrow) int[numPages];
     for (i = 0; i < numPages; i++) {
 	   
        pageTable[i].virtualPage = i;
@@ -266,6 +266,7 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
     numPages = copySpace -> numPages;
     
     pageTable = new(std::nothrow) TranslationEntry[numPages];
+    diskSectors = new(std::nothrow) int[numPages];
     
     for (i = 0; i < numPages; i++) {
 	   

@@ -51,7 +51,7 @@ class AddrSpace {
     bool failed;
     unsigned int numPages;		// Number of pages in the virtual 
     char* fileName;          
-    int diskSectors [2048];
+    int* diskSectors;
 #endif
     
 #ifndef USE_TLB
