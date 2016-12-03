@@ -1,5 +1,5 @@
 -------------------------------------------
-| Don Andes, Jose Acuna, Phillip Favaloro
+| Don Andes, Jose Acuna, Philip Favaloro
 | Nachos Project 3
 -------------------------------------------
 
