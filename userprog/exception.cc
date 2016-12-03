@@ -740,9 +740,6 @@ void faultPage(int faultingAddr, bool lockBit){
         newLocation = victim;
     }
     
-        
-
-    
     diskSectorsLock -> Acquire();
     faultSector = currentThread -> space -> diskSectors[faultPage];
     diskSectorsLock -> Release();
@@ -824,18 +821,6 @@ int pageToRemove(){
     DEBUG('v', "Num clear is: %d\n", memMap -> NumClear());
     if (numClear != 0)
         return -1;
-    
-    /*
-    vmInfoLock -> Acquire();
-    
-    
-    victim = Random() % NumPhysPages;
-    while (faultInfo[victim] != NULL && faultInfo[victim] -> locked)
-        victim = Random() % NumPhysPages;
-
-    
-    vmInfoLock -> Release();
-    */
     
     
     //LRU Clock approx
@@ -1175,18 +1160,6 @@ void CopyExecArgs(char** execArgs, int argAddr){
         
         while (str != 0){ //str is a VA (pointer) where the exec arg strings reside
             DEBUG('v', "Argaddr is %d at top  of while\n", argAddr);
-            /*
-            location = argAddr;
-            if (location / PageSize != currentPage){
-                vmInfoLock -> Acquire();
-                faultInfo[currentThread -> space -> pageTable[currentPage].physicalPage] -> locked = false;
-                vmInfoLock -> Release();
-                
-                currentPage = location / PageSize;
-                DEBUG('v', "Bring into mem at top of while in copy exec args\n");
-                bringIntoMemory(location);
-            }
-            */
             
             int count = 0;
             
