@@ -29,6 +29,7 @@
 #define SC_Close	8
 #define SC_Fork		9
 #define SC_Dup		10
+#define SC_CheckPoint		11
 
 #ifndef IN_ASM
 
@@ -124,6 +125,8 @@ void Close(OpenFileId id);
  * file vector.
 */
 OpenFileId Dup(OpenFileId fd);
+
+int CheckPoint(char* name);
 #endif
 
 

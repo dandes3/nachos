@@ -1,0 +1,12 @@
+Starting COW
+Initialization complete in parent
+Parent off Join with a value of 17
+Machine halting!
+
+Ticks: total 1582312, idle 1528823, system 32290, user 21199
+Disk I/O: reads 89, writes 92
+Console I/O: reads 0, writes 82
+Paging: faults 76
+Network I/O: packets received 0, sent 0
+
+Cleaning up...

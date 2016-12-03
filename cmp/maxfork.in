@@ -1,0 +1,72 @@
+PARENT exists
+Kid 0 created. pid=KID exists
+1
+Kid 1 created. pid=2
+Kid 2 created. pid=3
+KID exists
+Kid 3 created. pid=4
+KID exists
+KID exists
+Kid 4 created. pid=5
+KID exists
+Kid 5 created. pid=6
+Kid KID exists
+6 created. pid=KID exists
+7
+Kid 7 created. pid=8
+KID exists
+Kid 8 created. pid=KID exists
+9
+Kid 9KID exists
+ created. pid=10
+Kid 10 created. pid=11
+KID exists
+Kid 11 created. pid=KID exists
+12
+KID exists
+Kid 12 created. pid=13
+Kid 13 created. pid=14KID exists
+
+Kid 14 created. pid=15
+KID exists
+PARENT about to Join kids
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+PARENT off Join with value of 17
+kid array:
+     kid[0]=1
+     kid[1]=2
+     kid[2]=3
+     kid[3]=4
+     kid[4]=5
+     kid[5]=6
+     kid[6]=7
+     kid[7]=8
+     kid[8]=9
+     kid[9]=10
+     kid[10]=11
+     kid[11]=12
+     kid[12]=13
+     kid[13]=14
+     kid[14]=15
+Machine halting!
+
+Ticks: total 29853118, idle 743208, system 3302110, user 25807800
+Disk I/O: reads 1273, writes 1370
+Console I/O: reads 0, writes 1258
+Paging: faults 1072
+Network I/O: packets received 0, sent 0
+
+Cleaning up...

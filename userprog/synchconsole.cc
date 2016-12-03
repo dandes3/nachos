@@ -9,7 +9,6 @@ void SynchConsole::ReadAvail() //Release the Read Semaphore
 void SynchConsole::WriteDone() //Release the Write Semaphore 
 {
     writeSem->V();
-    
 }
 
 static void SConsoleReadAvail(int s) 

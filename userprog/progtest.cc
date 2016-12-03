@@ -29,8 +29,8 @@ StartProcess(char *filename)
     AddrSpace *space;
 
     if (executable == NULL) {
-	printf("Unable to open file %s\n", filename);
-	return;
+        printf("Unable to open file %s\n", filename);
+        return;
     }
     space = new(std::nothrow) AddrSpace(executable);    
     currentThread->space = space;
@@ -62,8 +62,8 @@ StartProcess(char *filename, char *inputName)
     AddrSpace *space;
 
     if (executable == NULL) {
-	printf("Unable to open file %s\n", filename);
-	return;
+        printf("Unable to open file %s\n", filename);
+        return;
     }
     space = new(std::nothrow) AddrSpace(executable);
     
@@ -76,8 +76,6 @@ StartProcess(char *filename, char *inputName)
     space->fileClose(scriptOpenId);    // close the OpenFileId of the scriptFile
     
     currentThread->space = space;
-    
-
     
     delete executable;			// close file
 
@@ -121,10 +119,10 @@ ConsoleTest (char *in, char *out)
     writeDone = new(std::nothrow) Semaphore("write done", 0);
     
     for (;;) {
-	readAvail->P();		// wait for character to arrive
-	ch = console->GetChar();
-	console->PutChar(ch);	// echo it!
-	writeDone->P() ;        // wait for write to finish
-	if (ch == 'q') return;  // if q, quit
+        readAvail->P();		// wait for character to arrive
+        ch = console->GetChar();
+        console->PutChar(ch);	// echo it!
+        writeDone->P() ;        // wait for write to finish
+        if (ch == 'q') return;  // if q, quit
     }
 }

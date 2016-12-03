@@ -16,13 +16,7 @@
 #include "copyright.h"
 #include "filesys.h"
 
-
 typedef int OpenFileId;	
-
-typedef struct ChildInfo{
-    int exitVal;
-    Semaphore* joinSemaphore;
-} ChildInfo;
 
 #define UserStackSize		1024 	// increase this as necessary!
 
@@ -53,10 +47,13 @@ class AddrSpace {
     OpenFile* fileVector [20]; //Maps file descriptors (indices) to OpenFile objects
     int mySpaceId;
     int parentThreadPtr;
+    bool checkpoint;
     bool failed;
     unsigned int numPages;		// Number of pages in the virtual 
-    char* fileName;                     
+    char* fileName;          
+    int* diskSectors;
 #endif
+    
 #ifndef USE_TLB
     TranslationEntry *pageTable;	// Assume linear page table translation
 #endif					// for now!

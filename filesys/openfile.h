@@ -38,24 +38,24 @@ class OpenFile {
     ~OpenFile() { Close(file); }			// close the file
 
     int ReadAt(char *into, int numBytes, int position) { 
-    		Lseek(file, position, 0); 
-		return ReadPartial(file, into, numBytes); 
-		}	
+        Lseek(file, position, 0); 
+        return ReadPartial(file, into, numBytes); 
+    }	
     int WriteAt(char *from, int numBytes, int position) { 
-    		Lseek(file, position, 0); 
+        Lseek(file, position, 0); 
 		WriteFile(file, from, numBytes); 
 		return numBytes;
-		}	
+    }	
     int Read(char *into, int numBytes) {
 		int numRead = ReadAt(into, numBytes, currentOffset); 
 		currentOffset += numRead;
 		return numRead;
-    		}
+    }
     int Write(char *from, int numBytes) {
 		int numWritten = WriteAt(from, numBytes, currentOffset); 
 		currentOffset += numWritten;
 		return numWritten;
-		}
+    }
 
     int Length() { Lseek(file, 0, 2); return Tell(file); }
     void PrintHDR();
@@ -66,7 +66,7 @@ class OpenFile {
     int file;
     char *fileName;
 #endif
-  private:
+
     int currentOffset;
 };
 

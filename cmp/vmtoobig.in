@@ -1,0 +1,13 @@
+PARENT after fork/exec; kid pid is 1
+PARENT about to Join kid
+Exec() failed in PARENT
+PARENT off Join with value of 16
+Machine halting!
+
+Ticks: total 640704, idle 531452, system 106180, user 3072
+Disk I/O: reads 36, writes 30
+Console I/O: reads 0, writes 119
+Paging: faults 20
+Network I/O: packets received 0, sent 0
+
+Cleaning up...

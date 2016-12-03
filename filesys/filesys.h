@@ -48,19 +48,21 @@ class FileSystem {
     FileSystem(bool) {}
 
     bool Create(char *name, int) { 
-	int fileDescriptor = OpenForWrite(name);
-
-	if (fileDescriptor == -1) return false;
-	Close(fileDescriptor); 
-	return true; 
+       int fileDescriptor = OpenForWrite(name);
+    
+	   if (fileDescriptor == -1) return false;
+       
+	   Close(fileDescriptor); 
+	   return true; 
 	}
 
     OpenFile* Open(char *name) {
 	  int fileDescriptor = OpenForReadWrite(name, false);
 
-	  if (fileDescriptor == -1) return NULL;
+	  if (fileDescriptor == -1)
+          return NULL;
 	  return new(std::nothrow) OpenFile(fileDescriptor);
-      }
+    }
 
     bool Remove(char *name) { return Unlink(name) == 0; }
 
@@ -88,9 +90,9 @@ class FileSystem {
     void Print();			// List all the files and their contents
 
   private:
-   OpenFile* freeMapFile;		// Bit map of free disk blocks,
+    OpenFile* freeMapFile;		// Bit map of free disk blocks,
 					// represented as a file
-   OpenFile* directoryFile;		// "Root" directory -- list of 
+    OpenFile* directoryFile;		// "Root" directory -- list of 
 					// file names, represented as a file
 };
 

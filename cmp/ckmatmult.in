@@ -1,0 +1,42 @@
+Starting matmult
+Initialization Complete
+i = 0
+i = 1
+i = 2
+i = 3
+i = 4
+i = 5
+i = 6
+i = 7
+i = 8
+i = 9
+i = 10
+i = 11
+i = 12
+i = 13
+i = 14
+i = 15
+i = 16
+i = 17
+i = 18
+i = 19
+i = 20
+i = 21
+i = 22
+i = 23
+i = 24
+i = 25
+i = 26
+i = 27
+i = 28
+i = 29
+C[29,29] = 25230
+Machine halting!
+
+Ticks: total 581120582, idle 570335261, system 8381280, user 2404041
+Disk I/O: reads 33465, writes 33373
+Console I/O: reads 0, writes 258
+Paging: faults 33387
+Network I/O: packets received 0, sent 0
+
+Cleaning up...

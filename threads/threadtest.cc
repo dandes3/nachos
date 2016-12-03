@@ -156,11 +156,7 @@ void Insert(char c){
         bufferNotFull->Wait(bufferLock);
     }
     buffer[pos++] = c;
-    //DEBUG('t', "insert entered %c\n", c);
-    //DEBUG('t', "insert's buffer is %s\n", buffer);
-    
     printf("%s\n", buffer);
-    //printf("%s\t%d\n", buffer, strlen(buffer));
     
     bufferNotEmpty->Signal(bufferLock); // Signal that the buffer is not empty
     
@@ -183,12 +179,8 @@ void Remove(){
         bufferNotEmpty->Wait(bufferLock);
     }
     
-    DEBUG('t', "remove's buffer is %s\n", buffer);
-    //char c = buffer[pos - 1];
     buffer[pos - 1] = '\0';
     pos--;
-    //DEBUG('t', "remove's count is %d\n", pos);
-    //DEBUG('t', "remove got %c\n", c);
     
     printf("%s\n", buffer);
     
@@ -210,13 +202,6 @@ void Remove(){
 void Two(int numPros, int numCons, int sizeOfBuffer){
     buffSize = sizeOfBuffer;
     charsToBeConsumed = numPros * 11; // 11 characters in "HELLO WORLD"
-    //printf("Two\n");
-    //DEBUG('t', "Entering Two\n");
-    //DEBUG('t', "numPro is %d\n", numPros);
-    //DEBUG('t', "numCon is %d\n", numCons);
-    //DEBUG('t', "buffSize is %d\n", buffSize);
-    //DEBUG('t', "charsToBeConsumed is %d\n", charsToBeConsumed);
-    
     buffer = new char[buffSize]; // initalize buffer to input buffSize
     
     // instantiate locks
@@ -373,7 +358,6 @@ void CrossBridge(int myDirection, int id){
 //  oncoming traffic to clear.
 //----------------------------------------------------------------------
 void ExitBridge(int myDirection, int id){
-    
     // Convert the directions to strings. Makes it easier to follow output
     char *myDirectionName = DirectionToString(myDirection);
     char *trafficDirectionName = DirectionToString(trafficDirection);

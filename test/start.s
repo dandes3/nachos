@@ -132,6 +132,14 @@ Dup:
 	j	$31
 	.end Dup
 
+	.global CheckPoint
+	.ent	CheckPoint
+CheckPoint:
+	addiu $2,$0, SC_CheckPoint
+	syscall
+	j	$31
+	.end CheckPoint
+	
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main

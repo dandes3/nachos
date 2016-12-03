@@ -32,7 +32,9 @@ SynchDisk   *synchDisk;
 Machine *machine;	// user program memory and registers
 SynchConsole *sConsole;
 BitMap *memMap;
+BitMap *diskMap;
 Lock *bitLock;
+Lock *diskBitLock;
 SpaceId spaceId;
 Semaphore *forkSem;
 Semaphore *joinSem;
@@ -41,6 +43,11 @@ JoinList *joinList;
 Lock *forkExec;
 Lock *stdOut;
 Lock *atomicWrite;
+Lock *vmInfoLock;
+Lock *faultLock;
+SynchDisk *megaDisk;
+FaultData **faultInfo;
+int clockPos;
 #endif
 #endif
 
@@ -48,7 +55,6 @@ Lock *atomicWrite;
 char diskname[50];
 PostOffice *postOffice;
 #endif
-
 
 // External definition, to allow us to take a pointer to this function
 extern void Cleanup();
@@ -166,6 +172,8 @@ Initialize(int argc, char **argv)
     machine = new(std::nothrow) Machine(debugUserProg);	// this must come first
     sConsole = new(std::nothrow) SynchConsole(NULL, NULL);
     memMap = new(std::nothrow) BitMap(NumPhysPages);
+    diskMap = new(std::nothrow) BitMap(SectorsPerTrack * NumTracks);
+    diskBitLock = new(std::nothrow) Lock("diskBitLock");
     bitLock = new(std::nothrow) Lock("bitLock");
     spaceId = 1;
     forkSem = new(std::nothrow) Semaphore("forkSem", 0);
@@ -175,7 +183,15 @@ Initialize(int argc, char **argv)
     forkExec = new(std::nothrow) Lock("forkExec");
     stdOut = new(std::nothrow) Lock("stdOut");
     atomicWrite = new(std::nothrow) Lock("atomicWrite");
+    vmInfoLock = new(std::nothrow) Lock("vmInfoLock");
+    faultLock = new(std::nothrow) Lock("faultLock");
     timer = new(std::nothrow) SlicingTimer(TimerInterruptHandler, 0);
+    megaDisk = new(std::nothrow) SynchDisk("megaDisk");
+    faultInfo = new(std::nothrow) FaultData*[NumPhysPages];
+    clockPos = 0;
+    for (int i = 0; i < NumPhysPages; i++)
+        faultInfo[i] = NULL;
+    
 #endif
 #endif
 

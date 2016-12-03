@@ -236,3 +236,9 @@ matmulthalt: matmulthalt.o start.o
 	$(LD) $(LDFLAGS) start.o matmulthalt.o -o matmulthalt.coff
 	../bin/coff2noff matmulthalt.coff matmulthalt
 
+vmtorture.c: vmtorture.c
+	$(CC) $(CFLAGS) -c vmtorture.c
+vmtorture: vmtorture.o start.o
+	$(LD) $(LDFLAGS) start.o vmtorture.o -o vmtorture.coff
+	../bin/coff2noff vmtorture.coff vmtorture
+

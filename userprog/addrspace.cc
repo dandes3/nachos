@@ -25,6 +25,7 @@
 #ifdef CHANGED
 
 #define SCRIPT 0x52435323 //Used to identify a shell script being brought into execution
+#define CHECK 0x4b435546
 extern void StartProcess(char *filename, char *inputName);
 //----------------------------------------------------------------------
 // SwapHeader
@@ -66,6 +67,7 @@ SwapHeader (NoffHeader *noffH)
 AddrSpace::AddrSpace(OpenFile *executable)
 {
     failed = false; //Flag used to tell exception.cc if an addrspace creation failed
+    checkpoint = false;
     
     stdOut = new(std::nothrow) OpenFile(1); //Cookies for ConsoleOutput and ConsoleInput
     stdIn = new(std::nothrow) OpenFile(0);
@@ -87,72 +89,146 @@ AddrSpace::AddrSpace(OpenFile *executable)
         failed = true; //Shouldn't be reached unless something bad happens
         return;
     }
-  
-    if ((noffH.noffMagic != NOFFMAGIC) && 
-		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
-    	SwapHeader(&noffH);
     
-    if (noffH.noffMagic != NOFFMAGIC){
-        failed = true;
-        return;
+    DEBUG('c', "Noffmagic is %x\n", noffH.noffMagic);
+    if (noffH.noffMagic == CHECK){
+        DEBUG('c', "Checkpoint detected\n");
+        char temp[128];
+        
+        executable -> Read(temp, 11); //This reads past the cookie
+        
+        checkpoint = true;
+        char strNumPages [128];
+        int curPos = 0;
+        bzero(strNumPages, 128);
+        
+        for (curPos = 0; ; curPos ++){
+            executable -> Read(&strNumPages[curPos], 1);
+            
+            if (strNumPages[curPos] == '\n')
+                break;
+        }
+        
+        strNumPages[curPos] = '\0';
+        numPages = strtol(strNumPages, NULL, 0);
     }
-
+    
+    else{
+        if ((noffH.noffMagic != NOFFMAGIC) && 
+            (WordToHost(noffH.noffMagic) == NOFFMAGIC))
+            SwapHeader(&noffH);
+        
+        if (noffH.noffMagic != NOFFMAGIC){
+            failed = true;
+            return;
+        }
+    
+    
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size 
 			+ UserStackSize;	// we need to increase the size
 						// to leave room for the stack
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    if (numPages > NumPhysPages){
-       failed = true; 
-       return;      // check we're not trying
-    }				// to run anything too big --
-					// at least until we have
-					// virtual memory
-
+    }
+    
+    
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
 #ifndef USE_TLB
 // first, set up the translation 
     pageTable = new(std::nothrow) TranslationEntry[numPages];
-    
+    diskSectors = new(std::nothrow) int[numPages];
     for (i = 0; i < numPages; i++) {
-	   pageTable[i].virtualPage = i;
 	   
-	   bitLock -> Acquire();
-       
-	   if ((pageTable[i].physicalPage = memMap -> Find()) == -1){ //Grab physical page using bitmap
-           failed = true; //If no pages are left, cannot create addrspace
-           return;
+       pageTable[i].virtualPage = i;
+	   
+       diskBitLock -> Acquire();
+       diskSectors[i] = diskMap -> Find();
+       if (diskSectors[i] == -1){
+           failed = true;
+           diskBitLock -> Release();
+           break;
        }
-       bzero(machine -> mainMemory + pageTable[i].physicalPage * PageSize, PageSize); //Zero out memory for safety
-       
-       bitLock -> Release();
+       diskBitLock -> Release();
     
-	   pageTable[i].valid = true;
+	   pageTable[i].valid = false;
 	   pageTable[i].use = false;
 	   pageTable[i].dirty = false;
-	   pageTable[i].readOnly = false;  // if the code segment was entirely on 
-					// a separate page, we could set its 
-					// pages to be read-only
+	   pageTable[i].readOnly = false; 
+       
+       DEBUG('v', "VP %d goes to sector %d\n", i, diskSectors[i]);
     }
 #endif    
 
-// then, copy in the code and data segments into memory byte by byte, converting to physical memory for each byte
-      if (noffH.code.size > 0) {
-
-        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
+    if (failed){
+        for (int i = 0; diskSectors[i] != -1; i++){
+            diskBitLock -> Acquire();
+            diskMap -> Clear(diskSectors[i]);
+            diskBitLock -> Release();
+        }
         
-        for (int j = 0; j < noffH.code.size; j ++) 
-            executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.code.virtualAddr + j)]), 1, noffH.code.inFileAddr + j); 
+        return;
     }
-       
-    if (noffH.initData.size > 0) {
+
+// then, copy in the code and data segments into memory byte by byte, converting to physical memory for each byte
+    
+    if (checkpoint){
+        char pageContents [128];
         
-        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
+        bzero(pageContents, 128);
         
-        for (int j = 0; j < noffH.initData.size; j ++)
-            executable->ReadAt(&(machine->mainMemory[convertVirtualtoPhysical(noffH.initData.virtualAddr + j)]), 1, noffH.initData.inFileAddr + j);
+        for(int i = 0; i < numPages; i++){
+           executable -> Read(pageContents, 128);
+           
+           faultLock -> Acquire();
+           megaDisk -> WriteSector(diskSectors[i], pageContents);
+           faultLock -> Release();
+           
+           executable -> Read(pageContents, 1);
+           bzero(pageContents, 128);
+        }
+    }
+    
+    else{
+        int virtualPage, virtualOffset;
+        int executableSize = noffH.code.size + noffH.initData.size;
+        executableSize +=  128 - (executableSize % 128);
+        char** dataBufs = new char*[executableSize / 128];
+        
+        for (int i =0; i < executableSize / 128; i++)
+            dataBufs[i] = new char[128];
+        
+        for (int i = 0; i < executableSize / 128; i ++)
+            bzero(dataBufs[i], 128);
+        
+        if (noffH.code.size > 0) {
+            DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", noffH.code.virtualAddr, noffH.code.size);
+            
+            for (int i = 0; i < noffH.code.size; i ++){
+                virtualPage = (noffH.code.virtualAddr + i) / 128;
+                virtualOffset = (noffH.code.virtualAddr + i) % 128;
+                executable->ReadAt(&dataBufs[virtualPage][virtualOffset], 1, noffH.code.inFileAddr + i); 
+            }
+        }
+        
+        if (noffH.initData.size > 0) {
+            DEBUG('a', "Initializing initData segment, at 0x%x, size %d\n", noffH.initData.virtualAddr, noffH.initData.size);
+            
+            for (int i = 0; i < noffH.initData.size; i ++){
+                virtualPage = (noffH.initData.virtualAddr + i) / 128;
+                virtualOffset = (noffH.initData.virtualAddr + i) % 128;
+                executable->ReadAt(&dataBufs[virtualPage][virtualOffset], 1, noffH.initData.inFileAddr + i); 
+            }
+        }
+        
+        for (int i = 0; i < executableSize / 128; i++){
+            megaDisk -> WriteSector(diskSectors[i], dataBufs[i]);
+            delete dataBufs[i];
+        }
+        
+        DEBUG('v', "code size: %d, initdata size: %d, uninitData size %d, stack size %d\n", noffH.code.size, noffH.initData.size, noffH.uninitData.size, UserStackSize);
+        DEBUG('v', "%d pages of code put on disk\n", executableSize / 128);
         
     }
     
@@ -190,36 +266,56 @@ AddrSpace::AddrSpace (AddrSpace* copySpace){
     numPages = copySpace -> numPages;
     
     pageTable = new(std::nothrow) TranslationEntry[numPages];
+    diskSectors = new(std::nothrow) int[numPages];
     
     for (i = 0; i < numPages; i++) {
-	   pageTable[i].virtualPage = i;
+	   
+       pageTable[i].virtualPage = i;
+	   
+       diskBitLock -> Acquire();
        
-	   bitLock -> Acquire();
+       diskSectors[i] = diskMap -> Find();
        
-	   if ((pageTable[i].physicalPage = memMap -> Find()) < 0){ //Same as in normal AddrSpace constructor
-               failed = true;
-                return;
-           }
-       bzero(machine -> mainMemory + (pageTable[i].physicalPage * PageSize), PageSize);
-       
-       bitLock -> Release();
-       
-	   pageTable[i].valid = true;
+       diskBitLock -> Release();
+    
+	   pageTable[i].valid = false;
 	   pageTable[i].use = false;
 	   pageTable[i].dirty = false;
-	   pageTable[i].readOnly = false;  // if the code segment was entirely on 
-					// a separate page, we could set its 
-					// pages to be read-only
+	   pageTable[i].readOnly = false; 
+       
+       DEBUG('v', "VP %d goes to sector %d\n", i, diskSectors[i]);
     }
  
     //Copy memory from parent's physical memory to child's physical memory
     for (i = 0; i < numPages; i++){
-        int curPhysMemAddr = pageTable[i].physicalPage * PageSize;
-        int copyPhysMemAddr = copySpace -> pageTable[i].physicalPage * PageSize;
-  
-        for (int j = 0; j < PageSize; j ++)
-            machine -> mainMemory[curPhysMemAddr + j] = machine -> mainMemory[copyPhysMemAddr + j];
+        faultLock -> Acquire();
+        vmInfoLock -> Acquire();
+                    
+        char* buf = new char[PageSize];
         
+        if (copySpace -> pageTable[i].valid){
+            int parentPhysicalPage = copySpace -> pageTable[i].physicalPage;
+            
+            faultInfo[parentPhysicalPage] -> locked = true;
+            
+            for (int j = 0; j < PageSize; j++)
+                buf[j] = machine -> mainMemory[parentPhysicalPage * PageSize + j];
+            
+            faultInfo[parentPhysicalPage] -> locked = false;
+            vmInfoLock -> Release();
+            
+            megaDisk -> WriteSector(diskSectors[i], buf);
+            
+        }
+        
+        else{
+            vmInfoLock -> Release();
+            
+            megaDisk -> ReadSector(copySpace -> diskSectors[i], buf);
+            megaDisk -> WriteSector(diskSectors[i], buf);
+        }
+        
+        faultLock -> Release();
     }
     
 }
@@ -234,10 +330,6 @@ AddrSpace::~AddrSpace()
 #ifndef USE_TLB
    delete pageTable;
 #endif
-   /*
-   for (int i = 0; i < 20; i++)
-      delete fileVector[i];
-   */
 }
 
 //----------------------------------------------------------------------
@@ -301,8 +393,6 @@ void AddrSpace::RestoreState()
 #endif
 }
 
-
-
 //----------------------------------------------------------------------
 // AddrSpace::fileOpen
 //      Opens a file by name given in parameter fileName. Puts resulting
@@ -357,7 +447,7 @@ void AddrSpace::fileClose(OpenFileId fileId){
     
     if (fileVector[fileId] != stdIn && fileVector[fileId] != stdOut && fileVector[fileId] -> links == 0) //Only delete the OpenFile object if it has 0 links to it.                                                                                                      
         delete fileVector[fileId];                                                                       //Deleting OpenFile object closes file in linux file system.
-                                                                                                         //Since the stdIn and stdOut doesn't correspond to actaul files, this would cause errors.
+                                                                                        //Since the stdIn and stdOut doesn't correspond to actaul files, this would cause errors.
     fileVector[fileId] -> linkLock -> Release();
     
     fileVector[fileId] = NULL; //Free up space in file vector

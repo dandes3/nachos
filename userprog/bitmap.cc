@@ -79,9 +79,9 @@ BitMap::Test(int which)
     ASSERT(which >= 0 && which < numBits);
     
     if (map[which / BitsInWord] & (1 << (which % BitsInWord)))
-	return true;
+        return true;
     else
-	return false;
+        return false;
 }
 
 //----------------------------------------------------------------------
@@ -97,10 +97,10 @@ int
 BitMap::Find() 
 {
     for (int i = 0; i < numBits; i++)
-	if (!Test(i)) {
-	    Mark(i);
-	    return i;
-	}
+        if (!Test(i)) {
+            Mark(i);
+            return i;
+        }
     return -1;
 }
 
@@ -116,7 +116,7 @@ BitMap::NumClear()
     int count = 0;
 
     for (int i = 0; i < numBits; i++)
-	if (!Test(i)) count++;
+        if (!Test(i)) count++;
     return count;
 }
 
@@ -133,8 +133,8 @@ BitMap::Print()
 {
     printf("Bitmap set:\n"); 
     for (int i = 0; i < numBits; i++)
-	if (Test(i))
-	    printf("%d, ", i);
+        if (Test(i))
+            printf("%d, ", i);
     printf("\n"); 
 }
 

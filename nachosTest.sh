@@ -5,27 +5,28 @@ echo "*****Passing input to shell required the input in a seperate file. I alway
 echo "*****Furthermore, passing input to shell doesn't allow the inner program to exit, it must halt. I tested that the program works correctly outside of this bash script, but for the purpose of this script, I made some files halt where they normally exit"
 echo ""
 
-sleep 5
+ext="out"
 
+#sleep 5
 echo "*****Running argseqchild"
-userprog/nachos -x test/argseqchild
+vm/nachos -x test/argseqchild > cmp/argseqchild.$ext
 echo "*****Finished argseqchild"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running argtest*****"
-userprog/nachos -x test/argtest
+vm/nachos -x test/argtest > cmp/argtest.$ext
 echo "*****Finished argtest****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running atomicwrite*****"
 rm atomicFile > /dev/null 2>&1
-userprog/nachos -x test/atomicwrite
+vm/nachos -x test/atomicwrite > cmp/atomicwrite.$ext
 
-sleep 1
+#sleep 1
 
 echo "*****Printing atomicFile*****"
 cat atomicFile
@@ -33,27 +34,27 @@ echo ""
 echo "*****Finished atomicwrite****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running deepfork******"
-userprog/nachos -x test/deepfork
+vm/nachos -x test/deepfork > cmp/deepfork.$ext
 echo "*****Finished deepfork*****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running duptest*****"
-userprog/nachos -x test/duptest
+vm/nachos -x test/duptest > cmp/duptest.$ext
 echo "*****Finished duptest****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running fileio************"
 rm fileio.out > /dev/null 2>&1
-userprog/nachos -x test/fileio
+vm/nachos -x test/fileio > cmp/fileio.$ext
 
-sleep 1
+#sleep 1
 
 echo "*****Printing fileio.input*****"
 cat fileio.input
@@ -62,89 +63,89 @@ cat fileio.out
 echo "*****Finished fileio*****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running fork****"
-userprog/nachos -x test/fork
+vm/nachos -x test/fork > cmp/fork.$ext
 echo "*****Finished fork***"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running  forktest****"
-userprog/nachos -x test/forktest
+vm/nachos -x test/forktest > cmp/forktest.$ext
 echo "*****Finished forktest****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running fromcons*****"
-userprog/nachos -x test/fromcons <<< 'abcdqQ'
+vm/nachos -x test/fromcons <<< 'abcdqQ' > cmp/fromcons.$ext
 echo "*****Finished fromcons****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running grandchildren*****"
-userprog/nachos -x test/grandchildren
+vm/nachos -x test/grandchildren > cmp/grandchildren.$ext
 echo "*****Finished grandchildren****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running hellocons*****"
-userprog/nachos -x test/hellocons
+vm/nachos -x test/hellocons > cmp/hellocons.$ext
 echo "*****Finished hellocons****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running hellofile*****"
-userprog/nachos -x test/hellofile
+vm/nachos -x test/hellofile > cmp/hellofile.$ext
 echo "*****Finished hellofile****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running matmult*****"
-timeout 1 userprog/nachos -x test/matmult
+timeout 3 vm/nachos -x test/matmult > cmp/matmult.$ext
 echo "*****Finished matmult****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running maxfork*****"
-userprog/nachos -x test/maxfork
+vm/nachos -x test/maxfork > cmp/maxfork.$ext
 echo "*****Finished maxfork****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running parentchild*****"
-userprog/nachos -x test/parentchild
+vm/nachos -x test/parentchild > cmp/parentchild.$ext
 echo "*****Finished parentchild****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running seqchild*****"
-userprog/nachos -x test/seqchild
+vm/nachos -x test/seqchild > cmp/seqchild.$ext
 echo "*****Finished seqchild****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Printing scripttest****"
 cat test/scripttest
 echo "*****Running scripttest*****"
-userprog/nachos -x test/scripttest
+vm/nachos -x test/scripttest > cmp/scripttest.$ext
 echo "*****Finished scripttest****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "*****Running share*****"
-userprog/nachos -x test/share
+vm/nachos -x test/share > cmp/share.$ext
 echo "*****Finished share****"
 echo ""
 
@@ -156,251 +157,251 @@ echo "---Printing input to shell---"
 cat test/shellargkid
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing exec with args in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellargkid
+timeout 3 vm/nachos -x test/shell < test/shellargkid > cmp/shellargkid.$ext
 echo "***Finished exec with args in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellargseqchild
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing argseqchild in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellargseqchild
+timeout 3 vm/nachos -x test/shell < test/shellargseqchild > cmp/shellargseqchild.$ext
 echo "***Finished argseqchild in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellargtest
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing argtest in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellargtest
+timeout 3 vm/nachos -x test/shell < test/shellargtest > cmp/shellargtest.$ext
 echo "***Finished argtest in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellatomicwrite
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing atomic write in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellatomicwrite
+timeout 3 vm/nachos -x test/shell < test/shellatomicwrite > cmp/shellatomicwrite.$ext
 echo "***Finished atomicwrite in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellcat
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing cat in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellcat
+timeout 3 vm/nachos -x test/shell < test/shellcat > cmp/shellcat.$ext
 echo "***Finished cat in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
-rm doesNotExist.out
+rm doesNotExist.out > /dev/null 2>&1
 cat test/shellcp
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing cp in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellcp
+timeout 3 vm/nachos -x test/shell < test/shellcp > cmp/shellcp.$ext
 echo "***Finished cp in shell**"
 
-sleep 1
+#sleep 1
 
 echo "*****Finished running various shell tests*****"
 echo ""
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shelldeepfork
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing deepfork in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shelldeepfork
+timeout 3 vm/nachos -x test/shell < test/shelldeepfork > cmp/shelldeepfork.$ext
 echo "***Finished deepfork in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellfileio
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing fileio in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellfileio
+timeout 3 vm/nachos -x test/shell < test/shellfileio > cmp/shellfileio.$ext
 echo "***Finished fileio in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellfork
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing fork in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellfork
+timeout 3 vm/nachos -x test/shell < test/shellfork > cmp/shellfork.$ext
 echo "***Finished cat in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellforktest
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing forktest in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellforktest
+timeout 3 vm/nachos -x test/shell < test/shellforktest > cmp/shellforktest.$ext
 echo "***Finished forktest in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellfromcons
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing fromcons in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellfromcons
+timeout 3 vm/nachos -x test/shell < test/shellfromcons > cmp/shellfromcons.$ext
 echo "***Finished fromcons in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellgrandchildren
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing grandchildren in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellgrandchildren
+timeout 3 vm/nachos -x test/shell < test/shellgrandchildren > cmp/shellgrandchildren.$ext
 echo "***Finished grandchildren in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellhellocons
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing hellocons in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellhellocons
+timeout 3 vm/nachos -x test/shell < test/shellhellocons > cmp/shellhellocons.$ext
 echo "***Finished hellocons in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellhellofile
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing hellofile in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellhellofile
+timeout 3 vm/nachos -x test/shell < test/shellhellofile > cmp/shellhellofile.$ext
 echo "***Finished hellofile in shell**"
 
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellmatmult
 echo "---Finished printing input---"
-sleep 1
+#sleep 1
 
 echo "***Testing matmult in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellmatmult
+timeout 3 vm/nachos -x test/shell < test/shellmatmult > cmp/shellmatmult.$ext
 echo "***Finished matmult in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellmaxfork
 echo "---Finished printing input---"
-sleep 1
+#sleep 1
 
 echo "***Testing maxfork in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellmaxfork
+timeout 3 vm/nachos -x test/shell < test/shellmaxfork > cmp/shellmaxfork.$ext
 echo "***Finished maxfork in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellparentchild
 echo "---Finished printing input---"
-sleep 1
+#sleep 1
 
 echo "***Testing parentchild in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellparentchild
+timeout 3 vm/nachos -x test/shell < test/shellparentchild > cmp/shellparentchild.$ext
 echo "***Finished parentchild in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellseqchild
 echo "---Finished printing input---"
-sleep 1
+#sleep 1
 
 echo "***Testing seqchild in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellseqchild
+timeout 3 vm/nachos -x test/shell < test/shellseqchild > cmp/shellseqchild.$ext
 echo "***Finished seqchild in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellshare
 echo "---Finished printing input---"
-sleep 1
+#sleep 1
 
 echo "***Testing share in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellshare
+timeout 3 vm/nachos -x test/shell < test/shellshare > cmp/shellshare.$ext
 echo "***Finished share in shell**"
 
-sleep 1
+#sleep 1
 
 echo "---Printing input to shell---"
 cat test/shellshell
 echo "---Finished printing input---"
 
-sleep 1
+#sleep 1
 
 echo "***Testing shell in shell***"
-timeout 1 userprog/nachos -x test/shell < test/shellshell
+timeout 3 vm/nachos -x test/shell < test/shellshell > cmp/shellshell.$ext
 echo "***Finished shell in shell**"
 
-sleep 1
+#sleep 1
 
 
 echo "*****Finished various shell tests****"
 echo ""
-sleep 1
+#sleep 1
 
 echo "*****Running sort*****"
-timeout 1 userprog/nachos -x test/sort
+timeout 3 vm/nachos -x test/sort > cmp/sort.$ext
 echo "*****Finished sort****"
 echo ""
 
