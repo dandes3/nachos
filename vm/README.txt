@@ -102,18 +102,18 @@ Implementation
             making a 2d array, with the first dimension as the number of pages that the
             executable, and the second as 128 (size of a page). This emulates what the
             process would appear as in a virtual memory space. We then write each of the
-            128 byte arrays to the corrosponding disk sector from the diskSectors array. 
+            128 byte arrays to the corresponding disk sector from the diskSectors array. 
 
         -- During a fork, we perform the same operation with the page table. We then
             look at the parent's address space, and for each page in the address space
             and if the page is in memory, we set the lock bit to true, and copy the page
-            from memory into a local buffer. This buffer is then writter to disk utilizing
+            from memory into a local buffer. This buffer is then written to disk utilizing
             the sector found from diskSectors. If the page is not in memory however, we
             read into the buffer, then write it into the child's sector (from the child's
             diskSector array). 
 
         -- Our entire implementation of a pageFault protocol is locked with FaultLock. 
-            This is the case for both externel and internel machine page faults, as they 
+            This is the case for both external and internal machine page faults, as they 
             are executed and handled by the same function, in the same manner.  
 
         -- During a page fault, we delegate finding a page to remove from memory to a 
@@ -134,9 +134,9 @@ Implementation
         -- We now make a new faultData struct, with the owner set to currentThread. 
             The virtual page is set to the page we faulted on, and the locked bit set to 
             true on internal, false on external. This new faultData struct is now put into
-            the faultInfo array at the index corrosponding to the page being replaced. 
+            the faultInfo array at the index corresponding to the page being replaced. 
             We then retrieve the sector where the faulting page lives from diskSectors for
-            the current thread, and read the sector into an internel kernel buffer. We
+            the current thread, and read the sector into an internal kernel buffer. We
             then clear the sector on the diskMap, and write it in to main memory byte by
             byte. We then update the page table for the faulting thread, at the faulting
             page by marking the valid bit true, the use bit true (used in replacement alg)
@@ -150,7 +150,7 @@ Implementation
             if so, call bringIntoMemory again with the new location's page. This 
             function faults in a page if it is not in memory. Once it is memory, or if 
             it started in memory, it will set the locked bit in faultInfo at the
-            corrosponding physical page to true. The bit will then be switched to false
+            corresponding physical page to true. The bit will then be switched to false
             once we are finished with that page.
 
         -- Anytime a thread finishes, for each of its pages, if that page is in memory
@@ -174,9 +174,9 @@ Implementation
         -- On the checkpoint syscall, we start by creating an openFile object for the
             checkpoint file. We then write the cookie "FUCKNACHOS\n" to indicate that
             it is a checkpoint file. We then write the number of memory pages that the
-            process has, and all of it's memory contents, seperated by ":"s, either
+            process has, and all of it's memory contents, separated by ":"s, either
             from disk or main memory. We then write the content of each register, also
-            seperated by ":"s. Each section is seperated by a newline character. 
+            separated by ":"s. Each section is separated by a newline character. 
             
         -- On a call to EXEC the checkpoint, we detect that a checkpoint is being EXECed
             in the addrspace creation by checking the cookie. The page table creation is
@@ -206,13 +206,13 @@ Implementation
             exactly, with the exception of setting both the child and parent's read only
             bits for each page to true. We do not copy the memory as we did in a normal, 
             non-COW environment. In both the parent and child's addrspaces, we also
-            give them references to eachother's thread pointers. 
+            give them references to each other's thread pointers. 
             
         -- Like in VM, the page faulting procedure is mutually exclusive. That is, it 
             is locked so only one page fault can be happening at one given time. However, 
             since a page can be owned by multiple processes, while a thread is waiting on
             the lock to page fault it's page table state may change. To combat this, we
-            check again after aquiring the lock to ensure the valid bit for the faulting
+            check again after acquiring the lock to ensure the valid bit for the faulting
             page is still false. 
 
         -- During a page eviction, we now mark the page table false for each owner of
@@ -239,11 +239,11 @@ Implementation
             once the process gets in to the function off the lock. 
             At the time that a read-only exception occurs, the page must be already 
             in memory. The process that is trying to write to the read-only page will 
-            keep posession of the page in memory, and all other owners will get a copy 
+            keep possession of the page in memory, and all other owners will get a copy 
             on disk.
             
         -- To make the writing process the sole owner of the page, all other owners are
-            removed from the faultData struct corrosponding to the page, and its read-only
+            removed from the faultData struct corresponding to the page, and its read-only
             bit for that page is set to false. Then, for each other owner, a new sector
             is found from the diskMap, the page is copied to that sector, its diskSectors
             array is updated, and both the valid and read-only bits are set to false.     
