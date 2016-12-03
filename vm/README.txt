@@ -58,7 +58,8 @@ Usage
     compile and prepare the full Nachos OS and included programs for execution. 
     In the >vm directory, there will now be a nachos executable.
 
-    **All parts of the assignment have been completed and are expected to work properly.**
+    **All parts of the assignment have been completed and are expected to work properly,
+      with the exception of handling open files during a checkpoint.**
     
      Basic commentary/conditions to review before testing: 
      - All tests for Copy On Write (COW) should be executed on the COW version of our
@@ -177,12 +178,91 @@ Implementation
             algorithm will continue if a victim has not been chosen, or terminate
             otherwise. 
 
+
      On Checkpoint:
-            
+            On the checkpoint syscall, we start by creating an openFile object for the
+            checkpoint file. We then write the cookie "FUCKNACHOS\n" to indicate that
+            it is a checkpoint file. We then write the number of memory pages that the
+            process has, and all of it's memory contents, seperated from ":"s either
+            from disk or main memory. We then write the content of each register, also
+            seperated by ":"s. Each section is seperated by a newline character. 
+            On a call to EXEC the checkpoint, we detect that a checkpoint is being EXECed
+            in the addrspace creation by checking the cookie. The page table creation is
+            the same, but instead of copying from the executable onto disk, we copy from
+            the checkpoint file instead. After the addrspace creation, we set a flag inside
+            the addrspace to indicate the process has been created from a checkpoint. This
+            allows us to easily check and perform different processes when we come back to
+            this point in our exception.cc. Inside exception.cc, we now skip adding exec
+            args, and instead of initializing registers to an initial value, pull register
+            values from the file. The implementation of Exit() and Join() is the same in
+            checkpoint as it is in any other normal Exec. 
 
 
-     On COW:   
+     On COW: 
+            Owners now refers to either a process owns a page that isn't read only, or
+            a parent/child pair that own a page that is read-only. Note: we originally, 
+            planned to make COW function for up to 5 children, which is the reason the
+            faultData has up to 5 owners, however we were unable to make it function.
+            Therefore, when we mention all owners, we mean just the parent and child. 
+            This could have been generalized to multiple parents and children had be
+            been able to make it function as we had originally planned.  
+            On a fork, in the creation of an addrspace, we copy the parent's page table
+            exactly, with the exception of setting both the child and parent's read only
+            bits for each page to true. We do not copy the memory as we did in a normal, 
+            non-COW environment. In both the parent and child's addrspaces, we also
+            give them references to eachother's thread pointers. 
+            Like in VM, the page faulting procedure is mutually exclusive. That is, it 
+            is locked so only one page fault can be happening at one given time. However, 
+            since a page can be owned by multiple processes, while a thread is waiting on
+            the lock to page fault it's page table state may change. To combat this, we
+            check again after aquiring the lock to ensure the valid bit for the faulting
+            page is still false. 
+            During a page eviction, we now mark the page table false for each owner of
+            the page. We also update the diskSectors array for each owner with the same
+            new sector. This preserves the "read only-ness" of the page, even after being
+            evicted from memory.
+            This means that a page being faulted in could have many owners. This is 
+            indicated by the page having a read only bit set to true in the page table
+            (even though it's valid bit is set to false.) If the page being faulted in
+            is read-only, the current thread adds itself to the owners of the page in the
+            faultInfo array, as well as it's parent or child. It will know it's parent
+            or child from the pointers set during a fork. Otherwise, it will only add
+            itself as an owner. 
+            The page is written from disk to memory as before. However, the changes
+            previously made to the owner's page table will now be made for each owner. 
+            (For each owner, at the faulting page in their page table, the valid bit
+            will be set to true, the physical page will be set to the new physical page, 
+            and the use bit will be set to true. The read-only bit will be unaffected.)
+            The procedure for handling a read-only exception is locked with readOnlyLock. 
+            Similarly to in a page fault, we check to see if the page is still read only
+            once the process gets in to the function off the lock. At the time that
+            a read-only exception occurs, the page must be already in memory. 
+            The process that is trying to write to the read-only page will keep posession
+            of the page in memory, and all other owners will get a copy on disk.
+            To make the writing process the sole owner of the page, all other owners are
+            removed from the faultData struct corrosponding to the page, and its read-only
+            bit for that page is set to false. Then for each other owner, a new sector
+            is found from the diskMap, the page is copied to that sector, its diskSectors
+            array is updated, and both the valid and read-only bits are set to false.     
+            When a thread is finished, we release the pages from the memMap and diskMap
+            as before. However, now that faultData structs have multiple owners, the 
+            procedure for cleaning up faultInfo changes. For each faultData struct in
+            faultInfo if the page were the only owner on the faultData struct, it 
+            removes the faultData struct from faultInfo. If it is one of two owners, it
+            removes itself as an owner, then updates the other owner's page table for that
+            page as not read-only. This effectively gives the other owner full control
+            over the given page. Finally, for the dying thread's family (parent and child), 
+            any reference (previously set in a fork) to that thread is set to NULL.
+            Anytime we are manipulating the owners in a faultData struct, we use the
+            killLock. This occurs when we are killing a thread, updating faultInfo during
+            a fork, updating owners page tables (during a read-only exception), evicting
+            a page, and creating a new faultData (with multiple owners) during a page
+            fault. Note: this lock never is held during disk I/O. The only lock held
+            during disk I/O is the faultLock.  
 
+            The only change to the replacement algorithm is- when setting an owner's use
+            bit to false, we now do the same for every owner. And when checking if an
+            owner's use bit is true, we check if any owner's use bit is true.  
 
 
   -------------------------------------------------------------------------------------------
